@@ -16,6 +16,8 @@ import sprEarth5 from '../sprites/earth5.png';
 import sprGeyser from '../sprites/geyser.png';
 import sprMountain from '../sprites/mountain.png';
 import sprIron from '../sprites/iron.png';
+import sprItems from '../sprites/items.png';
+import sprIronItem from '../sprites/ironItem.png';
 
 export const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 export const ctx = canvas.getContext("2d");
@@ -25,6 +27,40 @@ canvas.height = innerHeight;
 let resourcesLoadedCount = 0;
 let resourcesWaitingForLoadCount = 0;
 export let canBeginGame = false;
+
+
+export enum Layer {
+    NONE,
+    UI,
+    PLAYER,
+    TILE,
+    ON_TILE,
+    PARTICLES,
+}
+
+
+export enum DrawQueueType {
+    NONE,
+    IMAGE,
+    RECT,
+    CIRCLE,
+    TEXT,
+}
+
+export class DrawQueueItem {
+    x: number;
+    y: number;
+    layer: Layer = Layer.TILE;
+    type: DrawQueueType = DrawQueueType.NONE;
+    width?: number = 0;
+    height?: number = 0;
+    angle?: number = 0;
+    color?: string = 'white';
+    sprite?: HTMLImageElement = null;
+    radius?: number = 0;
+    text?: string = '';
+    textSize?: number = 60;
+}
 
 function resourceLoaded(src: string) {
     resourcesLoadedCount++;
@@ -61,33 +97,53 @@ export let imgEarth5 = loadImage(sprEarth5);
 export let imgGeyser = loadImage(sprGeyser);
 export let imgMountain = loadImage(sprMountain);
 export let imgIron = loadImage(sprIron);
+export let imgItems = loadImage(sprItems);
+export let imgIronItem = loadImage(sprIronItem);
 
-export function drawSprite(x: number, y: number, sprite: any, angle: number, width: number = 0, height: number = 0) {
-    ctx.save();
-    ctx.translate(x, y);
 
-    ctx.rotate(angle);
-    let compWidth = width || sprite.width;
-    let compHeight = height || sprite.height;
-    ctx.drawImage(sprite, -compWidth / 2, -compHeight / 2, compWidth, compHeight);
-    ctx.restore();
-}
+export function renderItem(item: DrawQueueItem) {
+    switch (item.type) {
+        case DrawQueueType.IMAGE: {
+            ctx.save();
+            ctx.translate(item.x, item.y);
 
-export function drawRect(x: number, y: number, width: number, height: number, angle: number, color: string) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.fillStyle = color;
+            ctx.rotate(item.angle);
+            let compWidth = item.width || item.sprite.width;
+            let compHeight = item.height || item.sprite.height;
+            ctx.drawImage(item.sprite, -compWidth / 2, -compHeight / 2, compWidth, compHeight);
+            ctx.restore();
+        } break;
 
-    ctx.rotate(-angle);
-    ctx.fillRect(-width / 2, -height / 2, width, height);
-    ctx.restore();
-}
+        case DrawQueueType.RECT: {
+            ctx.save();
+            ctx.translate(item.x, item.y);
+            ctx.fillStyle = item.color;
 
-export function drawCircle(x: number, y: number, radius: number, color: string) {
-    ctx.strokeStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fillStyle = color;
-    ctx.fill();
+            ctx.rotate(-item.angle);
+            ctx.fillRect(-item.width / 2, -item.height / 2, item.width, item.height);
+            ctx.restore();
+        } break;
+
+        case DrawQueueType.CIRCLE: {
+            ctx.strokeStyle = item.color;
+            ctx.beginPath();
+            ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = item.color;
+            ctx.fill();
+        } break;
+
+        case DrawQueueType.TEXT: {
+            ctx.save();
+            console.log(item.color);
+            ctx.fillStyle = item.color;
+            ctx.font = `${item.textSize}px Arial`;
+            ctx.textBaseline = 'middle';
+            // ctx.textAlign = 'left';
+            ctx.fillText(item.text, item.x, item.y);
+            ctx.restore();
+        } break;
+
+        default: console.assert(false);
+    }
 }

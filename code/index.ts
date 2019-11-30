@@ -1,5 +1,5 @@
 import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, Key } from "./controls";
-import { drawRect, drawCircle, ctx, canvas, drawSprite, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgIron } from "./input";
+import { ctx, canvas, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgIron, Layer, DrawQueueItem, DrawQueueType, renderItem, imgItems, imgIronItem } from "./drawing";
 
 enum GameObjectType {
     NONE,
@@ -19,11 +19,9 @@ let tile = {
     firstY: 0,
     chunkSizeX: 8,
     chunkSizeY: 8,
-    chunkCountX: 5,
-    chunkCountY: 5,
+    chunkCountX: 10,
+    chunkCountY: 10,
 }
-
-
 
 let chunkPrototypes = [
     [
@@ -67,6 +65,71 @@ let chunkPrototypes = [
         '@    000',
     ]
 ]
+
+enum Item {
+    IRON,
+}
+
+class InventorySlot {
+    item: Item;
+    count: number = 0;
+}
+
+let inventory: InventorySlot[] = [];
+
+function addItem(item: Item, count: number) {
+    for (let itemIndex = 0; itemIndex <= 4; itemIndex++) {
+        if (!inventory[itemIndex]) {
+            let slot = {
+                item,
+                count,
+            };
+            inventory[itemIndex] = slot;
+            break;
+        } else if (inventory[itemIndex].item === item) {
+            inventory[itemIndex].count += count;
+            break;
+        }
+    }
+}
+
+let drawQueue: DrawQueueItem[] = [];
+
+export function drawSprite(x: number, y: number, sprite: any, angle: number, width: number = 0, height: number = 0, layer = Layer.TILE) {
+    if (x > camera.x - camera.width * 0.5 - 450 &&
+        x < camera.x + camera.width * 0.5 + 450 &&
+        y > camera.y - camera.height * 0.5 - 450 &&
+        y < camera.y + camera.height * 0.5 + 450) {
+        drawQueue.push({ x, y, sprite, angle, width, height, layer, type: DrawQueueType.IMAGE });
+    }
+}
+
+export function drawRect(x: number, y: number, width: number, height: number, angle: number, color: string, layer = Layer.TILE) {
+    if (x > camera.x - camera.width * 0.5 - 450 &&
+        x < camera.x + camera.width * 0.5 + 450 &&
+        y > camera.y - camera.height * 0.5 - 450 &&
+        y < camera.y + camera.height * 0.5 + 450) {
+        drawQueue.push({ x, y, width, height, color, angle, layer, type: DrawQueueType.RECT });
+    }
+}
+
+export function drawCircle(x: number, y: number, radius: number, color: string, layer = Layer.TILE) {
+    if (x > camera.x - camera.width * 0.5 - 20 &&
+        x < camera.x + camera.width * 0.5 + 20 &&
+        y > camera.y - camera.height * 0.5 - 20 &&
+        y < camera.y + camera.height * 0.5 + 20) {
+        drawQueue.push({ x, y, radius, color, layer, type: DrawQueueType.CIRCLE });
+    }
+}
+
+export function drawText(x: number, y: number, color: string, text: string, textSize: number, layer = Layer.UI) {
+    if (x > camera.x - camera.width * 0.5 - 20 &&
+        x < camera.x + camera.width * 0.5 + 20 &&
+        y > camera.y - camera.height * 0.5 - 20 &&
+        y < camera.y + camera.height * 0.5 + 20) {
+        drawQueue.push({ x, y, color, text, layer, type: DrawQueueType.TEXT, textSize });
+    }
+}
 
 let camera = {
     x: 0,
@@ -556,6 +619,7 @@ function distanceBetweenPoints(x1: number, y1: number, x2: number, y2: number) {
 let globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
 
 function updateGameObject(gameObject: GameObject) {
+
     if (gameObject.sprite !== imgNone) {
         drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height);
     } else {
@@ -586,6 +650,7 @@ function updateGameObject(gameObject: GameObject) {
                     gameObject.toughness--;
                     if (gameObject.toughness <= 0) {
                         gameObject.oreCount--;
+                        addItem(Item.IRON, 1);
                         gameObject.toughness = gameObject.firstToughtness;
                     }
                     if (gameObject.oreCount <= 0) {
@@ -606,8 +671,9 @@ function updateGameObject(gameObject: GameObject) {
                         }
                         addGameObject(type, gameObject.x, gameObject.y);
                     }
-
-                    console.log(gameObject.toughness, gameObject.oreCount)
+                    let stripeWidth = 300;
+                    let width = stripeWidth * (gameObject.toughness / gameObject.firstToughtness);
+                    drawRect(globalPlayer.x + width / 2 - 150, globalPlayer.y + camera.height / 4, width, 50, 0, 'green', Layer.UI);
                 }
             }
         }
@@ -617,6 +683,19 @@ function updateGameObject(gameObject: GameObject) {
     if (gameObject.type === GameObjectType.PLAYER) {
         camera.x = gameObject.x;
         camera.y = gameObject.y;
+
+        drawSprite(globalPlayer.x, globalPlayer.y + camera.height / 2 - 50, imgItems, 0, 300, 50, Layer.UI);
+
+        for (let itemIndex = 0; itemIndex <= 4; itemIndex++) {
+            if (inventory[itemIndex]) {
+                let x = globalPlayer.x - 125;
+                let y = globalPlayer.y + camera.height / 2 - 50;
+                let sprite = imgIronItem;
+                drawSprite(x, y, sprite, 0, 40, 40, Layer.UI);
+                drawText(x - 5, y - 34, 'black', `${inventory[itemIndex].count}`, 25, Layer.UI);
+            }
+        }
+
         for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
             let particle = particles[particleIndex];
             if (gameObject.width / 2 + particle.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle.x, particle.y)) {
@@ -787,6 +866,8 @@ function updateGameObject(gameObject: GameObject) {
 
 
 function loop() {
+    drawQueue = [];
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.save();
@@ -804,6 +885,13 @@ function loop() {
     }
 
     drawParticles();
+
+    drawQueue.sort((a, b) => b.layer - a.layer);
+    for (let itemIndex = 0; itemIndex < drawQueue.length; itemIndex++) {
+        const item = drawQueue[itemIndex];
+        renderItem(item);
+
+    }
 
     ctx.restore();
 

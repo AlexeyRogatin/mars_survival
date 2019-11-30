@@ -1,4 +1,4 @@
-import { canvas } from './input';
+import { canvas } from './drawing';
 
 export let mouseX: number = 0;
 export let mouseY: number = 0;
