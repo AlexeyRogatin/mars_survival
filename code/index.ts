@@ -1,5 +1,10 @@
-import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, Key } from "./controls";
-import { ctx, canvas, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgIron, Layer, DrawQueueItem, DrawQueueType, renderItem, imgItems, imgIronItem } from "./drawing";
+import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, Key, mouseX } from "./controls";
+import {
+    ctx, canvas, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera,
+    imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgIron1, imgIron2, imgIron3, imgIron4,
+    imgIron5, Layer, DrawQueueItem, DrawQueueType, renderItem, imgItems, imgIronItem, imgAbyss, imgArrow, imgCrafts, imgArrow1,
+    imgMelter, imgMainSlot, imgIronIngot
+} from "./drawing";
 
 enum GameObjectType {
     NONE,
@@ -10,6 +15,19 @@ enum GameObjectType {
     VOLCANO,
     ABYSS,
     IRON,
+    MELTER,
+}
+
+enum TileTipe {
+    NONE,
+    PLAYER,
+    EARTH,
+    MOUNTAIN,
+    GEYSER,
+    VOLCANO,
+    ABYSS,
+    IRON,
+    MELTER,
 }
 
 let tile = {
@@ -23,6 +41,15 @@ let tile = {
     chunkCountY: 10,
 }
 
+class Tile {
+    baseLayer: TileTipe;
+    upperLayer: TileTipe;
+    x: number;
+    y: number;
+}
+
+const map: Tile[] = [];
+
 let chunkPrototypes = [
     [
         '  @!  ##',
@@ -35,7 +62,7 @@ let chunkPrototypes = [
         '@!@ #   ',
     ],
     [
-        'F  @  ##',
+        'F! @  ##',
         '       #',
         '   #   #',
         '        ',
@@ -68,7 +95,55 @@ let chunkPrototypes = [
 
 enum Item {
     IRON,
+    MELTER,
+    IRON_INGOT,
 }
+
+class RecipePart {
+    item: Item;
+    count: number;
+    sprite: HTMLImageElement;
+}
+
+class Recipe {
+    parts: RecipePart[];
+    result: Item;
+    sprite: HTMLImageElement;
+    name: string;
+    description1: string;
+    description2: string;
+    description3: string;
+}
+
+let recipes: Recipe[] = [
+    {
+        result: Item.MELTER,
+        parts: [{ item: Item.IRON, count: 20, sprite: imgIronItem },],
+        sprite: imgMelter,
+        name: 'Плавильня',
+        description1: 'Бегать с железом - это одно,',
+        description2: 'а с железными слитками - другое.',
+        description3: 'Можно поставить только на лаву',
+    },
+    {
+        result: Item.MELTER,
+        parts: [{ item: Item.IRON, count: 20, sprite: imgIronItem }],
+        sprite: imgMelter,
+        name: 'Плавильня',
+        description1: 'Бегать с железом - это одно,',
+        description2: 'а с железными слитками - другое.',
+        description3: 'Можно поставить только на лаву',
+    },
+    {
+        result: Item.MELTER,
+        parts: [{ item: Item.IRON, count: 20, sprite: imgIronItem }],
+        sprite: imgMelter,
+        name: 'Плавильня',
+        description1: 'Бегать с железом - это одно,',
+        description2: 'а с железными слитками - другое.',
+        description3: 'Можно поставить только на лаву',
+    },
+];
 
 class InventorySlot {
     item: Item;
@@ -78,7 +153,7 @@ class InventorySlot {
 let inventory: InventorySlot[] = [];
 
 function addItem(item: Item, count: number) {
-    for (let itemIndex = 0; itemIndex <= 4; itemIndex++) {
+    for (let itemIndex = 0; itemIndex <= 5; itemIndex++) {
         if (!inventory[itemIndex]) {
             let slot = {
                 item,
@@ -91,6 +166,25 @@ function addItem(item: Item, count: number) {
             break;
         }
     }
+}
+
+function removeItem(item: Item, count: number) {
+    let success = false;
+    for (let itemIndex = 0; itemIndex <= 5; itemIndex++) {
+        if (inventory[itemIndex]) {
+            if (inventory[itemIndex].item === item && inventory[itemIndex].count >= count) {
+
+                inventory[itemIndex].count -= count;
+                if (inventory[itemIndex].count === 0) {
+                    inventory[itemIndex] = null;
+                }
+                success = true;
+                return (success);
+                break;
+            }
+        }
+    }
+    return (success);
 }
 
 let drawQueue: DrawQueueItem[] = [];
@@ -171,8 +265,6 @@ class GameObject {
 
     specialTimer: number;
 
-    clickable: boolean;
-
     goForward: boolean;
     goRight: boolean;
     goLeft: boolean;
@@ -180,7 +272,7 @@ class GameObject {
 
     oreCount: number;
     toughness: number;
-    firstToughtness: number;
+    firstToughness: number;
 
     sprite: HTMLImageElement;
 
@@ -215,16 +307,14 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
 
         specialTimer: 0,
 
-        clickable: false,
-
         goForward: false,
         goBackward: false,
         goLeft: false,
         goRight: false,
 
-        oreCount: 0,
+        oreCount: null,
         toughness: 0,
-        firstToughtness: 0,
+        firstToughness: 0,
 
         sprite: imgNone,
 
@@ -291,18 +381,27 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         gameObject.width = tile.width;
         gameObject.height = tile.height;
         gameObject.color = 'black';
-
+        gameObject.sprite = imgAbyss;
     }
 
     if (gameObject.type === GameObjectType.IRON) {
         gameObject.width = tile.width;
         gameObject.height = tile.height;
         gameObject.color = 'grey';
-        gameObject.clickable = true;
         gameObject.toughness = 180;
-        gameObject.firstToughtness = gameObject.toughness;
+        gameObject.firstToughness = gameObject.toughness;
         gameObject.oreCount = 5;
-        gameObject.sprite = imgIron;
+        gameObject.sprite = imgIron1;
+    }
+
+    if (gameObject.type === GameObjectType.MELTER) {
+        gameObject.width = tile.width;
+        gameObject.height = tile.height;
+        gameObject.color = 'black';
+        gameObject.toughness = 90;
+        gameObject.firstToughness = 90;
+        gameObject.solid = true;
+        gameObject.sprite = imgMelter;
     }
 
     let freeIndex = gameObjects.length;
@@ -337,7 +436,7 @@ function controlPlayer(gameObject: GameObject) {
     }
 }
 
-function resetControls() {
+function deleteControls() {
     globalPlayer.goForward = false;
     globalPlayer.goBackward = false;
     globalPlayer.goLeft = false;
@@ -383,7 +482,7 @@ function moveGameObject(gameObject: GameObject) {
         const playerTop = gameObject.y - gameObject.height / 2;
         const playerBottom = gameObject.y + gameObject.height / 2;
 
-        if (other.solid) {
+        if (other.solid && other.exists) {
 
             if (gameObject.speedX !== 0) {
                 let side: number;
@@ -474,14 +573,8 @@ function rotateVector(x: number, y: number, angle: number) {
 }
 
 function angleBetweenPoints(x1: number, y1: number, x2: number, y2: number) {
-    let dX = x1 - x2;
-    let dY = y1 - y2;
-    let cos = dX / Math.sqrt(dX * dX + dY * dY);
-    let angle = Math.acos(cos);
-    if (y2 > y1) {
-        angle += 2 * Math.PI - angle * 2;
-    }
-    return angle;
+    const result = Math.atan2(y2 - y1, x2 - x1) + Math.PI;
+    return result;
 }
 
 let particles: particle[] = []
@@ -558,6 +651,9 @@ function drawParticles() {
 
 function removeParticle(particleIndex: number) {
     let lastParticle = particles[particles.length - 1];
+    if (particles[particleIndex].color === 'grey') {
+        addItem(Item.IRON, 1);
+    }
     particles[particleIndex] = lastParticle;
     particles.pop();
 }
@@ -618,88 +714,331 @@ function distanceBetweenPoints(x1: number, y1: number, x2: number, y2: number) {
 
 let globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
 
-function updateGameObject(gameObject: GameObject) {
+let craftMode = false;
+let slot = 0;
+let mainSlot = 0;
 
+function updateGameObject(gameObject: GameObject) {
+    if (gameObject.type === GameObjectType.MELTER) {
+        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, Layer.ON_TILE);
+    }
     if (gameObject.sprite !== imgNone) {
         drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height);
     } else {
         drawRect(gameObject.x, gameObject.y, gameObject.width, gameObject.height, -gameObject.angle, gameObject.color);
     }
 
-    if (gameObject.clickable) {
-        if (
-            mouse.worldX > gameObject.x - gameObject.width / 2 &&
-            mouse.worldX < gameObject.x + gameObject.width / 2 &&
-            mouse.worldY > gameObject.y - gameObject.height / 2 &&
-            mouse.worldY < gameObject.y + gameObject.height / 2
-        ) {
-            if (mouse.isDown) {
-                let angle = angleBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y);
-                if (globalPlayer.angle + globalPlayer.rotationSpeed > angle && globalPlayer.angle < angle) {
-                    globalPlayer.angle = angle;
-                } else if (globalPlayer.angle - globalPlayer.rotationSpeed < angle && globalPlayer.angle > angle) {
-                    globalPlayer.angle = angle;
-                } else if (globalPlayer.angle < angle) {
-                    globalPlayer.angle += globalPlayer.rotationSpeed;
-                } else if (globalPlayer.angle > angle) {
-                    globalPlayer.angle -= globalPlayer.rotationSpeed;
-                }
-                if (globalPlayer.width / 2 + gameObject.width / 2 < distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y)) {
-                    globalPlayer.goForward = true;
-                } else {
-                    gameObject.toughness--;
-                    if (gameObject.toughness <= 0) {
-                        gameObject.oreCount--;
-                        addItem(Item.IRON, 1);
-                        gameObject.toughness = gameObject.firstToughtness;
-                    }
-                    if (gameObject.oreCount <= 0) {
-                        gameObject.exists = false;
-                        let chance = randomFloat(0, 1);
-                        let type = 0;
-                        if (chance >= 0.6) {
-                            type = GameObjectType.EARTH;
-                        }
-                        if (chance <= 0.6 && chance >= 0.35) {
-                            type = GameObjectType.GEYSER;
-                        }
-                        if (chance <= 0.35 && chance >= 0.1) {
-                            type = GameObjectType.IRON;
-                        }
-                        if (chance <= 0.1) {
-                            type = GameObjectType.ABYSS;
-                        }
-                        addGameObject(type, gameObject.x, gameObject.y);
-                    }
-                    let stripeWidth = 300;
-                    let width = stripeWidth * (gameObject.toughness / gameObject.firstToughtness);
-                    drawRect(globalPlayer.x + width / 2 - 150, globalPlayer.y + camera.height / 4, width, 50, 0, 'green', Layer.UI);
-                }
-            }
-        }
-
-    }
-
     if (gameObject.type === GameObjectType.PLAYER) {
+
+        controlPlayer(gameObject);
+
         camera.x = gameObject.x;
         camera.y = gameObject.y;
 
         drawSprite(globalPlayer.x, globalPlayer.y + camera.height / 2 - 50, imgItems, 0, 300, 50, Layer.UI);
 
-        for (let itemIndex = 0; itemIndex <= 4; itemIndex++) {
-            if (inventory[itemIndex]) {
-                let x = globalPlayer.x - 125;
-                let y = globalPlayer.y + camera.height / 2 - 50;
-                let sprite = imgIronItem;
-                drawSprite(x, y, sprite, 0, 40, 40, Layer.UI);
-                drawText(x - 5, y - 34, 'black', `${inventory[itemIndex].count}`, 25, Layer.UI);
+        drawSprite(globalPlayer.x - camera.width / 2 + 10, globalPlayer.y - camera.height / 4, imgArrow, 0, 30, 50, Layer.UI);
+
+        if (mouse.wentDown && mouse.worldX > globalPlayer.x - camera.width / 2 - 10 &&
+            mouse.worldX < globalPlayer.x - camera.width / 2 + 25 &&
+            mouse.worldY > globalPlayer.y - camera.height / 4 - 25 &&
+            mouse.worldY < globalPlayer.y - camera.height / 4 + 25
+        ) {
+            if (craftMode === true) {
+                craftMode = false;
+            } else {
+                craftMode = true;
+            }
+        }
+
+        if (craftMode && mouse.wentDown && mouse.worldX > globalPlayer.x - camera.width / 2 + 130 &&
+            mouse.worldX < globalPlayer.x - camera.width / 2 + 170 &&
+            mouse.worldY > globalPlayer.y - camera.height / 4 + 2 &&
+            mouse.worldY < globalPlayer.y - camera.height / 4 + 30 &&
+            recipes[slot - 1]) {
+            slot--;
+        }
+        if (craftMode && mouse.wentDown && mouse.worldX > globalPlayer.x - camera.width / 2 + 130 &&
+            mouse.worldX < globalPlayer.x - camera.width / 2 + 170 &&
+            mouse.worldY > globalPlayer.y - camera.height / 4 + 422 &&
+            mouse.worldY < globalPlayer.y - camera.height / 4 + 450 &&
+            recipes[slot + 3]) {
+            slot++;
+        }
+
+        if (craftMode) {
+            //табличка
+            drawSprite(globalPlayer.x - camera.width / 2 + 150, globalPlayer.y - camera.height / 4 + 200 + 25, imgCrafts, 0, 300, 400, Layer.UI);
+            //стрелочки
+            drawSprite(globalPlayer.x - camera.width / 2 + 150, globalPlayer.y - camera.height / 4 + 15, imgArrow1, 0, 40, 26, Layer.UI);
+            drawSprite(globalPlayer.x - camera.width / 2 + 150, globalPlayer.y - camera.height / 4 + 435, imgArrow1, 1 * Math.PI, 40, 26, Layer.UI);
+            //спрайты предметов
+            for (let itemIndex = 0; itemIndex < 3; itemIndex++) {
+                drawSprite(globalPlayer.x - camera.width / 2 + 60, globalPlayer.y - camera.height / 4 + 90 + 133 * itemIndex,
+                    recipes[slot + itemIndex].sprite, 0, 70, 70, Layer.UI);
+
+                drawText(globalPlayer.x - camera.width / 2 + 100, globalPlayer.y - camera.height / 4 + 50 + 133 * itemIndex,
+                    'black', recipes[slot + itemIndex].name, 25, Layer.UI);
+
+                //их составляющие
+                for (let partIndex = 0; partIndex < recipes[slot + itemIndex].parts.length; partIndex++) {
+                    let row = 0;
+                    if (partIndex > 2) {
+                        row = 1;
+                    }
+                    drawSprite(
+                        globalPlayer.x - camera.width / 2 + 130 + 50 * partIndex - 150 * row, globalPlayer.y - camera.height / 4 + 90 + 133 * itemIndex + 50 * row,
+                        recipes[slot + itemIndex].parts[partIndex].sprite, 0, 30, 30, Layer.UI
+                    );
+                    drawText(
+                        globalPlayer.x - camera.width / 2 + 120 + 50 * partIndex - 150 * row, globalPlayer.y - camera.height / 4 + 70 + 133 * itemIndex + 50 * row,
+                        'black', `${recipes[slot + itemIndex].parts[partIndex].count}`, 15, Layer.UI
+                    );
+
+                    //крафт
+
+                    if (
+                        mouse.worldX >= globalPlayer.x - camera.width / 2 &&
+                        mouse.worldX <= globalPlayer.x - camera.width / 2 + 300 &&
+                        mouse.worldY >= globalPlayer.y - camera.height / 4 + 25 + 133 * itemIndex &&
+                        mouse.worldY <= globalPlayer.y - camera.height / 4 + 133 + 25 + 133 * itemIndex
+                    ) {
+                        drawText(globalPlayer.x + camera.width / 2 - 425, globalPlayer.y - 50, 'green', recipes[slot + itemIndex].description1, 25, Layer.UI);
+                        drawText(globalPlayer.x + camera.width / 2 - 425, globalPlayer.y, 'green', recipes[slot + itemIndex].description2, 25, Layer.UI);
+                        drawText(globalPlayer.x + camera.width / 2 - 425, globalPlayer.y + 50, 'green', recipes[slot + itemIndex].description3, 25, Layer.UI);
+                        if (mouse.wentDown) {
+                            addItem(recipes[slot + itemIndex].result, 1);
+                            let success = removeItem(recipes[slot + itemIndex].parts[partIndex].item, recipes[slot + itemIndex].parts[partIndex].count);
+                            if (!success) {
+                                removeItem(recipes[slot + itemIndex].result, 1);
+                            }
+                        }
+                    }
+                }
             }
         }
 
         for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
             let particle = particles[particleIndex];
+            if (particle.color === 'grey' && particle.radius < 15) {
+                let particleAngle = angleBetweenPoints(globalPlayer.x, globalPlayer.y, particle.x, particle.y);
+                let particleSpeed = rotateVector(6, 0, particleAngle);
+                particle.accelX = 0;
+                particle.accelY = 0;
+                particle.x += particleSpeed[0] - particle.speedX;
+                particle.y -= particleSpeed[1] + particle.speedY;
+                if (distanceBetweenPoints(particle.x, particle.y, gameObject.x, gameObject.y) <= 5) {
+                    removeParticle(particleIndex);
+                }
+            }
+
             if (gameObject.width / 2 + particle.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle.x, particle.y)) {
-                gameObject.exists = false;
+                if (particle.color === 'red') {
+                    gameObject.exists = false;
+                }
+            }
+        }
+
+        //сравнения с объектами
+
+        let mouseObject = [];
+
+        for (let gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {
+            let object = gameObjects[gameObjectIndex];
+            if (mouse.worldX > object.x - object.width / 2 &&
+                mouse.worldX < object.x + object.width / 2 &&
+                mouse.worldY > object.y - object.width / 2 &&
+                mouse.worldY < object.y + object.width / 2) {
+                mouseObject.push(object);
+            }
+        }
+
+        for (let mouseObjectIndex = 0; mouseObjectIndex < mouseObject.length; mouseObjectIndex++) {
+            if (mouseObject && mouseObject[mouseObjectIndex].toughness && mouse.isDown) {
+
+                let angle = angleBetweenPoints(mouseObject[mouseObjectIndex].x, mouseObject[mouseObjectIndex].y, globalPlayer.x, globalPlayer.y);
+                if (gameObject.angle > 0) {
+                    while (gameObject.angle + Math.PI * 1 < angle || gameObject.angle - Math.PI * 1 >= angle) {
+                        angle += Math.PI * 2;
+                    }
+                }
+                if (gameObject.angle < 0) {
+                    while (gameObject.angle + Math.PI * 1 < angle || gameObject.angle - Math.PI * 1 >= angle) {
+                        angle -= Math.PI * 2;
+                    }
+                }
+
+                if (globalPlayer.angle + globalPlayer.rotationSpeed > angle && globalPlayer.angle < angle) {
+                    globalPlayer.angle = angle;
+                } else if (globalPlayer.angle - globalPlayer.rotationSpeed < angle && globalPlayer.angle > angle) {
+                    globalPlayer.angle = angle;
+                } else if (globalPlayer.angle > angle) {
+                    globalPlayer.leftWeel++;
+                    globalPlayer.goLeft = true;
+                } else if (globalPlayer.angle < angle) {
+                    globalPlayer.rightWeel++;
+                    globalPlayer.goRight = true;
+                }
+                if (!(globalPlayer.x > mouseObject[mouseObjectIndex].x - (mouseObject[mouseObjectIndex].width / 2 + 51) &&
+                    globalPlayer.x < mouseObject[mouseObjectIndex].x + (mouseObject[mouseObjectIndex].width / 2 + 51) &&
+                    globalPlayer.y > mouseObject[mouseObjectIndex].y - (mouseObject[mouseObjectIndex].height / 2 + 51) &&
+                    globalPlayer.y < mouseObject[mouseObjectIndex].y + (mouseObject[mouseObjectIndex].height / 2 + 51))
+                ) {
+                    globalPlayer.goForward = true;
+                    globalPlayer.leftWeel++;
+                    globalPlayer.rightWeel++;
+                } else {
+                    mouseObject[mouseObjectIndex].toughness--;
+                    if (mouseObject[mouseObjectIndex].toughness <= 0) {
+                        if (mouseObject[mouseObjectIndex].oreCount !== null) {
+                            let color = mouseObject[mouseObjectIndex].color;
+                            burstParticles({
+                                x: mouse.worldX,
+                                y: mouse.worldY,
+                                color: color,
+                                speed: 1,
+                                size: 20,
+                                decrease: 0,
+                                accel: 0,
+                                count: 20,
+                            });
+                            mouseObject[mouseObjectIndex].oreCount--;
+                            mouseObject[mouseObjectIndex].toughness = mouseObject[mouseObjectIndex].firstToughness;
+                        } else {
+                            if (mouseObject[mouseObjectIndex].type === GameObjectType.MELTER) {
+                                addItem(Item.MELTER, 1);
+                                mouseObject[mouseObjectIndex].exists = false;
+                            }
+                        }
+                    }
+                    if (mouseObject[mouseObjectIndex].type === GameObjectType.IRON) {
+                        if (mouseObject[mouseObjectIndex].oreCount === 5) {
+                            mouseObject[mouseObjectIndex].sprite = imgIron1;
+                        }
+                        if (mouseObject[mouseObjectIndex].oreCount === 4) {
+                            mouseObject[mouseObjectIndex].sprite = imgIron2;
+                        }
+                        if (mouseObject[mouseObjectIndex].oreCount === 3) {
+                            mouseObject[mouseObjectIndex].sprite = imgIron3;
+                        }
+                        if (mouseObject[mouseObjectIndex].oreCount === 2) {
+                            mouseObject[mouseObjectIndex].sprite = imgIron4;
+                        }
+                        if (mouseObject[mouseObjectIndex].oreCount === 1) {
+                            mouseObject[mouseObjectIndex].sprite = imgIron5;
+                        }
+                        if (mouseObject[mouseObjectIndex].oreCount === 0) {
+                            mouseObject[mouseObjectIndex].exists = false;
+                            addGameObject(GameObjectType.EARTH, mouseObject[mouseObjectIndex].x, mouseObject[mouseObjectIndex].y);
+                        }
+                    }
+
+                    let stripeWidth = 300;
+                    let width = stripeWidth * (mouseObject[mouseObjectIndex].toughness / mouseObject[mouseObjectIndex].firstToughness);
+                    drawRect(globalPlayer.x + width / 2 - 150, globalPlayer.y + camera.height / 4, width, 50, 0, 'green', Layer.UI);
+                }
+            }
+        }
+
+
+        // //рисование предметов в инвентаре
+
+        for (let itemIndex = 0; itemIndex <= 4; itemIndex++) {
+            if (inventory[itemIndex]) {
+                let x = globalPlayer.x - 125;
+                let y = globalPlayer.y + camera.height / 2 - 50;
+                let sprite = null;
+                if (inventory[itemIndex].item === Item.IRON) {
+                    sprite = imgIronItem;
+                }
+                if (inventory[itemIndex].item === Item.MELTER) {
+                    sprite = imgMelter;
+                }
+                if (inventory[itemIndex].item === Item.IRON_INGOT) {
+                    sprite = imgIronIngot;
+                }
+
+                if (itemIndex === mainSlot) {
+                    drawSprite(x + 50 * itemIndex, y, imgMainSlot, 0, 50, 50, Layer.UI)
+                }
+
+                drawSprite(x + 50 * itemIndex, y, sprite, 0, 40, 40, Layer.UI);
+                drawText(x - 5 + 50 * itemIndex, y - 34, 'black', `${inventory[itemIndex].count}`, 25, Layer.UI);
+            }
+        }
+
+        if (
+            mouse.worldX >= globalPlayer.x - 145 &&
+            mouse.worldX <= globalPlayer.x - 105 &&
+            mouse.worldY >= globalPlayer.y + camera.height / 2 - 70 &&
+            mouse.worldY <= globalPlayer.y + camera.height / 2 - 30 &&
+            mouse.wentDown
+        ) {
+            mainSlot = 0;
+        }
+        if (
+            mouse.worldX >= globalPlayer.x - 95 &&
+            mouse.worldX <= globalPlayer.x - 55 &&
+            mouse.worldY >= globalPlayer.y + camera.height / 2 - 70 &&
+            mouse.worldY <= globalPlayer.y + camera.height / 2 - 30 &&
+            mouse.wentDown
+        ) {
+            mainSlot = 1;
+        }
+        if (
+            mouse.worldX >= globalPlayer.x - 45 &&
+            mouse.worldX <= globalPlayer.x - 5 &&
+            mouse.worldY >= globalPlayer.y + camera.height / 2 - 70 &&
+            mouse.worldY <= globalPlayer.y + camera.height / 2 - 30 &&
+            mouse.wentDown
+        ) {
+            mainSlot = 2;
+        }
+        if (
+            mouse.worldX >= globalPlayer.x + 5 &&
+            mouse.worldX <= globalPlayer.x + 45 &&
+            mouse.worldY >= globalPlayer.y + camera.height / 2 - 70 &&
+            mouse.worldY <= globalPlayer.y + camera.height / 2 - 30 &&
+            mouse.wentDown
+        ) {
+            mainSlot = 3;
+        }
+        if (
+            mouse.worldX >= globalPlayer.x + 55 &&
+            mouse.worldX <= globalPlayer.x + 95 &&
+            mouse.worldY >= globalPlayer.y + camera.height / 2 - 70 &&
+            mouse.worldY <= globalPlayer.y + camera.height / 2 - 30 &&
+            mouse.wentDown
+        ) {
+            mainSlot = 4;
+        }
+        if (
+            mouse.worldX >= globalPlayer.x + 105 &&
+            mouse.worldX <= globalPlayer.x + 145 &&
+            mouse.worldY >= globalPlayer.y + camera.height / 2 - 70 &&
+            mouse.worldY <= globalPlayer.y + camera.height / 2 - 30 &&
+            mouse.wentDown
+        ) {
+            mainSlot = 5;
+        }
+
+        for (let mouseObjectIndex = 0; mouseObjectIndex < mouseObject.length; mouseObjectIndex++) {
+            if (inventory[mainSlot] && mouse.wentDown) {
+                if (inventory[mainSlot].item === Item.MELTER) {
+                    if (mouseObject && mouseObject[mouseObjectIndex].type === GameObjectType.ABYSS) {
+                        addGameObject(GameObjectType.MELTER, mouseObject[mouseObjectIndex].x, mouseObject[mouseObjectIndex].y);
+                        removeItem(Item.MELTER, 1);
+                    }
+                }
+            }
+        }
+
+        for (let mouseObjectIndex = 0; mouseObjectIndex < mouseObject.length; mouseObjectIndex++) {
+            if (mouseObject && mouse.wentDown) {
+                if (mouseObject[mouseObjectIndex].type === GameObjectType.MELTER && inventory[mainSlot] && inventory[mainSlot].item === Item.IRON) {
+                    addItem(Item.IRON_INGOT, Math.floor(inventory[mainSlot].count / 5));
+                    removeItem(Item.IRON, inventory[mainSlot].count);
+                }
             }
         }
 
@@ -714,22 +1053,21 @@ function updateGameObject(gameObject: GameObject) {
         let [wheel5X, wheel5Y] = rotateVector(9, -45, -gameObject.angle);
         let [wheel6X, wheel6Y] = rotateVector(-48, -45, -gameObject.angle);
 
-        if (upKey.isDown) {
+        if (gameObject.goForward) {
             gameObject.leftWeel++;
             gameObject.rightWeel++;
-        }
-        if (downKey.isDown) {
-            gameObject.leftWeel--;
-            gameObject.rightWeel--;
-        }
-        if (leftKey.isDown) {
-            gameObject.rightWeel++;
-        }
-        if (rightKey.isDown) {
-            gameObject.leftWeel++;
-        }
-
-
+        } else
+            if (gameObject.goBackward) {
+                gameObject.leftWeel--;
+                gameObject.rightWeel--;
+            } else {
+                if (gameObject.goLeft) {
+                    gameObject.rightWeel++;
+                }
+                if (gameObject.goRight) {
+                    gameObject.leftWeel++;
+                }
+            }
 
         if (gameObject.leftWeel > 6) {
             gameObject.leftWeel = 1;
@@ -806,7 +1144,6 @@ function updateGameObject(gameObject: GameObject) {
             drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, imgWheel6, gameObject.angle);
         }
 
-        controlPlayer(gameObject);
         moveGameObject(gameObject);
     }
 
@@ -817,6 +1154,9 @@ function updateGameObject(gameObject: GameObject) {
             && gameObject.y > globalPlayer.y - camera.height / 2
             && gameObject.y < globalPlayer.y + camera.height / 2
         ) {
+            if (timers[gameObject.specialTimer] <= 0) {
+                timers[gameObject.specialTimer] = randomInt(500, 2000);
+            }
             if (timers[gameObject.specialTimer] <= 150) {
                 burstParticles({
                     x: gameObject.x,
@@ -828,9 +1168,6 @@ function updateGameObject(gameObject: GameObject) {
                     accel: -0.05,
                     count: 1,
                 });
-                if (timers[gameObject.specialTimer] <= 0) {
-                    timers[gameObject.specialTimer] = randomInt(500, 2000);
-                }
             }
         }
     }
@@ -862,6 +1199,16 @@ function updateGameObject(gameObject: GameObject) {
         }
     }
 
+    if (gameObject.type === GameObjectType.MELTER) {
+        if (!(
+            mouse.worldX > gameObject.x - gameObject.width / 2 &&
+            mouse.worldX < gameObject.x + gameObject.width / 2 &&
+            mouse.worldY > gameObject.y - gameObject.height / 2 &&
+            mouse.worldY < gameObject.y + gameObject.height / 2
+        ) || !mouse.isDown) {
+            gameObject.toughness = gameObject.firstToughness;
+        }
+    }
 }
 
 
@@ -895,8 +1242,8 @@ function loop() {
 
     ctx.restore();
 
-    resetControls();
     updateTimers();
+    deleteControls();
     clearAllKeys();
     requestAnimationFrame(loop);
 }

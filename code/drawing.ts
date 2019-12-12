@@ -15,9 +15,20 @@ import sprEarth4 from '../sprites/earth4.png';
 import sprEarth5 from '../sprites/earth5.png';
 import sprGeyser from '../sprites/geyser.png';
 import sprMountain from '../sprites/mountain.png';
-import sprIron from '../sprites/iron.png';
+import sprAbyss from '../sprites/abyss.png';
+import sprIron1 from '../sprites/iron1.png';
+import sprIron2 from '../sprites/iron2.png';
+import sprIron3 from '../sprites/iron3.png';
+import sprIron4 from '../sprites/iron4.png';
+import sprIron5 from '../sprites/iron5.png';
 import sprItems from '../sprites/items.png';
 import sprIronItem from '../sprites/ironItem.png';
+import sprArrow from '../sprites/arrow.png';
+import sprCrafts from '../sprites/crafts.png';
+import sprArrow1 from '../sprites/arrow1.png';
+import sprMelter from '../sprites/melter.png';
+import sprMainSlot from '../sprites/mainSlot.png';
+import sprIronIngot from '../sprites/ironIngotItem.png';
 
 export const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 export const ctx = canvas.getContext("2d");
@@ -96,9 +107,20 @@ export let imgEarth4 = loadImage(sprEarth4);
 export let imgEarth5 = loadImage(sprEarth5);
 export let imgGeyser = loadImage(sprGeyser);
 export let imgMountain = loadImage(sprMountain);
-export let imgIron = loadImage(sprIron);
+export let imgAbyss = loadImage(sprAbyss);
+export let imgIron1 = loadImage(sprIron1);
+export let imgIron2 = loadImage(sprIron2);
+export let imgIron3 = loadImage(sprIron3);
+export let imgIron4 = loadImage(sprIron4);
+export let imgIron5 = loadImage(sprIron5);
 export let imgItems = loadImage(sprItems);
 export let imgIronItem = loadImage(sprIronItem);
+export let imgArrow = loadImage(sprArrow);
+export let imgCrafts = loadImage(sprCrafts);
+export let imgArrow1 = loadImage(sprArrow1);
+export let imgMelter = loadImage(sprMelter);
+export let imgMainSlot = loadImage(sprMainSlot);
+export let imgIronIngot = loadImage(sprIronIngot);
 
 
 export function renderItem(item: DrawQueueItem) {
@@ -135,7 +157,6 @@ export function renderItem(item: DrawQueueItem) {
 
         case DrawQueueType.TEXT: {
             ctx.save();
-            console.log(item.color);
             ctx.fillStyle = item.color;
             ctx.font = `${item.textSize}px Arial`;
             ctx.textBaseline = 'middle';
