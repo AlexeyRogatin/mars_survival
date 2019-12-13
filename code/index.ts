@@ -9,28 +9,24 @@ import {
 enum GameObjectType {
     NONE,
     PLAYER,
-    EARTH,
-    MOUNTAIN,
-    GEYSER,
-    VOLCANO,
-    ABYSS,
-    IRON,
-    MELTER,
 }
 
-enum TileTipe {
+enum TileType {
     NONE,
-    PLAYER,
-    EARTH,
+    EARTH_1,
+    EARTH_2,
+    EARTH_3,
+    EARTH_4,
+    EARTH_5,
     MOUNTAIN,
     GEYSER,
     VOLCANO,
-    ABYSS,
+    LAVA,
     IRON,
     MELTER,
 }
 
-let tile = {
+let TILE = {
     width: 200,
     height: 200,
     firstX: 0,
@@ -42,13 +38,39 @@ let tile = {
 }
 
 class Tile {
-    baseLayer: TileTipe;
-    upperLayer: TileTipe;
+    baseLayer: TileType;
+    upperLayer: TileType;
     x: number;
     y: number;
+    specialTimer: number;
+    toughness: number;
+    firstToughness: number;
+    item: Item;
+    count: number;
 }
 
 const map: Tile[] = [];
+
+function getIndexFromCoords(x: number, y: number) {
+    let result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
+    return (result);
+}
+
+function getTileUnderMouse() {
+    let [x, y] = pixelsToTiles(mouse.worldX, mouse.worldY);
+    let tile = map[getIndexFromCoords(x, y)];
+    return (tile);
+}
+
+function tilesToPixels(x: number, y: number) {
+    let result = [x * TILE.width, y * TILE.height];
+    return result;
+}
+
+function pixelsToTiles(x: number, y: number) {
+    let result = [Math.round(x / TILE.width), Math.round(y / TILE.height)];
+    return result;
+}
 
 let chunkPrototypes = [
     [
@@ -263,16 +285,10 @@ class GameObject {
 
     solid: boolean;
 
-    specialTimer: number;
-
     goForward: boolean;
     goRight: boolean;
     goLeft: boolean;
     goBackward: boolean;
-
-    oreCount: number;
-    toughness: number;
-    firstToughness: number;
 
     sprite: HTMLImageElement;
 
@@ -303,18 +319,13 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         accel: 0,
         accelConst: 0.04,
         rotationSpeed: 0.08,
-        solid: false,
 
-        specialTimer: 0,
+        solid: false,
 
         goForward: false,
         goBackward: false,
         goLeft: false,
         goRight: false,
-
-        oreCount: null,
-        toughness: 0,
-        firstToughness: 0,
 
         sprite: imgNone,
 
@@ -328,80 +339,6 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
 
     if (gameObject.type === GameObjectType.NONE) {
         gameObject.exists = false;
-    }
-
-    if (gameObject.type === GameObjectType.EARTH) {
-        gameObject.width = tile.width;
-        gameObject.height = tile.height;
-        gameObject.color = 'yellow';
-        let chance = randomInt(1, 10);
-        if (chance === 1 || chance === 2 || chance === 3 || chance === 4 || chance === 5 || chance === 6) {
-            gameObject.sprite = imgEarth1;
-        }
-        if (chance === 7) {
-            gameObject.sprite = imgEarth2;
-        }
-        if (chance === 8) {
-            gameObject.sprite = imgEarth3;
-        }
-        if (chance === 9) {
-            gameObject.sprite = imgEarth4;
-        }
-        if (chance === 10) {
-            gameObject.sprite = imgEarth5;
-        }
-    }
-
-    if (gameObject.type === GameObjectType.MOUNTAIN) {
-        gameObject.width = tile.width;
-        gameObject.height = tile.height;
-        gameObject.color = 'orange';
-        gameObject.solid = true;
-        gameObject.sprite = imgMountain;
-    }
-
-    if (gameObject.type === GameObjectType.GEYSER) {
-        gameObject.width = tile.width;
-        gameObject.height = tile.height;
-        gameObject.color = 'blue';
-
-        gameObject.specialTimer = addTimer(randomInt(500, 2000));
-
-        gameObject.sprite = imgGeyser;
-    }
-
-    if (gameObject.type === GameObjectType.VOLCANO) {
-        gameObject.width = tile.width * 3;
-        gameObject.height = tile.height * 3;
-        gameObject.color = 'red';
-        gameObject.solid = true;
-    }
-
-    if (gameObject.type === GameObjectType.ABYSS) {
-        gameObject.width = tile.width;
-        gameObject.height = tile.height;
-        gameObject.color = 'black';
-        gameObject.sprite = imgAbyss;
-    }
-
-    if (gameObject.type === GameObjectType.IRON) {
-        gameObject.width = tile.width;
-        gameObject.height = tile.height;
-        gameObject.color = 'grey';
-        gameObject.toughness = 180;
-        gameObject.firstToughness = gameObject.toughness;
-        gameObject.oreCount = 5;
-        gameObject.sprite = imgIron1;
-    }
-
-    if (gameObject.type === GameObjectType.MELTER) {
-        gameObject.width = tile.width;
-        gameObject.height = tile.height;
-        gameObject.color = 'black';
-        gameObject.toughness = 90;
-        gameObject.firstToughness = 90;
-        gameObject.solid = true;
-        gameObject.sprite = imgMelter;
     }
 
     let freeIndex = gameObjects.length;
@@ -469,20 +406,20 @@ function moveGameObject(gameObject: GameObject) {
     gameObject.speedX = gameObject.speed * Math.cos(gameObject.angle);
     gameObject.speedY = gameObject.speed * Math.sin(gameObject.angle);
 
-    for (let gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {
-        const other = gameObjects[gameObjectIndex];
+    for (let tileIndex = 0; tileIndex < map.length; tileIndex++) {
+        const other = map[tileIndex];
 
-        const wallLeft = other.x - other.width / 2;
-        const wallRight = other.x + other.width / 2;
-        const wallTop = other.y - other.height / 2;
-        const wallBottom = other.y + other.height / 2;
+        const wallLeft = other.x * TILE.width - TILE.width / 2;
+        const wallRight = other.x * TILE.width + TILE.width / 2;
+        const wallTop = other.y * TILE.height - TILE.height / 2;
+        const wallBottom = other.y * TILE.height + TILE.height / 2;
 
         const playerLeft = gameObject.x - gameObject.width / 2;
         const playerRight = gameObject.x + gameObject.width / 2;
         const playerTop = gameObject.y - gameObject.height / 2;
         const playerBottom = gameObject.y + gameObject.height / 2;
 
-        if (other.solid && other.exists) {
+        if (other.baseLayer === TileType.MOUNTAIN || other.upperLayer === TileType.MELTER) {
 
             if (gameObject.speedX !== 0) {
                 let side: number;
@@ -501,10 +438,8 @@ function moveGameObject(gameObject: GameObject) {
                         playerTop >= wallBottom ||
                         playerBottom <= wallTop)
                 ) {
-                    if (other.solid) {
-                        gameObject.speedX = 0;
-                        gameObject.x -= side - wallSide;
-                    }
+                    gameObject.speedX = 0;
+                    gameObject.x -= side - wallSide;
                 }
             }
 
@@ -658,34 +593,59 @@ function removeParticle(particleIndex: number) {
     particles.pop();
 }
 
-for (let chunkY = 0; chunkY < tile.chunkCountY; chunkY++) {
-    for (let chunkX = 0; chunkX < tile.chunkCountX; chunkX++) {
+for (let chunkY = 0; chunkY < TILE.chunkCountY; chunkY++) {
+    for (let chunkX = 0; chunkX < TILE.chunkCountX; chunkX++) {
         let protoIndex = randomInt(0, chunkPrototypes.length - 1);
         let proto = chunkPrototypes[protoIndex];
-        console.assert(tile.chunkSizeY === proto.length);
-        console.assert(tile.chunkSizeX === proto[0].length);
+        console.assert(TILE.chunkSizeY === proto.length);
+        console.assert(TILE.chunkSizeX === proto[0].length);
 
         for (let tileY = 0; tileY < proto.length; tileY++) {
             let line = proto[tileY];
             for (let tileX = 0; tileX < line.length; tileX++) {
                 let char = line[tileX];
-                let charType = null;
+                let downTileType = null;
+                let upTileType = TileType.NONE;
+                let x = (chunkX * TILE.chunkSizeX + tileX);
+                let y = (chunkY * TILE.chunkSizeX + tileY);
+                let index = getIndexFromCoords(x, y);
+                map[index] = { baseLayer: downTileType, upperLayer: upTileType, x, y, specialTimer: null, toughness: null, firstToughness: null, item: null, count: null };
                 if (char === '0') {
-                    charType = GameObjectType.NONE;
+                    downTileType = TileType.NONE;
                 } else if (char === ' ') {
-                    charType = GameObjectType.EARTH;
+                    let chance = randomInt(1, 10);
+                    if (chance >= 1 && chance <= 6) {
+                        downTileType = TileType.EARTH_1;
+                    }
+                    if (chance === 7) {
+                        downTileType = TileType.EARTH_2;
+                    }
+                    if (chance === 8) {
+                        downTileType = TileType.EARTH_3;
+                    }
+                    if (chance === 9) {
+                        downTileType = TileType.EARTH_4;
+                    }
+                    if (chance === 10) {
+                        downTileType = TileType.EARTH_5;
+                    }
                 } else if (char === '#') {
-                    charType = GameObjectType.MOUNTAIN;
+                    downTileType = TileType.MOUNTAIN;
                 } else if (char === '@') {
-                    charType = GameObjectType.GEYSER;
+                    downTileType = TileType.GEYSER;
+                    map[index].specialTimer = addTimer(randomInt(500, 1400));
                 } else if (char === '*') {
-                    charType = GameObjectType.VOLCANO;
+                    downTileType = TileType.VOLCANO;
                 } else if (char === '!') {
-                    charType = GameObjectType.ABYSS;
+                    downTileType = TileType.LAVA;
                 } else if (char === 'F') {
-                    charType = GameObjectType.IRON;
+                    downTileType = TileType.EARTH_1;
+                    upTileType = TileType.IRON;
+                    map[index].toughness = 1000;
+                    map[index].firstToughness = 1000;
                 }
-                addGameObject(charType, (chunkX * tile.chunkSizeX + tileX) * tile.width, (chunkY * tile.chunkSizeX + tileY) * tile.height);
+                map[index].baseLayer = downTileType;
+                map[index].upperLayer = upTileType;
             }
         }
     }
@@ -714,14 +674,161 @@ function distanceBetweenPoints(x1: number, y1: number, x2: number, y2: number) {
 
 let globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
 
+function moveToTile(mouseTile: Tile) {
+    let [x, y] = tilesToPixels(mouseTile.x, mouseTile.y);
+    let angle = angleBetweenPoints(x, y, globalPlayer.x, globalPlayer.y);
+    if (globalPlayer.angle > angle) {
+        while (globalPlayer.angle + Math.PI * 1 < angle || globalPlayer.angle - Math.PI * 1 >= angle) {
+            angle += Math.PI * 2;
+        }
+    }
+    if (globalPlayer.angle < angle) {
+        while (globalPlayer.angle + Math.PI * 1 < angle || globalPlayer.angle - Math.PI * 1 >= angle) {
+            angle -= Math.PI * 2;
+        }
+    }
+
+    if (globalPlayer.angle + globalPlayer.rotationSpeed > angle && globalPlayer.angle < angle) {
+        globalPlayer.angle = angle;
+    } else if (globalPlayer.angle - globalPlayer.rotationSpeed < angle && globalPlayer.angle > angle) {
+        globalPlayer.angle = angle;
+    } else if (globalPlayer.angle > angle) {
+        globalPlayer.leftWeel++;
+        globalPlayer.goLeft = true;
+    } else if (globalPlayer.angle < angle) {
+        globalPlayer.rightWeel++;
+        globalPlayer.goRight = true;
+    }
+    if (!(globalPlayer.x > x - (TILE.width / 2 + 51) &&
+        globalPlayer.x < x + (TILE.width / 2 + 51) &&
+        globalPlayer.y > y - (TILE.height / 2 + 51) &&
+        globalPlayer.y < y + (TILE.height / 2 + 51))
+    ) {
+        globalPlayer.goForward = true;
+        globalPlayer.leftWeel++;
+        globalPlayer.rightWeel++;
+    }
+}
+
 let craftMode = false;
 let slot = 0;
 let mainSlot = 0;
 
-function updateGameObject(gameObject: GameObject) {
-    if (gameObject.type === GameObjectType.MELTER) {
-        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, Layer.ON_TILE);
+function updateTile(tileType: TileType, tile: Tile) {
+    let sprite = imgNone;
+    switch (tileType) {
+        case TileType.GEYSER: {
+            sprite = imgGeyser;
+            if (
+                tile.x * TILE.width > globalPlayer.x - camera.width / 2
+                && tile.x * TILE.width < globalPlayer.x + camera.width / 2
+                && tile.y * TILE.height > globalPlayer.y - camera.height / 2
+                && tile.y * TILE.height < globalPlayer.y + camera.height / 2
+            ) {
+                if (timers[tile.specialTimer] <= 0) {
+                    timers[tile.specialTimer] = randomInt(500, 2000);
+                }
+                if (timers[tile.specialTimer] <= 150) {
+                    burstParticles({
+                        x: tile.x * TILE.width,
+                        y: tile.y * TILE.height,
+                        color: 'red',
+                        speed: 5,
+                        size: 40,
+                        decrease: 0.8,
+                        accel: -0.05,
+                        count: 1,
+                    });
+                }
+            }
+        } break;
+        case TileType.EARTH_1: {
+            sprite = imgEarth1
+        } break;
+        case TileType.EARTH_2: {
+            sprite = imgEarth2
+        } break;
+        case TileType.EARTH_3: {
+            sprite = imgEarth3
+        } break;
+        case TileType.EARTH_4: {
+            sprite = imgEarth4
+        } break;
+        case TileType.EARTH_5: {
+            sprite = imgEarth5
+        } break;
+        case TileType.LAVA: {
+            sprite = imgAbyss;
+            const wallLeft = tile.x * TILE.width - TILE.width / 2;
+            const wallRight = tile.x * TILE.width + TILE.width / 2;
+            const wallTop = tile.y * TILE.height - TILE.height / 2;
+            const wallBottom = tile.y * TILE.height + TILE.height / 2;
+            if (
+                globalPlayer.x - globalPlayer.width / 4 < wallRight &&
+                globalPlayer.x - globalPlayer.width / 4 > wallLeft &&
+                globalPlayer.y - globalPlayer.height / 4 > wallTop &&
+                globalPlayer.y - globalPlayer.height / 4 < wallBottom &&
+                globalPlayer.x + globalPlayer.width / 4 < wallRight &&
+                globalPlayer.x + globalPlayer.width / 4 > wallLeft &&
+                globalPlayer.y - globalPlayer.height / 4 > wallTop &&
+                globalPlayer.y - globalPlayer.height / 4 < wallBottom &&
+                globalPlayer.x - globalPlayer.width / 4 < wallRight &&
+                globalPlayer.x - globalPlayer.width / 4 > wallLeft &&
+                globalPlayer.y + globalPlayer.height / 4 > wallTop &&
+                globalPlayer.y + globalPlayer.height / 4 < wallBottom &&
+                globalPlayer.x + globalPlayer.width / 4 < wallRight &&
+                globalPlayer.x + globalPlayer.width / 4 > wallLeft &&
+                globalPlayer.y + globalPlayer.height / 4 > wallTop &&
+                globalPlayer.y + globalPlayer.height / 4 < wallBottom
+            ) {
+                globalPlayer.exists = false;
+            }
+        } break;
+        case TileType.MELTER: {
+            sprite = imgMelter;
+            if (timers[tile.specialTimer] > 0) {
+                drawText(tile.x * TILE.width - TILE.width / 2 + TILE.width / 2, tile.y * TILE.height + TILE.height / 6 - TILE.height / 2, 'blue', `${Math.round(timers[tile.specialTimer] / 60)}`, 30, Layer.UI);
+            }
+            if (!mouse.isDown) {
+                tile.toughness = tile.firstToughness;
+            }
+        } break;
+        case TileType.IRON: {
+            if (tile.toughness <= tile.firstToughness && tile.toughness > tile.firstToughness / 5 * 4) {
+                sprite = imgIron1;
+            }
+            if (tile.toughness <= tile.firstToughness / 5 * 4 && tile.toughness > tile.firstToughness / 5 * 3) {
+                sprite = imgIron2;
+            }
+            if (tile.toughness <= tile.firstToughness / 5 * 3 && tile.toughness > tile.firstToughness / 5 * 2) {
+                sprite = imgIron3;
+            }
+            if (tile.toughness <= tile.firstToughness / 5 * 2 && tile.toughness > tile.firstToughness / 5 * 1) {
+                sprite = imgIron4;
+            }
+            if (tile.toughness <= tile.firstToughness / 5 * 1 && tile.toughness > 0) {
+                sprite = imgIron5;
+            }
+        } break;
+        case TileType.MOUNTAIN: {
+            sprite = imgMountain;
+        }
     }
+    let [spriteX, spriteY] = tilesToPixels(tile.x, tile.y);
+    drawSprite(spriteX, spriteY, sprite, 0, TILE.width, TILE.height, Layer.TILE);
+}
+
+function updateTileMap() {
+    for (let y = 0; y < TILE.chunkCountY * TILE.chunkSizeY; y++) {
+        for (let x = 0; x < TILE.chunkCountX * TILE.chunkSizeX; x++) {
+            let tile = map[getIndexFromCoords(x, y)];
+            updateTile(tile.baseLayer, tile);
+            updateTile(tile.upperLayer, tile);
+        }
+    }
+}
+
+function updateGameObject(gameObject: GameObject) {
     if (gameObject.sprite !== imgNone) {
         drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height);
     } else {
@@ -839,109 +946,55 @@ function updateGameObject(gameObject: GameObject) {
             }
         }
 
-        //сравнения с объектами
+        let mouseTile = getTileUnderMouse();
 
-        let mouseObject = [];
-
-        for (let gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {
-            let object = gameObjects[gameObjectIndex];
-            if (mouse.worldX > object.x - object.width / 2 &&
-                mouse.worldX < object.x + object.width / 2 &&
-                mouse.worldY > object.y - object.width / 2 &&
-                mouse.worldY < object.y + object.width / 2) {
-                mouseObject.push(object);
-            }
-        }
-
-        for (let mouseObjectIndex = 0; mouseObjectIndex < mouseObject.length; mouseObjectIndex++) {
-            if (mouseObject && mouseObject[mouseObjectIndex].toughness && mouse.isDown) {
-
-                let angle = angleBetweenPoints(mouseObject[mouseObjectIndex].x, mouseObject[mouseObjectIndex].y, globalPlayer.x, globalPlayer.y);
-                if (gameObject.angle > 0) {
-                    while (gameObject.angle + Math.PI * 1 < angle || gameObject.angle - Math.PI * 1 >= angle) {
-                        angle += Math.PI * 2;
-                    }
-                }
-                if (gameObject.angle < 0) {
-                    while (gameObject.angle + Math.PI * 1 < angle || gameObject.angle - Math.PI * 1 >= angle) {
-                        angle -= Math.PI * 2;
-                    }
-                }
-
-                if (globalPlayer.angle + globalPlayer.rotationSpeed > angle && globalPlayer.angle < angle) {
-                    globalPlayer.angle = angle;
-                } else if (globalPlayer.angle - globalPlayer.rotationSpeed < angle && globalPlayer.angle > angle) {
-                    globalPlayer.angle = angle;
-                } else if (globalPlayer.angle > angle) {
-                    globalPlayer.leftWeel++;
-                    globalPlayer.goLeft = true;
-                } else if (globalPlayer.angle < angle) {
-                    globalPlayer.rightWeel++;
-                    globalPlayer.goRight = true;
-                }
-                if (!(globalPlayer.x > mouseObject[mouseObjectIndex].x - (mouseObject[mouseObjectIndex].width / 2 + 51) &&
-                    globalPlayer.x < mouseObject[mouseObjectIndex].x + (mouseObject[mouseObjectIndex].width / 2 + 51) &&
-                    globalPlayer.y > mouseObject[mouseObjectIndex].y - (mouseObject[mouseObjectIndex].height / 2 + 51) &&
-                    globalPlayer.y < mouseObject[mouseObjectIndex].y + (mouseObject[mouseObjectIndex].height / 2 + 51))
-                ) {
-                    globalPlayer.goForward = true;
-                    globalPlayer.leftWeel++;
-                    globalPlayer.rightWeel++;
-                } else {
-                    mouseObject[mouseObjectIndex].toughness--;
-                    if (mouseObject[mouseObjectIndex].toughness <= 0) {
-                        if (mouseObject[mouseObjectIndex].oreCount !== null) {
-                            let color = mouseObject[mouseObjectIndex].color;
-                            burstParticles({
-                                x: mouse.worldX,
-                                y: mouse.worldY,
-                                color: color,
-                                speed: 1,
-                                size: 20,
-                                decrease: 0,
-                                accel: 0,
-                                count: 20,
-                            });
-                            mouseObject[mouseObjectIndex].oreCount--;
-                            mouseObject[mouseObjectIndex].toughness = mouseObject[mouseObjectIndex].firstToughness;
-                        } else {
-                            if (mouseObject[mouseObjectIndex].type === GameObjectType.MELTER) {
-                                addItem(Item.MELTER, 1);
-                                mouseObject[mouseObjectIndex].exists = false;
-                            }
-                        }
-                    }
-                    if (mouseObject[mouseObjectIndex].type === GameObjectType.IRON) {
-                        if (mouseObject[mouseObjectIndex].oreCount === 5) {
-                            mouseObject[mouseObjectIndex].sprite = imgIron1;
-                        }
-                        if (mouseObject[mouseObjectIndex].oreCount === 4) {
-                            mouseObject[mouseObjectIndex].sprite = imgIron2;
-                        }
-                        if (mouseObject[mouseObjectIndex].oreCount === 3) {
-                            mouseObject[mouseObjectIndex].sprite = imgIron3;
-                        }
-                        if (mouseObject[mouseObjectIndex].oreCount === 2) {
-                            mouseObject[mouseObjectIndex].sprite = imgIron4;
-                        }
-                        if (mouseObject[mouseObjectIndex].oreCount === 1) {
-                            mouseObject[mouseObjectIndex].sprite = imgIron5;
-                        }
-                        if (mouseObject[mouseObjectIndex].oreCount === 0) {
-                            mouseObject[mouseObjectIndex].exists = false;
-                            addGameObject(GameObjectType.EARTH, mouseObject[mouseObjectIndex].x, mouseObject[mouseObjectIndex].y);
-                        }
-                    }
-
-                    let stripeWidth = 300;
-                    let width = stripeWidth * (mouseObject[mouseObjectIndex].toughness / mouseObject[mouseObjectIndex].firstToughness);
-                    drawRect(globalPlayer.x + width / 2 - 150, globalPlayer.y + camera.height / 4, width, 50, 0, 'green', Layer.UI);
+        if (mouseTile && mouseTile.upperLayer === TileType.IRON && mouse.isDown) {
+            moveToTile(mouseTile);
+            if (globalPlayer.goForward === false) {
+                mouseTile.toughness--;
+                if (mouseTile.toughness % 200 === 0 || mouseTile.toughness === 0) {
+                    let color = 'grey';
+                    burstParticles({
+                        x: mouse.worldX,
+                        y: mouse.worldY,
+                        color: color,
+                        speed: 1,
+                        size: 20,
+                        decrease: 0,
+                        accel: 0,
+                        count: 20,
+                    });
                 }
             }
+            if (mouseTile.toughness <= 0) {
+                let x = mouseTile.x;
+                let y = mouseTile.y;
+                mouseTile.upperLayer = TileType.NONE;
+            }
+
+            let stripeWidth = 300;
+            let width = stripeWidth * (mouseTile.toughness / mouseTile.firstToughness);
+            drawRect(globalPlayer.x + width / 2 - 150, globalPlayer.y + camera.height / 4, width, 50, 0, 'green', Layer.UI);
         }
 
+        if (mouseTile && mouseTile.upperLayer === TileType.MELTER && mouse.isDown) {
+            moveToTile(mouseTile);
+            if (globalPlayer.goForward === false) {
+                mouseTile.toughness--;
+            }
+            if (mouseTile.toughness <= 0) {
+                addItem(Item.MELTER, 1);
+                let x = mouseTile.x;
+                let y = mouseTile.y;
+                mouseTile.upperLayer = TileType.NONE;
+            }
 
-        // //рисование предметов в инвентаре
+            let stripeWidth = 300;
+            let width = stripeWidth * (mouseTile.toughness / mouseTile.firstToughness);
+            drawRect(globalPlayer.x + width / 2 - 150, globalPlayer.y + camera.height / 4, width, 50, 0, 'green', Layer.UI);
+        }
+
+        //рисование предметов в инвентаре
 
         for (let itemIndex = 0; itemIndex <= 4; itemIndex++) {
             if (inventory[itemIndex]) {
@@ -1022,23 +1075,30 @@ function updateGameObject(gameObject: GameObject) {
             mainSlot = 5;
         }
 
-        for (let mouseObjectIndex = 0; mouseObjectIndex < mouseObject.length; mouseObjectIndex++) {
-            if (inventory[mainSlot] && mouse.wentDown) {
-                if (inventory[mainSlot].item === Item.MELTER) {
-                    if (mouseObject && mouseObject[mouseObjectIndex].type === GameObjectType.ABYSS) {
-                        addGameObject(GameObjectType.MELTER, mouseObject[mouseObjectIndex].x, mouseObject[mouseObjectIndex].y);
-                        removeItem(Item.MELTER, 1);
-                    }
-                }
+        if (mouseTile && mouseTile.baseLayer === TileType.LAVA && mouse.wentDown && !mouseTile.upperLayer) {
+            if (inventory[mainSlot] && inventory[mainSlot].item === Item.MELTER) {
+                mouseTile.upperLayer = TileType.MELTER;
+                mouseTile.toughness = 200;
+                mouseTile.firstToughness = 200;
+                mouseTile.specialTimer = addTimer(0);
+                removeItem(Item.MELTER, 1);
             }
         }
 
-        for (let mouseObjectIndex = 0; mouseObjectIndex < mouseObject.length; mouseObjectIndex++) {
-            if (mouseObject && mouse.wentDown) {
-                if (mouseObject[mouseObjectIndex].type === GameObjectType.MELTER && inventory[mainSlot] && inventory[mainSlot].item === Item.IRON) {
-                    addItem(Item.IRON_INGOT, Math.floor(inventory[mainSlot].count / 5));
-                    removeItem(Item.IRON, inventory[mainSlot].count);
+        if (mouseTile && mouse.wentDown && mouseTile.upperLayer === TileType.MELTER) {
+            if (mouseTile.item === null && inventory[mainSlot] && (inventory[mainSlot].item === Item.IRON)) {
+                mouseTile.item = inventory[mainSlot].item;
+                mouseTile.count = inventory[mainSlot].count;
+                removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
+                mouseTile.specialTimer = addTimer(mouseTile.count * 5 * 60);
+                console.log(timers[mouseTile.specialTimer]);
+            } else if (timers[mouseTile.specialTimer] <= 0) {
+                console.log(timers[mouseTile.specialTimer]);
+                if (mouseTile.item === Item.IRON) {
+                    addItem(Item.IRON_INGOT, mouseTile.count);
                 }
+                mouseTile.item = null;
+                mouseTile.count = null;
             }
         }
 
@@ -1146,69 +1206,6 @@ function updateGameObject(gameObject: GameObject) {
 
         moveGameObject(gameObject);
     }
-
-    if (gameObject.type === GameObjectType.GEYSER) {
-        if (
-            gameObject.x > globalPlayer.x - camera.width / 2
-            && gameObject.x < globalPlayer.x + camera.width / 2
-            && gameObject.y > globalPlayer.y - camera.height / 2
-            && gameObject.y < globalPlayer.y + camera.height / 2
-        ) {
-            if (timers[gameObject.specialTimer] <= 0) {
-                timers[gameObject.specialTimer] = randomInt(500, 2000);
-            }
-            if (timers[gameObject.specialTimer] <= 150) {
-                burstParticles({
-                    x: gameObject.x,
-                    y: gameObject.y,
-                    color: 'red',
-                    speed: 5,
-                    size: 40,
-                    decrease: 0.8,
-                    accel: -0.05,
-                    count: 1,
-                });
-            }
-        }
-    }
-
-    if (gameObject.type === GameObjectType.ABYSS) {
-        const wallLeft = gameObject.x - gameObject.width / 2;
-        const wallRight = gameObject.x + gameObject.width / 2;
-        const wallTop = gameObject.y - gameObject.height / 2;
-        const wallBottom = gameObject.y + gameObject.height / 2;
-        if (
-            globalPlayer.x - globalPlayer.width / 4 < wallRight &&
-            globalPlayer.x - globalPlayer.width / 4 > wallLeft &&
-            globalPlayer.y - globalPlayer.height / 4 > wallTop &&
-            globalPlayer.y - globalPlayer.height / 4 < wallBottom &&
-            globalPlayer.x + globalPlayer.width / 4 < wallRight &&
-            globalPlayer.x + globalPlayer.width / 4 > wallLeft &&
-            globalPlayer.y - globalPlayer.height / 4 > wallTop &&
-            globalPlayer.y - globalPlayer.height / 4 < wallBottom &&
-            globalPlayer.x - globalPlayer.width / 4 < wallRight &&
-            globalPlayer.x - globalPlayer.width / 4 > wallLeft &&
-            globalPlayer.y + globalPlayer.height / 4 > wallTop &&
-            globalPlayer.y + globalPlayer.height / 4 < wallBottom &&
-            globalPlayer.x + globalPlayer.width / 4 < wallRight &&
-            globalPlayer.x + globalPlayer.width / 4 > wallLeft &&
-            globalPlayer.y + globalPlayer.height / 4 > wallTop &&
-            globalPlayer.y + globalPlayer.height / 4 < wallBottom
-        ) {
-            globalPlayer.exists = false;
-        }
-    }
-
-    if (gameObject.type === GameObjectType.MELTER) {
-        if (!(
-            mouse.worldX > gameObject.x - gameObject.width / 2 &&
-            mouse.worldX < gameObject.x + gameObject.width / 2 &&
-            mouse.worldY > gameObject.y - gameObject.height / 2 &&
-            mouse.worldY < gameObject.y + gameObject.height / 2
-        ) || !mouse.isDown) {
-            gameObject.toughness = gameObject.firstToughness;
-        }
-    }
 }
 
 
@@ -1223,6 +1220,8 @@ function loop() {
     ctx.translate(-camera.x + camera.width / 2, -camera.y + camera.height / 2);
 
     [mouse.worldX, mouse.worldY] = screenToWorld(mouse.x, mouse.y);
+
+    updateTileMap();
 
     for (let gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {
         let gameObject = gameObjects[gameObjectIndex];
