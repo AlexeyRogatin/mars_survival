@@ -50,33 +50,33 @@ function handleKeyUp(event: KeyboardEvent, keyCode: KeyCode, key: Key) {
     }
 }
 
-window.onkeydown = function onkeydown(event) {
+window.onkeydown = function onkeydown(event: KeyboardEvent) {
     handleKeyDown(event, KeyCode.UP, upKey);
     handleKeyDown(event, KeyCode.DOWN, downKey);
     handleKeyDown(event, KeyCode.LEFT, leftKey);
     handleKeyDown(event, KeyCode.RIGHT, rightKey);
 };
 
-window.onkeyup = function onkeyup(event) {
+window.onkeyup = function onkeyup(event: KeyboardEvent) {
     handleKeyUp(event, KeyCode.UP, upKey);
     handleKeyUp(event, KeyCode.DOWN, downKey);
     handleKeyUp(event, KeyCode.LEFT, leftKey);
     handleKeyUp(event, KeyCode.RIGHT, rightKey);
 };
 
-window.onmousemove = function onmousemove(event) {
+window.onmousemove = function onmousemove(event: MouseEvent) {
     mouse.x = event.clientX - canvas.clientLeft;
     mouse.y = event.clientY - canvas.clientTop;
 }
 
-window.onmousedown = function onmousedown(event) {
+window.onmousedown = function onmousedown(event: MouseEvent) {
     if (!mouse.isDown) {
         mouse.isDown = true;
         mouse.wentDown = true;
     }
 }
 
-window.onmouseup = function onmouseup(event) {
+window.onmouseup = function onmouseup(event: MouseEvent) {
     if (mouse.isDown) {
         mouse.isDown = false;
         mouse.wentUp = true;
