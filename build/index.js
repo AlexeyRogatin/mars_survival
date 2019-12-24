@@ -1,6 +1,6 @@
 System.register("drawing", [], function (exports_1, context_1) {
     "use strict";
-    var canvas, ctx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgItems, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem;
+    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgItems, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter;
     var __moduleName = context_1 && context_1.id;
     function resourceLoaded(src) {
         resourcesLoadedCount++;
@@ -70,16 +70,21 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("ctx", ctx = canvas.getContext("2d"));
             canvas.width = innerWidth;
             canvas.height = innerHeight;
+            exports_1("backBuffer", backBuffer = document.createElement('canvas'));
+            exports_1("backCtx", backCtx = backBuffer.getContext('2d'));
+            backBuffer.width = canvas.width;
+            backBuffer.height = canvas.height;
             resourcesLoadedCount = 0;
             resourcesWaitingForLoadCount = 0;
             exports_1("canBeginGame", canBeginGame = false);
             (function (Layer) {
                 Layer[Layer["NONE"] = 0] = "NONE";
                 Layer[Layer["UI"] = 1] = "UI";
-                Layer[Layer["PLAYER"] = 2] = "PLAYER";
-                Layer[Layer["TILE"] = 3] = "TILE";
-                Layer[Layer["ON_TILE"] = 4] = "ON_TILE";
-                Layer[Layer["PARTICLES"] = 5] = "PARTICLES";
+                Layer[Layer["FORGROUND"] = 2] = "FORGROUND";
+                Layer[Layer["PLAYER"] = 3] = "PLAYER";
+                Layer[Layer["TILE"] = 4] = "TILE";
+                Layer[Layer["ON_TILE"] = 5] = "ON_TILE";
+                Layer[Layer["PARTICLES"] = 6] = "PARTICLES";
             })(Layer || (Layer = {}));
             exports_1("Layer", Layer);
             (function (DrawQueueType) {
@@ -149,6 +154,7 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgCrystal4", imgCrystal4 = loadImage('../sprites/crystal4.png'));
             exports_1("imgCrystal5", imgCrystal5 = loadImage('../sprites/crystal5.png'));
             exports_1("imgCrystalItem", imgCrystalItem = loadImage('../sprites/crystalItem.png'));
+            exports_1("imgSplitter", imgSplitter = loadImage('../sprites/splitter.png'));
         }
     };
 });
@@ -254,7 +260,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
 });
 System.register("index", ["controls", "drawing"], function (exports_3, context_3) {
     "use strict";
-    var controls_1, drawing_2, GameObjectType, TileType, TILE, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, InventorySlot, INVENTORY_MAX_COUNT, inventory, drawQueue, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, firstRecipeIndex, mainSlot;
+    var controls_1, drawing_2, GameObjectType, TileType, TILE, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, InventorySlot, INVENTORY_MAX_COUNT, inventory, drawQueue, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, DAY_LENGTH, NIGHT_TIME, craftMode, firstRecipeIndex, mainSlot, dayTimer;
     var __moduleName = context_3 && context_3.id;
     function getIndexFromCoords(x, y) {
         var result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
@@ -374,6 +380,33 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
     }
     exports_3("drawText", drawText);
+    function drawLight(x, y, radius) {
+        if (timers[dayTimer] < NIGHT_TIME) {
+            var decreaseTime = 200;
+            var Radius = radius;
+            if (timers[dayTimer] > NIGHT_TIME - decreaseTime) {
+                Radius = radius + 8 * (timers[dayTimer] - NIGHT_TIME + decreaseTime);
+            }
+            if (timers[dayTimer] < decreaseTime) {
+                Radius = radius + 8 * (decreaseTime - timers[dayTimer]);
+            }
+            if (x > camera.x - camera.width * 0.5 - Radius &&
+                x < camera.x + camera.width * 0.5 + Radius &&
+                y > camera.y - camera.height * 0.5 - Radius &&
+                y < camera.y + camera.height * 0.5 + Radius) {
+                drawing_2.backCtx.globalCompositeOperation = 'destination-out';
+                var X = x - camera.x + camera.width / 2;
+                var Y = y - camera.y + camera.height / 2;
+                var gradient = drawing_2.backCtx.createRadialGradient(X, Y, 0, X, Y, Radius);
+                var alpha = 0.25;
+                gradient.addColorStop(0, "rgba(0,0,0," + alpha + ")");
+                gradient.addColorStop(1, 'transparent');
+                drawing_2.backCtx.fillStyle = gradient;
+                drawing_2.backCtx.fillRect(X - Radius, Y - Radius, 2 * Radius, 2 * Radius);
+            }
+        }
+    }
+    exports_3("drawLight", drawLight);
     function addGameObject(type, x, y) {
         var gameObject = {
             type: type,
@@ -722,6 +755,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 break;
             case TileType.LAVA:
                 {
+                    drawLight(tile.x * TILE.width, tile.y * TILE.height, 200);
                     sprite = drawing_2.imgAbyss;
                     var wallLeft = tile.x * TILE.width - TILE.width / 2;
                     var wallRight = tile.x * TILE.width + TILE.width / 2;
@@ -749,6 +783,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 break;
             case TileType.MELTER:
                 {
+                    drawLight(tile.x * TILE.width, tile.y * TILE.height, 150);
                     sprite = drawing_2.imgMelter;
                     if (timers[tile.specialTimer] > 0) {
                         drawText(tile.x * TILE.width - TILE.width / 2 + TILE.width / 2, tile.y * TILE.height + TILE.height / 6 - TILE.height / 2, 'blue', "" + Math.round(timers[tile.specialTimer] / 60), 30, drawing_2.Layer.UI);
@@ -760,7 +795,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 break;
             case TileType.SPLITTER:
                 {
-                    sprite = drawing_2.imgCamera;
+                    sprite = drawing_2.imgSplitter;
                     if (!controls_1.mouse.isDown) {
                         tile.toughness = tile.firstToughness;
                     }
@@ -823,9 +858,11 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
                 break;
-            case TileType.MOUNTAIN: {
-                sprite = drawing_2.imgMountain;
-            }
+            case TileType.MOUNTAIN:
+                {
+                    sprite = drawing_2.imgMountain;
+                }
+                break;
         }
         var _a = tilesToPixels(tile.x, tile.y), spriteX = _a[0], spriteY = _a[1];
         drawSprite(spriteX, spriteY, sprite, 0, TILE.width, TILE.height, drawing_2.Layer.TILE);
@@ -856,6 +893,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
         if (gameObject.type === GameObjectType.PLAYER) {
             controlPlayer(gameObject);
+            drawLight(gameObject.x, gameObject.y, 250);
             if (gameObject.x - camera.width / 2 >= TILE.firstX - TILE.width / 2 &&
                 gameObject.x + camera.width / 2 <= TILE.firstX - TILE.width / 2 + TILE.width * TILE.chunkSizeX * TILE.chunkCountX) {
                 camera.x = gameObject.x;
@@ -884,6 +922,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             drawRect(camera.x - camera.width / 2 + width / 2 + 50, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT, 0, 'green', drawing_2.Layer.UI);
             width = timers[gameObject.energy] / gameObject.maxEnergy * STRIPE_WIDTH;
             drawRect(camera.x - camera.width / 2 + width / 2 + 300, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT, 0, 'blue', drawing_2.Layer.UI);
+            var hour = DAY_LENGTH / (24 + 37 / 60);
+            var minute = hour / 60;
+            drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 50, 'blue', Math.floor((DAY_LENGTH - timers[dayTimer]) / hour) + " : " + Math.floor((DAY_LENGTH - timers[dayTimer]) / minute) % 60, 25, drawing_2.Layer.UI);
             if (controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 - 10 &&
                 controls_1.mouse.worldX < camera.x - camera.width / 2 + 25 &&
                 controls_1.mouse.worldY > camera.y - camera.height / 4 - 25 &&
@@ -945,6 +986,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         removeParticle(particleIndex);
                     }
                 }
+                drawLight(particle_2.x + particle_2.radius, particle_2.y + particle_2.radius, particle_2.radius * 4);
                 if (gameObject.width / 2 + particle_2.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y) && timers[gameObject.unhitableTimer] <= 0) {
                     if (particle_2.color === 'red') {
                         gameObject.hitpoints -= 50;
@@ -953,7 +995,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
             }
             var mouseTile = getTileUnderMouse();
-            if (controls_1.mouse.isDown) {
+            if (controls_1.mouse.isDown && mouseTile) {
                 moveToTile(mouseTile);
             }
             if (mouseTile && (mouseTile.upperLayer === TileType.IRON || mouseTile.upperLayer === TileType.AURIT || mouseTile.upperLayer === TileType.MELTER || mouseTile.upperLayer === TileType.CRYSTAL || mouseTile.upperLayer === TileType.SPLITTER) && controls_1.mouse.isDown) {
@@ -1027,7 +1069,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         sprite = drawing_2.imgCrystalItem;
                     }
                     if (inventory[itemIndex].item === Item.SPLITTER) {
-                        sprite = drawing_2.imgCamera;
+                        sprite = drawing_2.imgSplitter;
                     }
                     if (itemIndex === mainSlot) {
                         drawSprite(x + 50 * itemIndex, y, drawing_2.imgMainSlot, 0, 50, 50, drawing_2.Layer.UI);
@@ -1239,6 +1281,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         drawing_2.ctx.rotate(-camera.angle);
         drawing_2.ctx.translate(-camera.x + camera.width / 2, -camera.y + camera.height / 2);
         _a = screenToWorld(controls_1.mouse.x, controls_1.mouse.y), controls_1.mouse.worldX = _a[0], controls_1.mouse.worldY = _a[1];
+        drawing_2.backCtx.save();
+        drawing_2.backCtx.fillRect(0, 0, drawing_2.canvas.width, drawing_2.canvas.height);
         updateTileMap();
         for (var gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {
             var gameObject = gameObjects[gameObjectIndex];
@@ -1247,11 +1291,18 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
         }
         drawParticles();
+        if (timers[dayTimer] === 0) {
+            timers[dayTimer] = DAY_LENGTH;
+        }
+        if (timers[dayTimer] < NIGHT_TIME) {
+            drawSprite(camera.x, camera.y, drawing_2.backBuffer, 0, drawing_2.canvas.width, drawing_2.canvas.height, drawing_2.Layer.FORGROUND);
+        }
         drawQueue.sort(function (a, b) { return b.layer - a.layer; });
         for (var itemIndex = 0; itemIndex < drawQueue.length; itemIndex++) {
             var item = drawQueue[itemIndex];
             drawing_2.renderItem(item);
         }
+        drawing_2.backCtx.restore();
         drawing_2.ctx.restore();
         updateTimers();
         controls_1.clearAllKeys();
@@ -1318,33 +1369,43 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 [
                     'F! @  ##',
                     '       #',
-                    'AC #   #',
-                    '        ',
+                    ' C #   #',
+                    'A       ',
                     ' @     #',
-                    '   #    ',
+                    '   #@@!!',
                     '       #',
                     ' #    ##',
                 ],
                 [
                     '    ####',
                     '   #   #',
+                    '  !!@@##',
                     '        ',
-                    '        ',
-                    '        ',
+                    '  !@#   ',
                     '       #',
                     '   ##   ',
                     ' #######',
                 ],
                 [
+                    ' @@@  @@',
+                    '@@@   @@',
+                    '@@@@  @@',
+                    '@@C@ @@@',
+                    '@@@@ @@@',
+                    '@@@   @@',
+                    '@@!! !!@',
+                    '@@@FFF@@',
+                ],
+                [
                     '    @   ',
                     '@    #  ',
-                    '        ',
+                    '   !@!!#',
                     '    #   ',
                     '@     # ',
                     '     000',
                     ' #   0*0',
                     '@    000',
-                ]
+                ],
             ];
             (function (Item) {
                 Item[Item["NONE"] = 0] = "NONE";
@@ -1379,7 +1440,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 {
                     result: Item.SPLITTER,
                     parts: [{ item: Item.IRON, count: 10, sprite: drawing_2.imgIronItem }, { item: Item.CRYSTAL, count: 10, sprite: drawing_2.imgCrystalItem }],
-                    sprite: drawing_2.imgCamera,
+                    sprite: drawing_2.imgSplitter,
                     name: 'Расщепитель',
                     description1: 'Если сломать кристалл пополам,',
                     description2: 'много энергии не выделится.',
@@ -1504,9 +1565,12 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
             }
             globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
+            DAY_LENGTH = 2000;
+            NIGHT_TIME = 1000;
             craftMode = false;
             firstRecipeIndex = 0;
             mainSlot = 0;
+            dayTimer = addTimer(DAY_LENGTH);
             requestAnimationFrame(loop);
         }
     };

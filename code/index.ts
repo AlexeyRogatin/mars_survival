@@ -4,13 +4,15 @@ import {
     imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgIron1, imgIron2, imgIron3, imgIron4,
     imgIron5, Layer, DrawQueueItem, DrawQueueType, renderItem, imgItems, imgIronItem, imgAbyss, imgArrow, imgCrafts, imgArrow1,
     imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritIngot, imgAuritItem,
-    imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem,
+    imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, backCtx, backBuffer
 } from "./drawing";
 
 enum GameObjectType {
     NONE,
     PLAYER,
 }
+
+
 
 enum TileType {
     NONE,
@@ -90,33 +92,43 @@ let chunkPrototypes = [
     [
         'F! @  ##',
         '       #',
-        'AC #   #',
-        '        ',
+        ' C #   #',
+        'A       ',
         ' @     #',
-        '   #    ',
+        '   #@@!!',
         '       #',
         ' #    ##',
     ],
     [
         '    ####',
         '   #   #',
+        '  !!@@##',
         '        ',
-        '        ',
-        '        ',
+        '  !@#   ',
         '       #',
         '   ##   ',
         ' #######',
     ],
     [
+        ' @@@  @@',
+        '@@@   @@',
+        '@@@@  @@',
+        '@@C@ @@@',
+        '@@@@ @@@',
+        '@@@   @@',
+        '@@!! !!@',
+        '@@@FFF@@',
+    ],
+    [
         '    @   ',
         '@    #  ',
-        '        ',
+        '   !@!!#',
         '    #   ',
         '@     # ',
         '     000',
         ' #   0*0',
         '@    000',
-    ]
+    ],
 ]
 
 enum Item {
@@ -159,7 +171,7 @@ let recipes: Recipe[] = [
     {
         result: Item.SPLITTER,
         parts: [{ item: Item.IRON, count: 10, sprite: imgIronItem }, { item: Item.CRYSTAL, count: 10, sprite: imgCrystalItem }],
-        sprite: imgCamera,
+        sprite: imgSplitter,
         name: 'Расщепитель',
         description1: 'Если сломать кристалл пополам,',
         description2: 'много энергии не выделится.',
@@ -289,6 +301,38 @@ export function drawText(x: number, y: number, color: string, text: string, text
         y > camera.y - camera.height * 0.5 - 20 &&
         y < camera.y + camera.height * 0.5 + 20) {
         drawQueue.push({ x, y, color, text, layer, type: DrawQueueType.TEXT, textSize });
+    }
+}
+
+export function drawLight(x: number, y: number, radius: number) {
+    if (timers[dayTimer] < NIGHT_TIME) {
+        let decreaseTime = 200;
+        let Radius = radius;
+        if (timers[dayTimer] > NIGHT_TIME - decreaseTime) {
+            Radius = radius + 8 * (timers[dayTimer] - NIGHT_TIME + decreaseTime);
+        }
+        if (timers[dayTimer] < decreaseTime) {
+            Radius = radius + 8 * (decreaseTime - timers[dayTimer]);
+        }
+        if (x > camera.x - camera.width * 0.5 - Radius &&
+            x < camera.x + camera.width * 0.5 + Radius &&
+            y > camera.y - camera.height * 0.5 - Radius &&
+            y < camera.y + camera.height * 0.5 + Radius) {
+            backCtx.globalCompositeOperation = 'destination-out';
+
+            let X = x - camera.x + camera.width / 2;
+            let Y = y - camera.y + camera.height / 2;
+
+            var gradient = backCtx.createRadialGradient(X, Y, 0, X, Y, Radius);
+
+            let alpha = 0.25;
+
+            gradient.addColorStop(0, `rgba(0,0,0,${alpha})`);
+            gradient.addColorStop(1, 'transparent');
+
+            backCtx.fillStyle = gradient;
+            backCtx.fillRect(X - Radius, Y - Radius, 2 * Radius, 2 * Radius);
+        }
     }
 }
 
@@ -783,9 +827,13 @@ function moveToTile(mouseTile: Tile) {
     }
 }
 
+const DAY_LENGTH = 2000;
+const NIGHT_TIME = 1000;
+
 let craftMode = false;
 let firstRecipeIndex = 0;
 let mainSlot = 0;
+let dayTimer = addTimer(DAY_LENGTH);
 
 function updateTile(tileType: TileType, tile: Tile) {
     let sprite = imgNone;
@@ -831,6 +879,7 @@ function updateTile(tileType: TileType, tile: Tile) {
             sprite = imgEarth5
         } break;
         case TileType.LAVA: {
+            drawLight(tile.x * TILE.width, tile.y * TILE.height, 200);
             sprite = imgAbyss;
             const wallLeft = tile.x * TILE.width - TILE.width / 2;
             const wallRight = tile.x * TILE.width + TILE.width / 2;
@@ -858,6 +907,7 @@ function updateTile(tileType: TileType, tile: Tile) {
             }
         } break;
         case TileType.MELTER: {
+            drawLight(tile.x * TILE.width, tile.y * TILE.height, 150);
             sprite = imgMelter;
             if (timers[tile.specialTimer] > 0) {
                 drawText(tile.x * TILE.width - TILE.width / 2 + TILE.width / 2, tile.y * TILE.height + TILE.height / 6 - TILE.height / 2, 'blue', `${Math.round(timers[tile.specialTimer] / 60)}`, 30, Layer.UI);
@@ -867,7 +917,7 @@ function updateTile(tileType: TileType, tile: Tile) {
             }
         } break;
         case TileType.SPLITTER: {
-            sprite = imgCamera;
+            sprite = imgSplitter;
             if (!mouse.isDown) {
                 tile.toughness = tile.firstToughness;
             }
@@ -925,8 +975,9 @@ function updateTile(tileType: TileType, tile: Tile) {
         } break;
         case TileType.MOUNTAIN: {
             sprite = imgMountain;
-        }
+        } break;
     }
+
     let [spriteX, spriteY] = tilesToPixels(tile.x, tile.y);
     drawSprite(spriteX, spriteY, sprite, 0, TILE.width, TILE.height, Layer.TILE);
 }
@@ -958,6 +1009,8 @@ function updateGameObject(gameObject: GameObject) {
 
     if (gameObject.type === GameObjectType.PLAYER) {
         controlPlayer(gameObject);
+
+        drawLight(gameObject.x, gameObject.y, 250);
 
         if (gameObject.x - camera.width / 2 >= TILE.firstX - TILE.width / 2 &&
             gameObject.x + camera.width / 2 <= TILE.firstX - TILE.width / 2 + TILE.width * TILE.chunkSizeX * TILE.chunkCountX) {
@@ -998,6 +1051,12 @@ function updateGameObject(gameObject: GameObject) {
         width = timers[gameObject.energy] / gameObject.maxEnergy * STRIPE_WIDTH;
 
         drawRect(camera.x - camera.width / 2 + width / 2 + 300, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT, 0, 'blue', Layer.UI);
+
+        let hour = DAY_LENGTH / (24 + 37 / 60);
+
+        let minute = hour / 60;
+
+        drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 50, 'blue', `${Math.floor((DAY_LENGTH - timers[dayTimer]) / hour)} : ${Math.floor((DAY_LENGTH - timers[dayTimer]) / minute) % 60}`, 25, Layer.UI);
 
         if (mouse.wentDown && mouse.worldX > camera.x - camera.width / 2 - 10 &&
             mouse.worldX < camera.x - camera.width / 2 + 25 &&
@@ -1083,6 +1142,7 @@ function updateGameObject(gameObject: GameObject) {
                     removeParticle(particleIndex);
                 }
             }
+            drawLight(particle.x + particle.radius, particle.y + particle.radius, particle.radius * 4);
 
             if (gameObject.width / 2 + particle.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle.x, particle.y) && timers[gameObject.unhitableTimer] <= 0) {
                 if (particle.color === 'red') {
@@ -1094,7 +1154,7 @@ function updateGameObject(gameObject: GameObject) {
 
         let mouseTile = getTileUnderMouse();
 
-        if (mouse.isDown) {
+        if (mouse.isDown && mouseTile) {
             moveToTile(mouseTile);
         }
 
@@ -1173,7 +1233,7 @@ function updateGameObject(gameObject: GameObject) {
                     sprite = imgCrystalItem;
                 }
                 if (inventory[itemIndex].item === Item.SPLITTER) {
-                    sprite = imgCamera;
+                    sprite = imgSplitter;
                 }
 
                 if (itemIndex === mainSlot) {
@@ -1420,6 +1480,10 @@ function loop() {
 
     [mouse.worldX, mouse.worldY] = screenToWorld(mouse.x, mouse.y);
 
+    backCtx.save();
+
+    backCtx.fillRect(0, 0, canvas.width, canvas.height);
+
     updateTileMap();
 
     for (let gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {
@@ -1431,12 +1495,22 @@ function loop() {
 
     drawParticles();
 
+    if (timers[dayTimer] === 0) {
+        timers[dayTimer] = DAY_LENGTH;
+    }
+
+    if (timers[dayTimer] < NIGHT_TIME) {
+        drawSprite(camera.x, camera.y, backBuffer, 0, canvas.width, canvas.height, Layer.FORGROUND);
+    }
+
     drawQueue.sort((a, b) => b.layer - a.layer);
     for (let itemIndex = 0; itemIndex < drawQueue.length; itemIndex++) {
         const item = drawQueue[itemIndex];
         renderItem(item);
 
     }
+
+    backCtx.restore();
 
     ctx.restore();
 

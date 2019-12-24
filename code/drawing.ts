@@ -6,6 +6,13 @@ export const ctx = canvas.getContext("2d");
 canvas.width = innerWidth;
 canvas.height = innerHeight;
 
+
+export const backBuffer = document.createElement('canvas');
+export const backCtx = backBuffer.getContext('2d');
+backBuffer.width = canvas.width;
+backBuffer.height = canvas.height;
+
+
 let resourcesLoadedCount = 0;
 let resourcesWaitingForLoadCount = 0;
 export let canBeginGame = false;
@@ -14,6 +21,7 @@ export let canBeginGame = false;
 export enum Layer {
     NONE,
     UI,
+    FORGROUND,
     PLAYER,
     TILE,
     ON_TILE,
@@ -105,7 +113,7 @@ export let imgCrystal3 = loadImage('../sprites/crystal3.png');
 export let imgCrystal4 = loadImage('../sprites/crystal4.png');
 export let imgCrystal5 = loadImage('../sprites/crystal5.png');
 export let imgCrystalItem = loadImage('../sprites/crystalItem.png');
-
+export let imgSplitter = loadImage('../sprites/splitter.png');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {
