@@ -260,7 +260,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
 });
 System.register("index", ["controls", "drawing"], function (exports_3, context_3) {
     "use strict";
-    var controls_1, drawing_2, GameObjectType, TileType, TILE, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, InventorySlot, INVENTORY_MAX_COUNT, inventory, drawQueue, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, DAY_LENGTH, NIGHT_TIME, craftMode, firstRecipeIndex, mainSlot, dayTimer;
+    var controls_1, drawing_2, GameObjectType, TileType, TILE, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, InventorySlot, INVENTORY_MAX_COUNT, inventory, drawQueue, alpha, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, DAY_LENGTH, NIGHT_TIME, craftMode, firstRecipeIndex, mainSlot, dayTimer;
     var __moduleName = context_3 && context_3.id;
     function getIndexFromCoords(x, y) {
         var result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
@@ -382,27 +382,27 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
     exports_3("drawText", drawText);
     function drawLight(x, y, radius) {
         if (timers[dayTimer] < NIGHT_TIME) {
-            var decreaseTime = 200;
-            var Radius = radius;
+            alpha = 1;
+            var decreaseTime = NIGHT_TIME / 3;
             if (timers[dayTimer] > NIGHT_TIME - decreaseTime) {
-                Radius = radius + 8 * (timers[dayTimer] - NIGHT_TIME + decreaseTime);
+                alpha = (NIGHT_TIME - timers[dayTimer]) / decreaseTime;
             }
             if (timers[dayTimer] < decreaseTime) {
-                Radius = radius + 8 * (decreaseTime - timers[dayTimer]);
+                alpha = (timers[dayTimer]) / decreaseTime;
             }
-            if (x > camera.x - camera.width * 0.5 - Radius &&
-                x < camera.x + camera.width * 0.5 + Radius &&
-                y > camera.y - camera.height * 0.5 - Radius &&
-                y < camera.y + camera.height * 0.5 + Radius) {
+            if (x > camera.x - camera.width * 0.5 - radius &&
+                x < camera.x + camera.width * 0.5 + radius &&
+                y > camera.y - camera.height * 0.5 - radius &&
+                y < camera.y + camera.height * 0.5 + radius) {
                 drawing_2.backCtx.globalCompositeOperation = 'destination-out';
                 var X = x - camera.x + camera.width / 2;
                 var Y = y - camera.y + camera.height / 2;
-                var gradient = drawing_2.backCtx.createRadialGradient(X, Y, 0, X, Y, Radius);
-                var alpha = 0.25;
-                gradient.addColorStop(0, "rgba(0,0,0," + alpha + ")");
+                var gradient = drawing_2.backCtx.createRadialGradient(X, Y, 0, X, Y, radius);
+                var alpha_1 = 0.25;
+                gradient.addColorStop(0, "white");
                 gradient.addColorStop(1, 'transparent');
                 drawing_2.backCtx.fillStyle = gradient;
-                drawing_2.backCtx.fillRect(X - Radius, Y - Radius, 2 * Radius, 2 * Radius);
+                drawing_2.backCtx.fillRect(X - radius, Y - radius, 2 * radius, 2 * radius);
             }
         }
     }
@@ -1282,6 +1282,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         drawing_2.ctx.translate(-camera.x + camera.width / 2, -camera.y + camera.height / 2);
         _a = screenToWorld(controls_1.mouse.x, controls_1.mouse.y), controls_1.mouse.worldX = _a[0], controls_1.mouse.worldY = _a[1];
         drawing_2.backCtx.save();
+        drawing_2.backCtx.clearRect(0, 0, drawing_2.canvas.width, drawing_2.canvas.height);
+        drawing_2.backCtx.fillStyle = "rgba(0,0,0," + alpha + ")";
         drawing_2.backCtx.fillRect(0, 0, drawing_2.canvas.width, drawing_2.canvas.height);
         updateTileMap();
         for (var gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {
@@ -1469,6 +1471,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 inventory.push(new InventorySlot());
             }
             drawQueue = [];
+            alpha = 0;
             camera = {
                 x: TILE.firstX - TILE.width / 2 + drawing_2.canvas.width / 2,
                 y: TILE.firstY - TILE.height / 2 + drawing_2.canvas.height / 2,
@@ -1566,7 +1569,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
             DAY_LENGTH = 2000;
-            NIGHT_TIME = 1000;
+            NIGHT_TIME = 1500;
             craftMode = false;
             firstRecipeIndex = 0;
             mainSlot = 0;

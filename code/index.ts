@@ -304,34 +304,36 @@ export function drawText(x: number, y: number, color: string, text: string, text
     }
 }
 
+let alpha = 0;
+
 export function drawLight(x: number, y: number, radius: number) {
     if (timers[dayTimer] < NIGHT_TIME) {
-        let decreaseTime = 200;
-        let Radius = radius;
+        alpha = 1;
+        let decreaseTime = NIGHT_TIME / 3;
         if (timers[dayTimer] > NIGHT_TIME - decreaseTime) {
-            Radius = radius + 8 * (timers[dayTimer] - NIGHT_TIME + decreaseTime);
+            alpha = (NIGHT_TIME - timers[dayTimer]) / decreaseTime;
         }
         if (timers[dayTimer] < decreaseTime) {
-            Radius = radius + 8 * (decreaseTime - timers[dayTimer]);
+            alpha = (timers[dayTimer]) / decreaseTime;
         }
-        if (x > camera.x - camera.width * 0.5 - Radius &&
-            x < camera.x + camera.width * 0.5 + Radius &&
-            y > camera.y - camera.height * 0.5 - Radius &&
-            y < camera.y + camera.height * 0.5 + Radius) {
+        if (x > camera.x - camera.width * 0.5 - radius &&
+            x < camera.x + camera.width * 0.5 + radius &&
+            y > camera.y - camera.height * 0.5 - radius &&
+            y < camera.y + camera.height * 0.5 + radius) {
             backCtx.globalCompositeOperation = 'destination-out';
 
             let X = x - camera.x + camera.width / 2;
             let Y = y - camera.y + camera.height / 2;
 
-            var gradient = backCtx.createRadialGradient(X, Y, 0, X, Y, Radius);
+            var gradient = backCtx.createRadialGradient(X, Y, 0, X, Y, radius);
 
             let alpha = 0.25;
 
-            gradient.addColorStop(0, `rgba(0,0,0,${alpha})`);
+            gradient.addColorStop(0, `white`);
             gradient.addColorStop(1, 'transparent');
 
             backCtx.fillStyle = gradient;
-            backCtx.fillRect(X - Radius, Y - Radius, 2 * Radius, 2 * Radius);
+            backCtx.fillRect(X - radius, Y - radius, 2 * radius, 2 * radius);
         }
     }
 }
@@ -828,7 +830,7 @@ function moveToTile(mouseTile: Tile) {
 }
 
 const DAY_LENGTH = 2000;
-const NIGHT_TIME = 1000;
+const NIGHT_TIME = 1500;
 
 let craftMode = false;
 let firstRecipeIndex = 0;
@@ -1481,6 +1483,10 @@ function loop() {
     [mouse.worldX, mouse.worldY] = screenToWorld(mouse.x, mouse.y);
 
     backCtx.save();
+
+    backCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+    backCtx.fillStyle = `rgba(0,0,0,${alpha})`;
 
     backCtx.fillRect(0, 0, canvas.width, canvas.height);
 
