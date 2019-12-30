@@ -1,6 +1,6 @@
 System.register("drawing", [], function (exports_1, context_1) {
     "use strict";
-    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgItems, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall;
+    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgItems, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage;
     var __moduleName = context_1 && context_1.id;
     function resourceLoaded(src) {
         resourcesLoadedCount++;
@@ -178,6 +178,7 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgSiliconItem", imgSiliconItem = loadImage('../sprites/siliconItem.png'));
             exports_1("imgVolcano", imgVolcano = imgMountain);
             exports_1("imgMagmaBall", imgMagmaBall = loadImage('../sprites/magmaBall.png'));
+            exports_1("imgStorage", imgStorage = loadImage('../sprites/imgStorage.png'));
         }
     };
 });
@@ -283,7 +284,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
 });
 System.register("index", ["controls", "drawing"], function (exports_3, context_3) {
     "use strict";
-    var controls_1, drawing_2, GameObjectType, TileType, TILE, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, InventorySlot, SLOT_COUNT, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, MAX_RANGE, STORAGE_SLOT_COUNT;
+    var controls_1, drawing_2, GameObjectType, TileType, TILE, InventorySlot, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, SLOT_COUNT, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, MAX_RANGE, STORAGE_SLOT_COUNT;
     var __moduleName = context_3 && context_3.id;
     function getIndexFromCoords(x, y) {
         var result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
@@ -316,9 +317,31 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         resultSlot.item = item;
         resultSlot.count += count;
     }
+    function addItemToStorage(item, count, tile) {
+        var resultSlot = getStorageSlotWithItem(item, tile);
+        if (!resultSlot) {
+            for (var slotIndex = 0; slotIndex < STORAGE_SLOT_COUNT; slotIndex++) {
+                var slot = tile.inventory[slotIndex];
+                if (slot.item === Item.NONE) {
+                    resultSlot = slot;
+                    break;
+                }
+            }
+        }
+        resultSlot.item = item;
+        resultSlot.count += count;
+    }
     function removeItem(item, count) {
         var slot = getInventorySlotWithItem(item);
         console.assert(slot.count >= count, 'В инвентаре слишком мало этого предмета');
+        slot.count -= count;
+        if (slot.count === 0) {
+            slot.item = Item.NONE;
+        }
+    }
+    function removeItemFromStorage(item, count, tile) {
+        var slot = getStorageSlotWithItem(item, tile);
+        console.assert(slot.count >= count, 'В храгилище слишком мало этого предмета');
         slot.count -= count;
         if (slot.count === 0) {
             slot.item = Item.NONE;
@@ -343,10 +366,38 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
         return result;
     }
+    function getStorageSlotIndexWithItem(item, tile) {
+        var result = -1;
+        for (var slotIndex = 0; slotIndex < STORAGE_SLOT_COUNT; slotIndex++) {
+            var slot = tile.inventory[slotIndex];
+            if (slot.item === item) {
+                result = slotIndex;
+                break;
+            }
+        }
+        return result;
+    }
+    function getStorageSlotWithItem(item, tile) {
+        var index = getStorageSlotIndexWithItem(item, tile);
+        var result = null;
+        if (index >= 0) {
+            result = tile.inventory[index];
+        }
+        return result;
+    }
     function isInventoryFullForItem(result) {
         var inventoryFull = true;
         for (var inventoryIndex = 0; inventoryIndex < SLOT_COUNT; inventoryIndex++) {
             if (inventory[inventoryIndex].item === Item.NONE || inventory[inventoryIndex].item === result) {
+                inventoryFull = false;
+            }
+        }
+        return (inventoryFull);
+    }
+    function isStoraggeFullForItem(result, tile) {
+        var inventoryFull = true;
+        for (var inventoryIndex = 0; inventoryIndex < STORAGE_SLOT_COUNT; inventoryIndex++) {
+            if (tile.inventory[inventoryIndex].item === Item.NONE || tile.inventory[inventoryIndex].item === result) {
                 inventoryFull = false;
             }
         }
@@ -962,7 +1013,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 break;
             case TileType.STORAGE:
                 {
-                    sprite = drawing_2.imgCamera;
+                    sprite = drawing_2.imgStorage;
                     if (!controls_1.mouse.isDown) {
                         tile.toughness = tile.firstToughness;
                     }
@@ -1094,7 +1145,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         sprite = drawing_2.imgSiliconItem;
                     }
                     if (inventory[itemIndex].item === Item.STORAGE) {
-                        sprite = drawing_2.imgCamera;
+                        sprite = drawing_2.imgStorage;
                     }
                     if (itemIndex === mainSlot) {
                         drawRect(x + 50 * itemIndex, y, 50, 50, 0, 'green', true, drawing_2.Layer.UI);
@@ -1114,33 +1165,37 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     controls_1.mouse.worldY > slotY - 20 &&
                     controls_1.mouse.worldY < slotY + 20) {
                     mainSlot = slotIndex;
+                    if (controlledStorage && !isStoraggeFullForItem(inventory[mainSlot].item, controlledStorage)) {
+                        addItemToStorage(inventory[mainSlot].item, inventory[mainSlot].count, controlledStorage);
+                        removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
+                    }
                 }
             }
             if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.MELTER &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
                     TILE.width + globalPlayer.width) {
-                if (mouseTile.item[0] === Item.NONE && inventory[mainSlot] &&
+                if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
                     (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT)) {
-                    mouseTile.item[0] = inventory[mainSlot].item;
-                    mouseTile.count[0] = inventory[mainSlot].count;
+                    mouseTile.inventory[0].item = inventory[mainSlot].item;
+                    mouseTile.inventory[0].count = inventory[mainSlot].count;
                     removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
-                    mouseTile.specialTimer = addTimer(mouseTile.count[0] * 2 * 60);
+                    mouseTile.specialTimer = addTimer(mouseTile.inventory[0].count * 2 * 60);
                 }
                 if (timers[mouseTile.specialTimer] <= 0) {
-                    if (mouseTile.item[0] === Item.IRON) {
-                        addItem(Item.IRON_INGOT, mouseTile.count[0]);
+                    if (mouseTile.inventory[0].item === Item.IRON) {
+                        addItem(Item.IRON_INGOT, mouseTile.inventory[0].count);
                     }
-                    if (mouseTile.item[0] === Item.AURIT) {
-                        addItem(Item.AURIT_INGOT, mouseTile.count[0]);
+                    if (mouseTile.inventory[0].item === Item.AURIT) {
+                        addItem(Item.AURIT_INGOT, mouseTile.inventory[0].count);
                     }
-                    mouseTile.item[0] = Item.NONE;
+                    mouseTile.inventory[0].item = Item.NONE;
                     timers[mouseTile.specialTimer] = null;
                 }
             }
             if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.SPLITTER &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
                     <= TILE.width + globalPlayer.width) {
-                if (mouseTile.item === null && inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
+                if (inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
                     while (timers[gameObject.energy] <= gameObject.maxEnergy && inventory[mainSlot].count > 0) {
                         timers[gameObject.energy] += 2000;
                         removeItem(inventory[mainSlot].item, 1);
@@ -1171,9 +1226,60 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                     else {
                         x = camera.x + camera.width / 2 - 50 * STORAGE_SLOT_COUNT / 2 - 20 + slotIndex * 50 - 50 * STORAGE_SLOT_COUNT / 2;
-                        y = camera.y + 60;
+                        y = camera.y + 100;
                     }
                     drawRect(x, y, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
+                    var sprite = null;
+                    if (controlledStorage.inventory[slotIndex].item === Item.NONE) {
+                        sprite = drawing_2.imgNone;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.IRON) {
+                        sprite = drawing_2.imgIronItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.MELTER) {
+                        sprite = drawing_2.imgMelter;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.IRON_INGOT) {
+                        sprite = drawing_2.imgIronIngot;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.AURIT) {
+                        sprite = drawing_2.imgAuritItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.AURIT_INGOT) {
+                        sprite = drawing_2.imgAuritIngot;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.CRYSTAL) {
+                        sprite = drawing_2.imgCrystalItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.SPLITTER) {
+                        sprite = drawing_2.imgSplitter;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.TOOLKIT) {
+                        sprite = drawing_2.imgToolkit;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.SUN_BATERY) {
+                        sprite = drawing_2.imgSunBatteryItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.SILIKON) {
+                        sprite = drawing_2.imgSiliconItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.STORAGE) {
+                        sprite = drawing_2.imgStorage;
+                    }
+                    drawSprite(x, y, sprite, 0, 40, 40, drawing_2.Layer.UI);
+                    if (controlledStorage.inventory[slotIndex].count !== 0) {
+                        drawText(x, y - 50, 'green', "" + controlledStorage.inventory[slotIndex].count, 25, drawing_2.Layer.UI);
+                    }
+                    if (controls_1.mouse.wentDown &&
+                        controls_1.mouse.worldX > x - 20 &&
+                        controls_1.mouse.worldX < x + 20 &&
+                        controls_1.mouse.worldY > y - 20 &&
+                        controls_1.mouse.worldY < y + 20) {
+                        if (controlledStorage.inventory[slotIndex].item !== Item.NONE && !isInventoryFullForItem(controlledStorage.inventory[slotIndex].item)) {
+                            addItem(controlledStorage.inventory[slotIndex].item, controlledStorage.inventory[slotIndex].count);
+                            removeItemFromStorage(controlledStorage.inventory[slotIndex].item, controlledStorage.inventory[slotIndex].count, controlledStorage);
+                        }
+                    }
                 }
             }
             if (controls_1.mouse.wentDown && inventory[mainSlot] && inventory[mainSlot].item === Item.TOOLKIT &&
@@ -1218,32 +1324,30 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         mouseTile.specialTimer = addTimer(0);
-                        mouseTile.item[0] = Item.NONE;
-                        mouseTile.count[0] = 0;
+                        mouseTile.inventory[0] = { item: Item.NONE, count: 0 };
                         removeItem(Item.MELTER, 1);
                     }
                     if (inventory[mainSlot] && inventory[mainSlot].item === Item.SPLITTER &&
-                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN)) {
+                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
                         mouseTile.upperLayer = TileType.SPLITTER;
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         removeItem(Item.SPLITTER, 1);
                     }
                     if (inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY &&
-                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN)) {
+                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
                         mouseTile.upperLayer = TileType.SUN_BATERY;
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         removeItem(Item.SUN_BATERY, 1);
                     }
                     if (inventory[mainSlot] && inventory[mainSlot].item === Item.STORAGE &&
-                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN)) {
+                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
                         mouseTile.upperLayer = TileType.STORAGE;
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         for (var i = 0; i < STORAGE_SLOT_COUNT; i++) {
-                            mouseTile.item[i] = Item.NONE;
-                            mouseTile.count[i] = 0;
+                            mouseTile.inventory[i] = { item: Item.NONE, count: 0 };
                         }
                         removeItem(Item.STORAGE, 1);
                     }
@@ -1307,8 +1411,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 if (globalPlayer.goForward === false && globalPlayer.goBackward === false &&
                     globalPlayer.goLeft === false && globalPlayer.goRight === false) {
                     var isThereAnItem = false;
-                    for (var slotIndex = 0; slotIndex < mouseTile.item.length; slotIndex++) {
-                        if (mouseTile.item[slotIndex] !== Item.NONE) {
+                    for (var slotIndex = 0; slotIndex < mouseTile.inventory.length; slotIndex++) {
+                        if (mouseTile.inventory[slotIndex].item !== Item.NONE) {
                             isThereAnItem = true;
                         }
                     }
@@ -1619,6 +1723,13 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 chunkCountX: 20,
                 chunkCountY: 20
             };
+            InventorySlot = (function () {
+                function InventorySlot() {
+                    this.item = Item.NONE;
+                    this.count = 0;
+                }
+                return InventorySlot;
+            }());
             Tile = (function () {
                 function Tile() {
                 }
@@ -1741,20 +1852,13 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 {
                     result: Item.STORAGE,
                     parts: [{ item: Item.IRON_INGOT, count: 20, sprite: drawing_2.imgIronIngot }],
-                    sprite: drawing_2.imgCamera,
+                    sprite: drawing_2.imgStorage,
                     name: 'Хранилище',
                     description1: 'Это сундук из Майнкрафта,',
                     description2: 'ни больше, ни меньше.',
                     description3: 'Хватит вопросов!'
                 },
             ];
-            InventorySlot = (function () {
-                function InventorySlot() {
-                    this.item = Item.NONE;
-                    this.count = 0;
-                }
-                return InventorySlot;
-            }());
             SLOT_COUNT = 5;
             inventory = [];
             for (var i = 0; i < SLOT_COUNT; i++) {
@@ -1805,7 +1909,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             var index = getIndexFromCoords(x, y);
                             map[index] = {
                                 baseLayer: downTileType, upperLayer: upTileType, x: x, y: y, specialTimer: null, toughness: null,
-                                firstToughness: null, item: [], count: [], width: TILE.width, height: TILE.height
+                                firstToughness: null, inventory: [], width: TILE.width, height: TILE.height
                             };
                             if (char === '0') {
                                 downTileType = TileType.NONE;

@@ -6,7 +6,7 @@ import {
     imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritIngot, imgAuritItem,
     imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, backCtx, backBuffer, imgToolkit,
     imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem,
-    imgVolcano, imgMagmaBall
+    imgVolcano, imgMagmaBall, imgStorage
 } from "./drawing";
 
 enum GameObjectType {
@@ -47,6 +47,11 @@ let TILE = {
     chunkCountY: 20,
 }
 
+class InventorySlot {
+    item: Item = Item.NONE;
+    count: number = 0;
+}
+
 class Tile {
     baseLayer: TileType;
     upperLayer: TileType;
@@ -57,8 +62,7 @@ class Tile {
     specialTimer: number;
     toughness: number;
     firstToughness: number;
-    item: Item[];
-    count: number[];
+    inventory: InventorySlot[];
 }
 
 const map: Tile[] = [];
@@ -208,18 +212,13 @@ let recipes: Recipe[] = [
     {
         result: Item.STORAGE,
         parts: [{ item: Item.IRON_INGOT, count: 20, sprite: imgIronIngot }],
-        sprite: imgCamera,
+        sprite: imgStorage,
         name: 'Хранилище',
         description1: 'Это сундук из Майнкрафта,',
         description2: 'ни больше, ни меньше.',
         description3: 'Хватит вопросов!',
     },
 ];
-
-class InventorySlot {
-    item: Item = Item.NONE;
-    count: number = 0;
-}
 
 const SLOT_COUNT = 5;
 let inventory: InventorySlot[] = [];
@@ -244,9 +243,34 @@ function addItem(item: Item, count: number) {
     resultSlot.count += count;
 }
 
+function addItemToStorage(item: Item, count: number, tile: Tile) {
+    let resultSlot = getStorageSlotWithItem(item, tile);
+    if (!resultSlot) {
+        for (let slotIndex = 0; slotIndex < STORAGE_SLOT_COUNT; slotIndex++) {
+            let slot = tile.inventory[slotIndex];
+            if (slot.item === Item.NONE) {
+                resultSlot = slot;
+                break;
+            }
+        }
+    }
+
+    resultSlot.item = item;
+    resultSlot.count += count;
+}
+
 function removeItem(item: Item, count: number) {
     let slot = getInventorySlotWithItem(item);
     console.assert(slot.count >= count, 'В инвентаре слишком мало этого предмета');
+    slot.count -= count;
+    if (slot.count === 0) {
+        slot.item = Item.NONE;
+    }
+}
+
+function removeItemFromStorage(item: Item, count: number, tile: Tile) {
+    let slot = getStorageSlotWithItem(item, tile);
+    console.assert(slot.count >= count, 'В храгилище слишком мало этого предмета');
     slot.count -= count;
     if (slot.count === 0) {
         slot.item = Item.NONE;
@@ -274,10 +298,41 @@ function getInventorySlotWithItem(item: Item) {
     return result;
 }
 
+function getStorageSlotIndexWithItem(item: Item, tile: Tile) {
+    let result: number = -1;
+    for (let slotIndex = 0; slotIndex < STORAGE_SLOT_COUNT; slotIndex++) {
+        let slot = tile.inventory[slotIndex];
+        if (slot.item === item) {
+            result = slotIndex;
+            break;
+        }
+    }
+    return result;
+}
+
+function getStorageSlotWithItem(item: Item, tile: Tile) {
+    let index = getStorageSlotIndexWithItem(item, tile);
+    let result = null;
+    if (index >= 0) {
+        result = tile.inventory[index];
+    }
+    return result;
+}
+
 function isInventoryFullForItem(result: Item) {
     let inventoryFull = true;
     for (let inventoryIndex = 0; inventoryIndex < SLOT_COUNT; inventoryIndex++) {
         if (inventory[inventoryIndex].item === Item.NONE || inventory[inventoryIndex].item === result) {
+            inventoryFull = false;
+        }
+    }
+    return (inventoryFull);
+}
+
+function isStoraggeFullForItem(result: Item, tile: Tile) {
+    let inventoryFull = true;
+    for (let inventoryIndex = 0; inventoryIndex < STORAGE_SLOT_COUNT; inventoryIndex++) {
+        if (tile.inventory[inventoryIndex].item === Item.NONE || tile.inventory[inventoryIndex].item === result) {
             inventoryFull = false;
         }
     }
@@ -812,7 +867,7 @@ for (let chunkY = 0; chunkY < TILE.chunkCountY; chunkY++) {
                 let index = getIndexFromCoords(x, y);
                 map[index] = {
                     baseLayer: downTileType, upperLayer: upTileType, x, y, specialTimer: null, toughness: null,
-                    firstToughness: null, item: [], count: [], width: TILE.width, height: TILE.height
+                    firstToughness: null, inventory: [], width: TILE.width, height: TILE.height
                 };
                 if (char === '0') {
                     downTileType = TileType.NONE;
@@ -1123,7 +1178,7 @@ function updateTile(tileType: TileType, tile: Tile) {
             }
         } break;
         case TileType.STORAGE: {
-            sprite = imgCamera;
+            sprite = imgStorage;
             if (!mouse.isDown) {
                 tile.toughness = tile.firstToughness;
             }
@@ -1309,7 +1364,7 @@ function updateGameObject(gameObject: GameObject) {
                     sprite = imgSiliconItem;
                 }
                 if (inventory[itemIndex].item === Item.STORAGE) {
-                    sprite = imgCamera;
+                    sprite = imgStorage;
                 }
 
                 if (itemIndex === mainSlot) {
@@ -1336,6 +1391,10 @@ function updateGameObject(gameObject: GameObject) {
                 mouse.worldY < slotY + 20
             ) {
                 mainSlot = slotIndex;
+                if (controlledStorage && !isStoraggeFullForItem(inventory[mainSlot].item, controlledStorage)) {
+                    addItemToStorage(inventory[mainSlot].item, inventory[mainSlot].count, controlledStorage);
+                    removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
+                }
             }
         }
 
@@ -1346,21 +1405,21 @@ function updateGameObject(gameObject: GameObject) {
             distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
             TILE.width + globalPlayer.width
         ) {
-            if (mouseTile.item[0] === Item.NONE && inventory[mainSlot] &&
+            if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
                 (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT)) {
-                mouseTile.item[0] = inventory[mainSlot].item;
-                mouseTile.count[0] = inventory[mainSlot].count;
+                mouseTile.inventory[0].item = inventory[mainSlot].item;
+                mouseTile.inventory[0].count = inventory[mainSlot].count;
                 removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
-                mouseTile.specialTimer = addTimer(mouseTile.count[0] * 2 * 60);
+                mouseTile.specialTimer = addTimer(mouseTile.inventory[0].count * 2 * 60);
             }
             if (timers[mouseTile.specialTimer] <= 0) {
-                if (mouseTile.item[0] === Item.IRON) {
-                    addItem(Item.IRON_INGOT, mouseTile.count[0]);
+                if (mouseTile.inventory[0].item === Item.IRON) {
+                    addItem(Item.IRON_INGOT, mouseTile.inventory[0].count);
                 }
-                if (mouseTile.item[0] === Item.AURIT) {
-                    addItem(Item.AURIT_INGOT, mouseTile.count[0]);
+                if (mouseTile.inventory[0].item === Item.AURIT) {
+                    addItem(Item.AURIT_INGOT, mouseTile.inventory[0].count);
                 }
-                mouseTile.item[0] = Item.NONE;
+                mouseTile.inventory[0].item = Item.NONE;
                 timers[mouseTile.specialTimer] = null;
             }
         }
@@ -1370,7 +1429,7 @@ function updateGameObject(gameObject: GameObject) {
         if (mouseTile && mouse.wentDown && mouseTile.upperLayer === TileType.SPLITTER &&
             distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
             <= TILE.width + globalPlayer.width) {
-            if (mouseTile.item === null && inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
+            if (inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
                 while (timers[gameObject.energy] <= gameObject.maxEnergy && inventory[mainSlot].count > 0) {
                     timers[gameObject.energy] += 2000;
                     removeItem(inventory[mainSlot].item, 1);
@@ -1407,9 +1466,63 @@ function updateGameObject(gameObject: GameObject) {
                     y = camera.y;
                 } else {
                     x = camera.x + camera.width / 2 - 50 * STORAGE_SLOT_COUNT / 2 - 20 + slotIndex * 50 - 50 * STORAGE_SLOT_COUNT / 2;
-                    y = camera.y + 60;
+                    y = camera.y + 100;
                 }
                 drawRect(x, y, 50, 50, 0, 'grey', true, Layer.UI);
+                let sprite = null;
+                if (controlledStorage.inventory[slotIndex].item === Item.NONE) {
+                    sprite = imgNone;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.IRON) {
+                    sprite = imgIronItem;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.MELTER) {
+                    sprite = imgMelter;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.IRON_INGOT) {
+                    sprite = imgIronIngot;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.AURIT) {
+                    sprite = imgAuritItem;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.AURIT_INGOT) {
+                    sprite = imgAuritIngot;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.CRYSTAL) {
+                    sprite = imgCrystalItem;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.SPLITTER) {
+                    sprite = imgSplitter;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.TOOLKIT) {
+                    sprite = imgToolkit;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.SUN_BATERY) {
+                    sprite = imgSunBatteryItem;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.SILIKON) {
+                    sprite = imgSiliconItem;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.STORAGE) {
+                    sprite = imgStorage;
+                }
+                drawSprite(x, y, sprite, 0, 40, 40, Layer.UI);
+                if (controlledStorage.inventory[slotIndex].count !== 0) {
+                    drawText(x, y - 50, 'green', `${controlledStorage.inventory[slotIndex].count}`, 25, Layer.UI);
+                }
+
+                if (
+                    mouse.wentDown &&
+                    mouse.worldX > x - 20 &&
+                    mouse.worldX < x + 20 &&
+                    mouse.worldY > y - 20 &&
+                    mouse.worldY < y + 20
+                ) {
+                    if (controlledStorage.inventory[slotIndex].item !== Item.NONE && !isInventoryFullForItem(controlledStorage.inventory[slotIndex].item)) {
+                        addItem(controlledStorage.inventory[slotIndex].item, controlledStorage.inventory[slotIndex].count);
+                        removeItemFromStorage(controlledStorage.inventory[slotIndex].item, controlledStorage.inventory[slotIndex].count, controlledStorage);
+                    }
+                }
             }
         }
 
@@ -1467,13 +1580,12 @@ function updateGameObject(gameObject: GameObject) {
                     mouseTile.toughness = 200;
                     mouseTile.firstToughness = 200;
                     mouseTile.specialTimer = addTimer(0);
-                    mouseTile.item[0] = Item.NONE;
-                    mouseTile.count[0] = 0;
+                    mouseTile.inventory[0] = { item: Item.NONE, count: 0 };
                     removeItem(Item.MELTER, 1);
                 }
                 if (
                     inventory[mainSlot] && inventory[mainSlot].item === Item.SPLITTER &&
-                    !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN)
+                    !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)
                 ) {
                     mouseTile.upperLayer = TileType.SPLITTER;
                     mouseTile.toughness = 200;
@@ -1481,7 +1593,7 @@ function updateGameObject(gameObject: GameObject) {
                     removeItem(Item.SPLITTER, 1);
                 }
                 if (inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY &&
-                    !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN)) {
+                    !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
                     mouseTile.upperLayer = TileType.SUN_BATERY;
                     mouseTile.toughness = 200;
                     mouseTile.firstToughness = 200;
@@ -1489,14 +1601,13 @@ function updateGameObject(gameObject: GameObject) {
                 }
                 if (
                     inventory[mainSlot] && inventory[mainSlot].item === Item.STORAGE &&
-                    !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN)
+                    !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)
                 ) {
                     mouseTile.upperLayer = TileType.STORAGE;
                     mouseTile.toughness = 200;
                     mouseTile.firstToughness = 200;
                     for (let i = 0; i < STORAGE_SLOT_COUNT; i++) {
-                        mouseTile.item[i] = Item.NONE;
-                        mouseTile.count[i] = 0;
+                        mouseTile.inventory[i] = { item: Item.NONE, count: 0 };
                     }
                     removeItem(Item.STORAGE, 1);
                 }
@@ -1600,8 +1711,8 @@ function updateGameObject(gameObject: GameObject) {
             if (globalPlayer.goForward === false && globalPlayer.goBackward === false &&
                 globalPlayer.goLeft === false && globalPlayer.goRight === false) {
                 let isThereAnItem = false;
-                for (let slotIndex = 0; slotIndex < mouseTile.item.length; slotIndex++) {
-                    if (mouseTile.item[slotIndex] !== Item.NONE) {
+                for (let slotIndex = 0; slotIndex < mouseTile.inventory.length; slotIndex++) {
+                    if (mouseTile.inventory[slotIndex].item !== Item.NONE) {
                         isThereAnItem = true;
                     }
                 }

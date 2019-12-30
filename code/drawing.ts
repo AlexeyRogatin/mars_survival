@@ -126,7 +126,8 @@ export let imgSilicon4 = loadImage('../sprites/silicon4.png');
 export let imgSilicon5 = loadImage('../sprites/silicon5.png');
 export let imgSiliconItem = loadImage('../sprites/siliconItem.png');
 export let imgVolcano = imgMountain;
-export let imgMagmaBall = loadImage('../sprites/magmaBall.png')
+export let imgMagmaBall = loadImage('../sprites/magmaBall.png');
+export let imgStorage = loadImage('../sprites/imgStorage.png');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {
