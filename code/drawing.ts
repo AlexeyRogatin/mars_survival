@@ -19,13 +19,13 @@ export let canBeginGame = false;
 
 
 export enum Layer {
-    NONE,
     UI,
     FORGROUND,
-    PLAYER,
-    TILE,
-    ON_TILE,
     PARTICLES,
+    PLAYER,
+    ON_TILE,
+    TILE,
+    NONE,
 }
 
 
@@ -50,6 +50,7 @@ export class DrawQueueItem {
     radius?: number = 0;
     text?: string = '';
     textSize?: number = 60;
+    outlineOnly?: boolean = false;
 }
 
 function resourceLoaded(src: string) {
@@ -114,6 +115,18 @@ export let imgCrystal4 = loadImage('../sprites/crystal4.png');
 export let imgCrystal5 = loadImage('../sprites/crystal5.png');
 export let imgCrystalItem = loadImage('../sprites/crystalItem.png');
 export let imgSplitter = loadImage('../sprites/splitter.png');
+export let imgToolkit = loadImage('../sprites/toolkit.png');
+export let imgSunBatteryAdd = loadImage('../sprites/sun_battery.png');
+export let imgSunBatteryItem = loadImage('../sprites/sun_batteryItem.png');
+export let imgSunBattery = loadImage('../sprites/sunBattery.png');
+export let imgSilicon1 = loadImage('../sprites/silicon1.png');
+export let imgSilicon2 = loadImage('../sprites/silicon2.png');
+export let imgSilicon3 = loadImage('../sprites/silicon3.png');
+export let imgSilicon4 = loadImage('../sprites/silicon4.png');
+export let imgSilicon5 = loadImage('../sprites/silicon5.png');
+export let imgSiliconItem = loadImage('../sprites/siliconItem.png');
+export let imgVolcano = imgMountain;
+export let imgMagmaBall = loadImage('../sprites/magmaBall.png')
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {
@@ -131,20 +144,29 @@ export function renderItem(item: DrawQueueItem) {
         case DrawQueueType.RECT: {
             ctx.save();
             ctx.translate(item.x, item.y);
-            ctx.fillStyle = item.color;
-
             ctx.rotate(-item.angle);
-            ctx.fillRect(-item.width / 2, -item.height / 2, item.width, item.height);
+
+            if (item.outlineOnly) {
+                ctx.strokeStyle = item.color;
+                ctx.strokeRect(-item.width / 2, -item.height / 2, item.width, item.height);
+            } else {
+                ctx.fillStyle = item.color;
+                ctx.fillRect(-item.width / 2, -item.height / 2, item.width, item.height);
+            }
             ctx.restore();
         } break;
 
         case DrawQueueType.CIRCLE: {
-            ctx.strokeStyle = item.color;
             ctx.beginPath();
             ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.fillStyle = item.color;
-            ctx.fill();
+
+            if (item.outlineOnly) {
+                ctx.strokeStyle = item.color;
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = item.color;
+                ctx.fill();
+            }
         } break;
 
         case DrawQueueType.TEXT: {
