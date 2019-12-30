@@ -283,7 +283,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
 });
 System.register("index", ["controls", "drawing"], function (exports_3, context_3) {
     "use strict";
-    var controls_1, drawing_2, GameObjectType, TileType, TILE, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, InventorySlot, SLOT_COUNT, inventory, inventoryFull, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, firstRecipeIndex, mainSlot, dayTimer, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, range;
+    var controls_1, drawing_2, GameObjectType, TileType, TILE, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, InventorySlot, SLOT_COUNT, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, MAX_RANGE, STORAGE_SLOT_COUNT;
     var __moduleName = context_3 && context_3.id;
     function getIndexFromCoords(x, y) {
         var result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
@@ -343,8 +343,17 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
         return result;
     }
+    function isInventoryFullForItem(result) {
+        var inventoryFull = true;
+        for (var inventoryIndex = 0; inventoryIndex < SLOT_COUNT; inventoryIndex++) {
+            if (inventory[inventoryIndex].item === Item.NONE || inventory[inventoryIndex].item === result) {
+                inventoryFull = false;
+            }
+        }
+        return (inventoryFull);
+    }
     function craftRecipe(recipe) {
-        var canCraft = true;
+        var canCraft = !isInventoryFullForItem(recipe.result);
         for (var partIndex = 0; partIndex < recipe.parts.length; partIndex++) {
             var part = recipe.parts[partIndex];
             var slot = getInventorySlotWithItem(part.item);
@@ -558,7 +567,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             var playerRight = gameObject.x + gameObject.width / 2;
             var playerTop = gameObject.y - gameObject.height / 2;
             var playerBottom = gameObject.y + gameObject.height / 2;
-            if (gameObject.stuckable && (other.baseLayer === TileType.MOUNTAIN || other.baseLayer === TileType.VOLCANO || other.upperLayer === TileType.MELTER || other.upperLayer === TileType.SPLITTER || other.upperLayer === TileType.SUN_BATERY || other.upperLayer === TileType.STORAGE)) {
+            if (gameObject.stuckable && (other.baseLayer === TileType.MOUNTAIN || other.baseLayer === TileType.VOLCANO ||
+                other.upperLayer === TileType.MELTER || other.upperLayer === TileType.SPLITTER ||
+                other.upperLayer === TileType.SUN_BATERY || other.upperLayer === TileType.STORAGE)) {
                 if (gameObject.speedX !== 0) {
                     var side = void 0;
                     var wallSide = void 0;
@@ -1012,12 +1023,6 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             for (var slotIndex = 0; slotIndex < SLOT_COUNT; slotIndex++) {
                 drawRect(camera.x - SLOT_COUNT * 40 / 2 + slotIndex * 50, camera.y + camera.height / 2 - 50, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
             }
-            inventoryFull = true;
-            for (var inventoryIndex = 0; inventoryIndex < SLOT_COUNT; inventoryIndex++) {
-                if (inventory[inventoryIndex].item === Item.NONE) {
-                    inventoryFull = false;
-                }
-            }
             drawSprite(camera.x - camera.width / 2 + 10, camera.y - camera.height / 4, drawing_2.imgArrow, 0, 30, 50, drawing_2.Layer.UI);
             var STRIPE_WIDTH = 200;
             var STRIPE_HEIGHT = 50;
@@ -1028,6 +1033,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             var hour = ONE_DAY / (24 + 37 / 60);
             var minute = hour / 60;
             drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 50, 'blue', Math.floor((ONE_DAY - timers[dayTimer]) / hour) + " : " + Math.floor((ONE_DAY - timers[dayTimer]) / minute) % 60, 25, drawing_2.Layer.UI);
+            drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 100, 'blue', "x: " + Math.round((gameObject.x) / TILE.width), 25, drawing_2.Layer.UI);
+            drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 130, 'blue', "y: " + Math.round((gameObject.y) / TILE.height), 25, drawing_2.Layer.UI);
             if (controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 - 10 &&
                 controls_1.mouse.worldX < camera.x - camera.width / 2 + 25 &&
                 controls_1.mouse.worldY > camera.y - camera.height / 4 - 25 &&
@@ -1110,26 +1117,29 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
             }
             if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.MELTER &&
-                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <= TILE.width + globalPlayer.width) {
-                if (mouseTile.item === null && inventory[mainSlot] && (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT)) {
-                    mouseTile.item = inventory[mainSlot].item;
-                    mouseTile.count = inventory[mainSlot].count;
+                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
+                    TILE.width + globalPlayer.width) {
+                if (mouseTile.item[0] === Item.NONE && inventory[mainSlot] &&
+                    (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT)) {
+                    mouseTile.item[0] = inventory[mainSlot].item;
+                    mouseTile.count[0] = inventory[mainSlot].count;
                     removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
-                    mouseTile.specialTimer = addTimer(mouseTile.count * 2 * 60);
+                    mouseTile.specialTimer = addTimer(mouseTile.count[0] * 2 * 60);
                 }
                 if (timers[mouseTile.specialTimer] <= 0) {
-                    if (mouseTile.item === Item.IRON) {
-                        addItem(Item.IRON_INGOT, mouseTile.count);
+                    if (mouseTile.item[0] === Item.IRON) {
+                        addItem(Item.IRON_INGOT, mouseTile.count[0]);
                     }
-                    if (mouseTile.item === Item.AURIT) {
-                        addItem(Item.AURIT_INGOT, mouseTile.count);
+                    if (mouseTile.item[0] === Item.AURIT) {
+                        addItem(Item.AURIT_INGOT, mouseTile.count[0]);
                     }
-                    mouseTile.item = null;
+                    mouseTile.item[0] = Item.NONE;
                     timers[mouseTile.specialTimer] = null;
                 }
             }
             if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.SPLITTER &&
-                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width) <= TILE.width + globalPlayer.width) {
+                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
+                    <= TILE.width + globalPlayer.width) {
                 if (mouseTile.item === null && inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
                     while (timers[gameObject.energy] <= gameObject.maxEnergy && inventory[mainSlot].count > 0) {
                         timers[gameObject.energy] += 2000;
@@ -1140,10 +1150,34 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
             }
-            if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.STORAGE &&
-                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width) <= TILE.width + globalPlayer.width) {
+            if ((controlledStorage
+                &&
+                    distanceBetweenPoints(gameObject.x, gameObject.y, controlledStorage.x * TILE.width, controlledStorage.y * TILE.width)
+                        > TILE.width + globalPlayer.width) || (mouseTile && mouseTile && controls_1.mouse.wentDown && mouseTile === controlledStorage)) {
+                controlledStorage = null;
             }
-            if (controls_1.mouse.wentDown && inventory[mainSlot] && inventory[mainSlot].item === Item.TOOLKIT && globalPlayer.hitpoints !== globalPlayer.maxHitpoints) {
+            else if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.STORAGE &&
+                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
+                    <= TILE.width + globalPlayer.width && !controlledStorage) {
+                controlledStorage = mouseTile;
+            }
+            if (controlledStorage) {
+                for (var slotIndex = 0; slotIndex < STORAGE_SLOT_COUNT; slotIndex++) {
+                    var x = void 0;
+                    var y = void 0;
+                    if (slotIndex <= Math.round(STORAGE_SLOT_COUNT / 2 - 1)) {
+                        x = camera.x + camera.width / 2 - 50 * STORAGE_SLOT_COUNT / 2 - 20 + slotIndex * 50;
+                        y = camera.y;
+                    }
+                    else {
+                        x = camera.x + camera.width / 2 - 50 * STORAGE_SLOT_COUNT / 2 - 20 + slotIndex * 50 - 50 * STORAGE_SLOT_COUNT / 2;
+                        y = camera.y + 60;
+                    }
+                    drawRect(x, y, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
+                }
+            }
+            if (controls_1.mouse.wentDown && inventory[mainSlot] && inventory[mainSlot].item === Item.TOOLKIT &&
+                globalPlayer.hitpoints !== globalPlayer.maxHitpoints) {
                 globalPlayer.hitpoints += 100;
                 if (globalPlayer.hitpoints > globalPlayer.maxHitpoints) {
                     globalPlayer.hitpoints = globalPlayer.maxHitpoints;
@@ -1164,7 +1198,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
             }
             if (mouseTile && controls_1.mouse.wentDown && !mouseTile.upperLayer &&
-                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <= TILE.width + globalPlayer.width + 50 &&
+                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height)
+                    <= TILE.width + globalPlayer.width + 50 &&
                 !(craftMode &&
                     controls_1.mouse.worldX >= camera.x - camera.width / 2 &&
                     controls_1.mouse.worldX <= camera.x - camera.width / 2 + 300 &&
@@ -1183,6 +1218,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         mouseTile.specialTimer = addTimer(0);
+                        mouseTile.item[0] = Item.NONE;
+                        mouseTile.count[0] = 0;
                         removeItem(Item.MELTER, 1);
                     }
                     if (inventory[mainSlot] && inventory[mainSlot].item === Item.SPLITTER &&
@@ -1192,7 +1229,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         mouseTile.firstToughness = 200;
                         removeItem(Item.SPLITTER, 1);
                     }
-                    if (inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY && !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN)) {
+                    if (inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY &&
+                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN)) {
                         mouseTile.upperLayer = TileType.SUN_BATERY;
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
@@ -1203,6 +1241,10 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         mouseTile.upperLayer = TileType.STORAGE;
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
+                        for (var i = 0; i < STORAGE_SLOT_COUNT; i++) {
+                            mouseTile.item[i] = Item.NONE;
+                            mouseTile.count[i] = 0;
+                        }
                         removeItem(Item.STORAGE, 1);
                     }
                 }
@@ -1237,7 +1279,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             for (var particleIndex = 0; particleIndex < particles.length; particleIndex++) {
                 var particle_2 = particles[particleIndex];
-                if ((particle_2.color === 'grey' || particle_2.color === 'yellow' || particle_2.color === 'lightcoral' || particle_2.color === 'black') && particle_2.radius < 15) {
+                if ((particle_2.color === 'grey' || particle_2.color === 'yellow' || particle_2.color === 'lightcoral' || particle_2.color === 'black') &&
+                    particle_2.radius < 15) {
                     var particleAngle = angleBetweenPoints(globalPlayer.x, globalPlayer.y, particle_2.x, particle_2.y);
                     var particleSpeed = rotateVector(6, 0, particleAngle);
                     particle_2.accelX = 0;
@@ -1249,7 +1292,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
                 drawLight(particle_2.x + particle_2.radius, particle_2.y + particle_2.radius, particle_2.radius * 4);
-                if (gameObject.width / 2 + particle_2.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y) && timers[gameObject.unhitableTimer] <= 0) {
+                if (gameObject.width / 2 + particle_2.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y) &&
+                    timers[gameObject.unhitableTimer] <= 0) {
                     if (particle_2.color === 'red') {
                         gameObject.hitpoints -= 50;
                         timers[gameObject.unhitableTimer] = 180;
@@ -1259,10 +1303,41 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             if (controls_1.mouse.isDown && mouseTile) {
                 moveToTile(mouseTile);
             }
-            if (mouseTile && (mouseTile.upperLayer === TileType.IRON || mouseTile.upperLayer === TileType.AURIT || mouseTile.upperLayer === TileType.MELTER || mouseTile.upperLayer === TileType.CRYSTAL || mouseTile.upperLayer === TileType.SPLITTER || mouseTile.upperLayer === TileType.SUN_BATERY || mouseTile.upperLayer === TileType.SILIKON || mouseTile.upperLayer === TileType.STORAGE) && controls_1.mouse.isDown) {
+            if (mouseTile && controls_1.mouse.isDown && mouseTile.toughness) {
                 if (globalPlayer.goForward === false && globalPlayer.goBackward === false &&
                     globalPlayer.goLeft === false && globalPlayer.goRight === false) {
-                    mouseTile.toughness--;
+                    var isThereAnItem = false;
+                    for (var slotIndex = 0; slotIndex < mouseTile.item.length; slotIndex++) {
+                        if (mouseTile.item[slotIndex] !== Item.NONE) {
+                            isThereAnItem = true;
+                        }
+                    }
+                    if (!isThereAnItem) {
+                        if (mouseTile.upperLayer === TileType.IRON && !isInventoryFullForItem(Item.IRON)) {
+                            mouseTile.toughness--;
+                        }
+                        if (mouseTile.upperLayer === TileType.AURIT && !isInventoryFullForItem(Item.AURIT)) {
+                            mouseTile.toughness--;
+                        }
+                        if (mouseTile.upperLayer === TileType.CRYSTAL && !isInventoryFullForItem(Item.CRYSTAL)) {
+                            mouseTile.toughness--;
+                        }
+                        if (mouseTile.upperLayer === TileType.SILIKON && !isInventoryFullForItem(Item.SILIKON)) {
+                            mouseTile.toughness--;
+                        }
+                        if (mouseTile.upperLayer === TileType.MELTER && !isInventoryFullForItem(Item.MELTER)) {
+                            mouseTile.toughness--;
+                        }
+                        if (mouseTile.upperLayer === TileType.SPLITTER && !isInventoryFullForItem(Item.SPLITTER)) {
+                            mouseTile.toughness--;
+                        }
+                        if (mouseTile.upperLayer === TileType.SUN_BATERY && !isInventoryFullForItem(Item.SUN_BATERY)) {
+                            mouseTile.toughness--;
+                        }
+                        if (mouseTile.upperLayer === TileType.STORAGE && !isInventoryFullForItem(Item.STORAGE)) {
+                            mouseTile.toughness--;
+                        }
+                    }
                     if ((mouseTile.toughness % 200 === 0 || mouseTile.toughness === 0)) {
                         var color = null;
                         if (mouseTile.upperLayer === TileType.IRON) {
@@ -1305,6 +1380,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                     if (mouseTile.upperLayer === TileType.STORAGE) {
                         addItem(Item.STORAGE, 1);
+                        if (mouseTile === controlledStorage) {
+                            controlledStorage = null;
+                        }
                     }
                     mouseTile.upperLayer = TileType.NONE;
                 }
@@ -1433,14 +1511,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             var height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
             gameObject.angle += Math.PI / 180;
             drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
-            if (range / gameObject.lifeTime / 2 > gameObject.lifeTime) {
-                gameObject.width = 100 + height;
-                gameObject.height = 100 + height;
-            }
-            else {
-                gameObject.width = 100 + height;
-                gameObject.height = 100 + height;
-            }
+            gameObject.width = 100 + height;
+            gameObject.height = 100 + height;
             if (height <= 0) {
                 gameObject.exists = false;
                 burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.35, accel: 0 });
@@ -1455,7 +1527,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         }
                     }
                     else {
-                        if (chance === 1 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER && map[tileIndex].baseLayer !== TileType.VOLCANO) {
+                        if (chance === 1 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER
+                            && map[tileIndex].baseLayer !== TileType.VOLCANO) {
                             map[tileIndex].baseLayer = TileType.LAVA;
                         }
                     }
@@ -1682,12 +1755,11 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
                 return InventorySlot;
             }());
-            SLOT_COUNT = 7;
+            SLOT_COUNT = 5;
             inventory = [];
             for (var i = 0; i < SLOT_COUNT; i++) {
                 inventory.push(new InventorySlot());
             }
-            inventoryFull = false;
             drawQueue = [];
             alpha = 0;
             MORNING_LENGTH = 6000;
@@ -1731,7 +1803,10 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             var x = (chunkX * TILE.chunkSizeX + tileX);
                             var y = (chunkY * TILE.chunkSizeX + tileY);
                             var index = getIndexFromCoords(x, y);
-                            map[index] = { baseLayer: downTileType, upperLayer: upTileType, x: x, y: y, specialTimer: null, toughness: null, firstToughness: null, item: null, count: null, width: TILE.width, height: TILE.height };
+                            map[index] = {
+                                baseLayer: downTileType, upperLayer: upTileType, x: x, y: y, specialTimer: null, toughness: null,
+                                firstToughness: null, item: [], count: [], width: TILE.width, height: TILE.height
+                            };
                             if (char === '0') {
                                 downTileType = TileType.NONE;
                             }
@@ -1773,26 +1848,26 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             else if (char === 'F') {
                                 downTileType = TileType.EARTH_1;
                                 upTileType = TileType.IRON;
-                                map[index].toughness = 1000;
-                                map[index].firstToughness = 1000;
+                                map[index].toughness = 999;
+                                map[index].firstToughness = 999;
                             }
                             else if (char === 'A') {
                                 downTileType = TileType.EARTH_1;
                                 upTileType = TileType.AURIT;
-                                map[index].toughness = 1000;
-                                map[index].firstToughness = 1000;
+                                map[index].toughness = 999;
+                                map[index].firstToughness = 999;
                             }
                             else if (char === 'C') {
                                 downTileType = TileType.EARTH_1;
                                 upTileType = TileType.CRYSTAL;
-                                map[index].toughness = 1000;
-                                map[index].firstToughness = 1000;
+                                map[index].toughness = 999;
+                                map[index].firstToughness = 999;
                             }
                             else if (char = 'S') {
                                 downTileType = TileType.EARTH_1;
                                 upTileType = TileType.SILIKON;
-                                map[index].toughness = 1000;
-                                map[index].firstToughness = 1000;
+                                map[index].toughness = 999;
+                                map[index].firstToughness = 999;
                             }
                             map[index].baseLayer = downTileType;
                             map[index].upperLayer = upTileType;
@@ -1801,15 +1876,18 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
             }
             globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
+            addItem(Item.STORAGE, 1);
             craftMode = false;
             firstRecipeIndex = 0;
             mainSlot = 0;
+            controlledStorage = null;
             dayTimer = addTimer(ONE_DAY);
             VOLCANO_RADIUS = TILE.width * TILE.chunkSizeX * 1.5;
             MAGMA_BALL_SPEED = 35;
             VOLCANO_HEIGHT = 100;
             GRAVITATION = 0.5;
-            range = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
+            MAX_RANGE = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
+            STORAGE_SLOT_COUNT = 10;
             requestAnimationFrame(loop);
         }
     };
