@@ -422,9 +422,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 canCraft = false;
                 break;
             }
-            if (slot && slot.count >= part.count) {
+            if (slot && slot.count === part.count) {
                 canCraft = true;
-                break;
             }
         }
         if (canCraft) {
@@ -1023,6 +1022,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             case TileType.VOLCANO:
                 {
                     sprite = drawing_2.imgVolcano;
+                    drawLight(tile.x * tile.width, tile.y * tile.height, tile.width * 1.2);
                     if (distanceBetweenPoints(camera.x, camera.y, tile.x * TILE.width, tile.y * TILE.width) < VOLCANO_RADIUS) {
                         if (timers[tile.specialTimer] === 0) {
                             addGameObject(GameObjectType.MAGMA_BALL, tile.x * TILE.width, tile.y * TILE.height);
@@ -1037,6 +1037,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     if (!controls_1.mouse.isDown) {
                         tile.toughness = tile.firstToughness;
                     }
+                    drawLight(tile.x * tile.width, tile.y * tile.height, tile.width * 1.2);
                 }
                 break;
         }
@@ -1116,25 +1117,28 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             if (isInventoryFullForItem(Item.NONE)) {
                 drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, drawing_2.Layer.UI);
             }
-            if (controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 - 10 &&
-                controls_1.mouse.worldX < camera.x - camera.width / 2 + 25 &&
-                controls_1.mouse.worldY > camera.y - camera.height / 4 - 25 &&
-                controls_1.mouse.worldY < camera.y - camera.height / 4 + 25) {
-                craftMode = !craftMode;
-            }
-            if (craftMode && controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 + 130 &&
-                controls_1.mouse.worldX < camera.x - camera.width / 2 + 170 &&
-                controls_1.mouse.worldY > camera.y - camera.height / 4 + 2 &&
-                controls_1.mouse.worldY < camera.y - camera.height / 4 + 30 &&
-                recipes[firstRecipeIndex - 1]) {
-                firstRecipeIndex--;
-            }
-            if (craftMode && controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 + 130 &&
-                controls_1.mouse.worldX < camera.x - camera.width / 2 + 170 &&
-                controls_1.mouse.worldY > camera.y - camera.height / 4 + 422 &&
-                controls_1.mouse.worldY < camera.y - camera.height / 4 + 450 &&
-                recipes[firstRecipeIndex + 3]) {
-                firstRecipeIndex++;
+            for (var particleIndex = 0; particleIndex < particles.length; particleIndex++) {
+                var particle_2 = particles[particleIndex];
+                if ((particle_2.color === 'grey' || particle_2.color === 'yellow' || particle_2.color === 'lightcoral' || particle_2.color === 'black') &&
+                    particle_2.radius < 15) {
+                    var particleAngle = angleBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y);
+                    var particleSpeed = rotateVector(6, 0, particleAngle);
+                    particle_2.accelX = 0;
+                    particle_2.accelY = 0;
+                    particle_2.x += particleSpeed[0] - particle_2.speedX;
+                    particle_2.y -= particleSpeed[1] + particle_2.speedY;
+                    if (distanceBetweenPoints(particle_2.x, particle_2.y, gameObject.x, gameObject.y) <= 5) {
+                        removeParticle(particleIndex);
+                    }
+                }
+                drawLight(particle_2.x + particle_2.radius, particle_2.y + particle_2.radius, particle_2.radius * 4);
+                if (gameObject.width / 2 + particle_2.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y) &&
+                    timers[gameObject.unhitableTimer] <= 0) {
+                    if (particle_2.color === 'red') {
+                        gameObject.hitpoints -= 50;
+                        timers[gameObject.unhitableTimer] = 180;
+                    }
+                }
             }
             for (var itemIndex = 0; itemIndex <= inventory.length; itemIndex++) {
                 if (inventory[itemIndex]) {
@@ -1210,50 +1214,292 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
             }
-            if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.MELTER &&
-                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
-                    TILE.width + gameObject.width) {
-                if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
-                    (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT)) {
-                    mouseTile.inventory[0].item = inventory[mainSlot].item;
-                    mouseTile.inventory[0].count = inventory[mainSlot].count;
-                    removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
-                    mouseTile.specialTimer = addTimer(mouseTile.inventory[0].count * 2 * 60);
-                }
-                if (timers[mouseTile.specialTimer] <= 0) {
-                    if (mouseTile.inventory[0].item === Item.IRON) {
-                        addItem(Item.IRON_INGOT, mouseTile.inventory[0].count);
+            if (controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 - 10 &&
+                controls_1.mouse.worldX < camera.x - camera.width / 2 + 25 &&
+                controls_1.mouse.worldY > camera.y - camera.height / 4 - 25 &&
+                controls_1.mouse.worldY < camera.y - camera.height / 4 + 25) {
+                craftMode = !craftMode;
+            }
+            else if (craftMode) {
+                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 200 + 25, drawing_2.imgCrafts, 0, 300, 400, drawing_2.Layer.UI);
+                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 15, drawing_2.imgArrow1, 0, 40, 26, drawing_2.Layer.UI);
+                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 435, drawing_2.imgArrow1, 1 * Math.PI, 40, 26, drawing_2.Layer.UI);
+                for (var itemIndex = 0; itemIndex < 3; itemIndex++) {
+                    drawSprite(camera.x - camera.width / 2 + 60, camera.y - camera.height / 4 + 90 + 133 * itemIndex, recipes[firstRecipeIndex + itemIndex].sprite, 0, 70, 70, drawing_2.Layer.UI);
+                    drawText(camera.x - camera.width / 2 + 100, camera.y - camera.height / 4 + 50 + 133 * itemIndex, 'black', recipes[firstRecipeIndex + itemIndex].name, 25, drawing_2.Layer.UI);
+                    for (var partIndex = 0; partIndex < recipes[firstRecipeIndex + itemIndex].parts.length; partIndex++) {
+                        var row = 0;
+                        if (partIndex > 2) {
+                            row = 1;
+                        }
+                        drawSprite(camera.x - camera.width / 2 + 130 + 50 * partIndex - 150 * row, camera.y - camera.height / 4 + 90 + 133 * itemIndex + 50 * row, recipes[firstRecipeIndex + itemIndex].parts[partIndex].sprite, 0, 30, 30, drawing_2.Layer.UI);
+                        drawText(camera.x - camera.width / 2 + 120 + 50 * partIndex - 150 * row, camera.y - camera.height / 4 + 70 + 133 * itemIndex + 50 * row, 'black', "" + recipes[firstRecipeIndex + itemIndex].parts[partIndex].count, 15, drawing_2.Layer.UI);
                     }
-                    if (mouseTile.inventory[0].item === Item.AURIT) {
-                        addItem(Item.AURIT_INGOT, mouseTile.inventory[0].count);
+                    if (controls_1.mouse.worldX >= camera.x - camera.width / 2 &&
+                        controls_1.mouse.worldX <= camera.x - camera.width / 2 + 300 &&
+                        controls_1.mouse.worldY >= camera.y - camera.height / 4 + 25 + 133 * itemIndex &&
+                        controls_1.mouse.worldY <= camera.y - camera.height / 4 + 133 + 25 + 133 * itemIndex) {
+                        drawText(camera.x + camera.width / 2 - 425, camera.y - 50, 'green', recipes[firstRecipeIndex + itemIndex].description1, 25, drawing_2.Layer.UI);
+                        drawText(camera.x + camera.width / 2 - 425, camera.y, 'green', recipes[firstRecipeIndex + itemIndex].description2, 25, drawing_2.Layer.UI);
+                        drawText(camera.x + camera.width / 2 - 425, camera.y + 50, 'green', recipes[firstRecipeIndex + itemIndex].description3, 25, drawing_2.Layer.UI);
+                        if (controls_1.mouse.wentDown) {
+                            craftRecipe(recipes[firstRecipeIndex + itemIndex]);
+                        }
                     }
-                    mouseTile.inventory[0].item = Item.NONE;
-                    timers[mouseTile.specialTimer] = null;
                 }
             }
-            if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.SPLITTER &&
-                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
-                    <= TILE.width + gameObject.width) {
-                if (inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
-                    while (timers[gameObject.energy] <= gameObject.maxEnergy && inventory[mainSlot].count > 0) {
-                        timers[gameObject.energy] += 2000;
+            else {
+                if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.MELTER &&
+                    distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
+                        TILE.width + gameObject.width) {
+                    if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
+                        (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT)) {
+                        mouseTile.inventory[0].item = inventory[mainSlot].item;
+                        mouseTile.inventory[0].count = inventory[mainSlot].count;
+                        removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
+                        mouseTile.specialTimer = addTimer(mouseTile.inventory[0].count * 2 * 60);
+                    }
+                    if (timers[mouseTile.specialTimer] <= 0) {
+                        if (mouseTile.inventory[0].item === Item.IRON) {
+                            addItem(Item.IRON_INGOT, mouseTile.inventory[0].count);
+                        }
+                        if (mouseTile.inventory[0].item === Item.AURIT) {
+                            addItem(Item.AURIT_INGOT, mouseTile.inventory[0].count);
+                        }
+                        mouseTile.inventory[0].item = Item.NONE;
+                        timers[mouseTile.specialTimer] = null;
+                    }
+                }
+                if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.SPLITTER &&
+                    distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
+                        <= TILE.width + gameObject.width) {
+                    if (inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
+                        while (timers[gameObject.energy] <= gameObject.maxEnergy && inventory[mainSlot].count > 0) {
+                            timers[gameObject.energy] += 2000;
+                            removeItem(inventory[mainSlot].item, 1);
+                        }
+                        if (timers[gameObject.energy] > gameObject.maxEnergy) {
+                            timers[gameObject.energy] = gameObject.maxEnergy;
+                        }
+                    }
+                }
+                if ((controlledStorage
+                    &&
+                        distanceBetweenPoints(gameObject.x, gameObject.y, controlledStorage.x * TILE.width, controlledStorage.y * TILE.width)
+                            > TILE.width + gameObject.width) || (mouseTile && mouseTile && controls_1.mouse.wentDown && mouseTile === controlledStorage)) {
+                    controlledStorage = null;
+                }
+                else if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.STORAGE &&
+                    distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
+                        <= TILE.width + gameObject.width && !controlledStorage) {
+                    controlledStorage = mouseTile;
+                }
+                if (controls_1.mouse.wentDown && inventory[mainSlot]) {
+                    if (inventory[mainSlot].item === Item.TOOLKIT &&
+                        gameObject.hitpoints !== gameObject.maxHitpoints) {
+                        gameObject.hitpoints += 100;
+                        if (gameObject.hitpoints > gameObject.maxHitpoints) {
+                            gameObject.hitpoints = gameObject.maxHitpoints;
+                        }
                         removeItem(inventory[mainSlot].item, 1);
                     }
-                    if (timers[gameObject.energy] > gameObject.maxEnergy) {
-                        timers[gameObject.energy] = gameObject.maxEnergy;
+                    if (controls_1.mouse.worldX >= gameObject.x - gameObject.width / 2 &&
+                        controls_1.mouse.worldX <= gameObject.x + gameObject.width / 2 &&
+                        controls_1.mouse.worldY >= gameObject.y - gameObject.height / 2 &&
+                        controls_1.mouse.worldY <= gameObject.y + gameObject.height / 2) {
+                        if (inventory[mainSlot].item === Item.SUN_BATERY) {
+                            if (gameObject.sunBateryLvl === 0) {
+                                gameObject.sunBateryLvl = 1;
+                                timers[gameObject.energy] *= 0.25;
+                                gameObject.maxEnergy *= 0.25;
+                                removeItem(Item.SUN_BATERY, 1);
+                            }
+                        }
+                        else if (inventory[mainSlot].item === Item.GOLDEN_CAMERA) {
+                            if (gameObject.cameraLvl === 0) {
+                                gameObject.cameraLvl = 1;
+                                removeItem(Item.GOLDEN_CAMERA, 1);
+                            }
+                        }
+                        else if (inventory[mainSlot].item === Item.EXTRA_SLOT) {
+                            if (slotCount === 5) {
+                                slotCount++;
+                                inventory[slotCount - 1] = { item: Item.NONE, count: 0 };
+                                removeItem(Item.EXTRA_SLOT, 1);
+                            }
+                        }
+                        else if (inventory[mainSlot].item === Item.SHOCKPROOF_BODY) {
+                            if (gameObject.sprite !== drawing_2.imgShockProofBody) {
+                                gameObject.hitpoints = 150;
+                                gameObject.maxHitpoints = 150;
+                                gameObject.sprite = drawing_2.imgShockProofBody;
+                                removeItem(Item.SHOCKPROOF_BODY, 1);
+                            }
+                        }
+                        else {
+                            if (gameObject.sunBateryLvl === 1 && !isInventoryFullForItem(Item.SUN_BATERY)) {
+                                gameObject.sunBateryLvl = 0;
+                                timers[gameObject.energy] *= 100 / 25;
+                                gameObject.maxEnergy *= 100 / 25;
+                                addItem(Item.SUN_BATERY, 1);
+                            }
+                        }
                     }
                 }
+                if (mouseTile && controls_1.mouse.wentDown && !mouseTile.upperLayer &&
+                    distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height)
+                        <= TILE.width + gameObject.width + 50 &&
+                    !(craftMode &&
+                        controls_1.mouse.worldX >= camera.x - camera.width / 2 &&
+                        controls_1.mouse.worldX <= camera.x - camera.width / 2 + 300 &&
+                        controls_1.mouse.worldY >= camera.y - camera.height / 4 + 25 + 133 * 3 &&
+                        controls_1.mouse.worldY <= camera.y - camera.height / 4 + 133 + 25 + 133 * 3) &&
+                    !(controls_1.mouse.worldX >= camera.x - 145 &&
+                        controls_1.mouse.worldX <= camera.x + 145 &&
+                        controls_1.mouse.worldY >= camera.y + camera.height / 2 - 70 &&
+                        controls_1.mouse.worldY <= camera.y + camera.height / 2 - 30)) {
+                    if (!(gameObject.x >= mouseTile.x * TILE.width - TILE.width / 2 - gameObject.width / 2 &&
+                        gameObject.x <= mouseTile.x * TILE.width + TILE.width / 2 + gameObject.width / 2 &&
+                        gameObject.y >= mouseTile.y * TILE.height - TILE.height / 2 - gameObject.height / 2 &&
+                        gameObject.y <= mouseTile.y * TILE.height + TILE.height / 2 + gameObject.height / 2)) {
+                        if (inventory[mainSlot] && inventory[mainSlot].item === Item.MELTER && mouseTile.baseLayer === TileType.LAVA) {
+                            mouseTile.upperLayer = TileType.MELTER;
+                            mouseTile.toughness = 200;
+                            mouseTile.firstToughness = 200;
+                            mouseTile.specialTimer = addTimer(0);
+                            mouseTile.inventory[0] = { item: Item.NONE, count: 0 };
+                            removeItem(Item.MELTER, 1);
+                        }
+                        if (inventory[mainSlot] && inventory[mainSlot].item === Item.SPLITTER &&
+                            !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
+                            mouseTile.upperLayer = TileType.SPLITTER;
+                            mouseTile.toughness = 200;
+                            mouseTile.firstToughness = 200;
+                            removeItem(Item.SPLITTER, 1);
+                        }
+                        if (inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY &&
+                            !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
+                            mouseTile.upperLayer = TileType.SUN_BATERY;
+                            mouseTile.toughness = 200;
+                            mouseTile.firstToughness = 200;
+                            removeItem(Item.SUN_BATERY, 1);
+                        }
+                        if (inventory[mainSlot] && inventory[mainSlot].item === Item.STORAGE &&
+                            !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
+                            mouseTile.upperLayer = TileType.STORAGE;
+                            mouseTile.toughness = 200;
+                            mouseTile.firstToughness = 200;
+                            for (var i = 0; i < STORAGE_SLOT_COUNT; i++) {
+                                mouseTile.inventory[i] = { item: Item.NONE, count: 0 };
+                            }
+                            removeItem(Item.STORAGE, 1);
+                        }
+                    }
+                }
+                if (mouseTile && controls_1.mouse.isDown && mouseTile.toughness) {
+                    if (gameObject.goForward === false && gameObject.goBackward === false &&
+                        gameObject.goLeft === false && gameObject.goRight === false) {
+                        var isThereAnItem = false;
+                        for (var slotIndex = 0; slotIndex < mouseTile.inventory.length; slotIndex++) {
+                            if (mouseTile.inventory[slotIndex].item !== Item.NONE) {
+                                isThereAnItem = true;
+                            }
+                        }
+                        if (!isThereAnItem) {
+                            if (mouseTile.upperLayer === TileType.IRON && !isInventoryFullForItem(Item.IRON)) {
+                                mouseTile.toughness--;
+                            }
+                            if (mouseTile.upperLayer === TileType.AURIT && !isInventoryFullForItem(Item.AURIT)) {
+                                mouseTile.toughness--;
+                            }
+                            if (mouseTile.upperLayer === TileType.CRYSTAL && !isInventoryFullForItem(Item.CRYSTAL)) {
+                                mouseTile.toughness--;
+                            }
+                            if (mouseTile.upperLayer === TileType.SILIKON && !isInventoryFullForItem(Item.SILIKON)) {
+                                mouseTile.toughness--;
+                            }
+                            if (mouseTile.upperLayer === TileType.MELTER && !isInventoryFullForItem(Item.MELTER)) {
+                                mouseTile.toughness--;
+                            }
+                            if (mouseTile.upperLayer === TileType.SPLITTER && !isInventoryFullForItem(Item.SPLITTER)) {
+                                mouseTile.toughness--;
+                            }
+                            if (mouseTile.upperLayer === TileType.SUN_BATERY && !isInventoryFullForItem(Item.SUN_BATERY)) {
+                                mouseTile.toughness--;
+                            }
+                            if (mouseTile.upperLayer === TileType.STORAGE && !isInventoryFullForItem(Item.STORAGE)) {
+                                mouseTile.toughness--;
+                            }
+                        }
+                        if ((mouseTile.toughness % 200 === 0 || mouseTile.toughness === 0)) {
+                            var color = null;
+                            if (mouseTile.upperLayer === TileType.IRON) {
+                                color = 'grey';
+                            }
+                            if (mouseTile.upperLayer === TileType.AURIT) {
+                                color = 'yellow';
+                            }
+                            if (mouseTile.upperLayer === TileType.CRYSTAL) {
+                                color = 'lightcoral';
+                            }
+                            if (mouseTile.upperLayer === TileType.SILIKON) {
+                                color = 'black';
+                            }
+                            if (color !== null) {
+                                burstParticles({
+                                    x: controls_1.mouse.worldX,
+                                    y: controls_1.mouse.worldY,
+                                    color: color,
+                                    speed: 1,
+                                    size: 20,
+                                    decrease: 0,
+                                    accel: 0,
+                                    count: 5
+                                });
+                            }
+                        }
+                    }
+                    if (mouseTile.toughness <= 0) {
+                        var x = mouseTile.x;
+                        var y = mouseTile.y;
+                        if (mouseTile.upperLayer === TileType.MELTER) {
+                            addItem(Item.MELTER, 1);
+                        }
+                        if (mouseTile.upperLayer === TileType.SPLITTER) {
+                            addItem(Item.SPLITTER, 1);
+                        }
+                        if (mouseTile.upperLayer === TileType.SUN_BATERY) {
+                            addItem(Item.SUN_BATERY, 1);
+                        }
+                        if (mouseTile.upperLayer === TileType.STORAGE) {
+                            addItem(Item.STORAGE, 1);
+                            if (mouseTile === controlledStorage) {
+                                controlledStorage = null;
+                            }
+                        }
+                        mouseTile.upperLayer = TileType.NONE;
+                    }
+                    var stripeWidth = 300;
+                    var width_1 = stripeWidth * (mouseTile.toughness / mouseTile.firstToughness);
+                    drawRect(camera.x + width_1 / 2 - 150, camera.y + camera.height / 4, width_1, 50, 0, 'green', false, drawing_2.Layer.UI);
+                }
+                if (controls_1.mouse.isDown && mouseTile) {
+                    moveToTile(mouseTile);
+                }
             }
-            if ((controlledStorage
-                &&
-                    distanceBetweenPoints(gameObject.x, gameObject.y, controlledStorage.x * TILE.width, controlledStorage.y * TILE.width)
-                        > TILE.width + gameObject.width) || (mouseTile && mouseTile && controls_1.mouse.wentDown && mouseTile === controlledStorage)) {
-                controlledStorage = null;
+            if (craftMode && controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 + 130 &&
+                controls_1.mouse.worldX < camera.x - camera.width / 2 + 170 &&
+                controls_1.mouse.worldY > camera.y - camera.height / 4 + 2 &&
+                controls_1.mouse.worldY < camera.y - camera.height / 4 + 30 &&
+                recipes[firstRecipeIndex - 1]) {
+                firstRecipeIndex--;
             }
-            else if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.STORAGE &&
-                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
-                    <= TILE.width + gameObject.width && !controlledStorage) {
-                controlledStorage = mouseTile;
+            if (craftMode && controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 + 130 &&
+                controls_1.mouse.worldX < camera.x - camera.width / 2 + 170 &&
+                controls_1.mouse.worldY > camera.y - camera.height / 4 + 422 &&
+                controls_1.mouse.worldY < camera.y - camera.height / 4 + 450 &&
+                recipes[firstRecipeIndex + 3]) {
+                firstRecipeIndex++;
             }
             if (controlledStorage) {
                 for (var slotIndex = 0; slotIndex < STORAGE_SLOT_COUNT; slotIndex++) {
@@ -1329,249 +1575,6 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         }
                     }
                 }
-            }
-            if (controls_1.mouse.wentDown && inventory[mainSlot]) {
-                if (inventory[mainSlot].item === Item.TOOLKIT &&
-                    gameObject.hitpoints !== gameObject.maxHitpoints) {
-                    gameObject.hitpoints += 100;
-                    if (gameObject.hitpoints > gameObject.maxHitpoints) {
-                        gameObject.hitpoints = gameObject.maxHitpoints;
-                    }
-                    removeItem(inventory[mainSlot].item, 1);
-                }
-                if (controls_1.mouse.worldX >= gameObject.x - gameObject.width / 2 &&
-                    controls_1.mouse.worldX <= gameObject.x + gameObject.width / 2 &&
-                    controls_1.mouse.worldY >= gameObject.y - gameObject.height / 2 &&
-                    controls_1.mouse.worldY <= gameObject.y + gameObject.height / 2) {
-                    if (inventory[mainSlot].item === Item.SUN_BATERY) {
-                        if (gameObject.sunBateryLvl === 0) {
-                            gameObject.sunBateryLvl = 1;
-                            timers[gameObject.energy] *= 0.25;
-                            gameObject.maxEnergy *= 0.25;
-                            removeItem(Item.SUN_BATERY, 1);
-                        }
-                    }
-                    else if (inventory[mainSlot].item === Item.GOLDEN_CAMERA) {
-                        if (gameObject.cameraLvl === 0) {
-                            gameObject.cameraLvl = 1;
-                            removeItem(Item.GOLDEN_CAMERA, 1);
-                        }
-                    }
-                    else if (inventory[mainSlot].item === Item.EXTRA_SLOT) {
-                        if (slotCount === 5) {
-                            slotCount++;
-                            inventory[slotCount - 1] = { item: Item.NONE, count: 0 };
-                            removeItem(Item.EXTRA_SLOT, 1);
-                        }
-                    }
-                    else if (inventory[mainSlot].item === Item.SHOCKPROOF_BODY) {
-                        if (gameObject.sprite !== drawing_2.imgShockProofBody) {
-                            gameObject.hitpoints = 150;
-                            gameObject.maxHitpoints = 150;
-                            gameObject.sprite = drawing_2.imgShockProofBody;
-                            removeItem(Item.SHOCKPROOF_BODY, 1);
-                        }
-                    }
-                    else {
-                        if (gameObject.sunBateryLvl === 1 && !isInventoryFullForItem(Item.SUN_BATERY)) {
-                            gameObject.sunBateryLvl = 0;
-                            timers[gameObject.energy] *= 100 / 25;
-                            gameObject.maxEnergy *= 100 / 25;
-                            addItem(Item.SUN_BATERY, 1);
-                        }
-                    }
-                }
-            }
-            if (mouseTile && controls_1.mouse.wentDown && !mouseTile.upperLayer &&
-                distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height)
-                    <= TILE.width + gameObject.width + 50 &&
-                !(craftMode &&
-                    controls_1.mouse.worldX >= camera.x - camera.width / 2 &&
-                    controls_1.mouse.worldX <= camera.x - camera.width / 2 + 300 &&
-                    controls_1.mouse.worldY >= camera.y - camera.height / 4 + 25 + 133 * 3 &&
-                    controls_1.mouse.worldY <= camera.y - camera.height / 4 + 133 + 25 + 133 * 3) &&
-                !(controls_1.mouse.worldX >= camera.x - 145 &&
-                    controls_1.mouse.worldX <= camera.x + 145 &&
-                    controls_1.mouse.worldY >= camera.y + camera.height / 2 - 70 &&
-                    controls_1.mouse.worldY <= camera.y + camera.height / 2 - 30)) {
-                if (!(gameObject.x >= mouseTile.x * TILE.width - TILE.width / 2 - gameObject.width / 2 &&
-                    gameObject.x <= mouseTile.x * TILE.width + TILE.width / 2 + gameObject.width / 2 &&
-                    gameObject.y >= mouseTile.y * TILE.height - TILE.height / 2 - gameObject.height / 2 &&
-                    gameObject.y <= mouseTile.y * TILE.height + TILE.height / 2 + gameObject.height / 2)) {
-                    if (inventory[mainSlot] && inventory[mainSlot].item === Item.MELTER && mouseTile.baseLayer === TileType.LAVA) {
-                        mouseTile.upperLayer = TileType.MELTER;
-                        mouseTile.toughness = 200;
-                        mouseTile.firstToughness = 200;
-                        mouseTile.specialTimer = addTimer(0);
-                        mouseTile.inventory[0] = { item: Item.NONE, count: 0 };
-                        removeItem(Item.MELTER, 1);
-                    }
-                    if (inventory[mainSlot] && inventory[mainSlot].item === Item.SPLITTER &&
-                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
-                        mouseTile.upperLayer = TileType.SPLITTER;
-                        mouseTile.toughness = 200;
-                        mouseTile.firstToughness = 200;
-                        removeItem(Item.SPLITTER, 1);
-                    }
-                    if (inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY &&
-                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
-                        mouseTile.upperLayer = TileType.SUN_BATERY;
-                        mouseTile.toughness = 200;
-                        mouseTile.firstToughness = 200;
-                        removeItem(Item.SUN_BATERY, 1);
-                    }
-                    if (inventory[mainSlot] && inventory[mainSlot].item === Item.STORAGE &&
-                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
-                        mouseTile.upperLayer = TileType.STORAGE;
-                        mouseTile.toughness = 200;
-                        mouseTile.firstToughness = 200;
-                        for (var i = 0; i < STORAGE_SLOT_COUNT; i++) {
-                            mouseTile.inventory[i] = { item: Item.NONE, count: 0 };
-                        }
-                        removeItem(Item.STORAGE, 1);
-                    }
-                }
-            }
-            if (craftMode) {
-                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 200 + 25, drawing_2.imgCrafts, 0, 300, 400, drawing_2.Layer.UI);
-                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 15, drawing_2.imgArrow1, 0, 40, 26, drawing_2.Layer.UI);
-                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 435, drawing_2.imgArrow1, 1 * Math.PI, 40, 26, drawing_2.Layer.UI);
-                for (var itemIndex = 0; itemIndex < 3; itemIndex++) {
-                    drawSprite(camera.x - camera.width / 2 + 60, camera.y - camera.height / 4 + 90 + 133 * itemIndex, recipes[firstRecipeIndex + itemIndex].sprite, 0, 70, 70, drawing_2.Layer.UI);
-                    drawText(camera.x - camera.width / 2 + 100, camera.y - camera.height / 4 + 50 + 133 * itemIndex, 'black', recipes[firstRecipeIndex + itemIndex].name, 25, drawing_2.Layer.UI);
-                    for (var partIndex = 0; partIndex < recipes[firstRecipeIndex + itemIndex].parts.length; partIndex++) {
-                        var row = 0;
-                        if (partIndex > 2) {
-                            row = 1;
-                        }
-                        drawSprite(camera.x - camera.width / 2 + 130 + 50 * partIndex - 150 * row, camera.y - camera.height / 4 + 90 + 133 * itemIndex + 50 * row, recipes[firstRecipeIndex + itemIndex].parts[partIndex].sprite, 0, 30, 30, drawing_2.Layer.UI);
-                        drawText(camera.x - camera.width / 2 + 120 + 50 * partIndex - 150 * row, camera.y - camera.height / 4 + 70 + 133 * itemIndex + 50 * row, 'black', "" + recipes[firstRecipeIndex + itemIndex].parts[partIndex].count, 15, drawing_2.Layer.UI);
-                    }
-                    if (controls_1.mouse.worldX >= camera.x - camera.width / 2 &&
-                        controls_1.mouse.worldX <= camera.x - camera.width / 2 + 300 &&
-                        controls_1.mouse.worldY >= camera.y - camera.height / 4 + 25 + 133 * itemIndex &&
-                        controls_1.mouse.worldY <= camera.y - camera.height / 4 + 133 + 25 + 133 * itemIndex) {
-                        drawText(camera.x + camera.width / 2 - 425, camera.y - 50, 'green', recipes[firstRecipeIndex + itemIndex].description1, 25, drawing_2.Layer.UI);
-                        drawText(camera.x + camera.width / 2 - 425, camera.y, 'green', recipes[firstRecipeIndex + itemIndex].description2, 25, drawing_2.Layer.UI);
-                        drawText(camera.x + camera.width / 2 - 425, camera.y + 50, 'green', recipes[firstRecipeIndex + itemIndex].description3, 25, drawing_2.Layer.UI);
-                        if (controls_1.mouse.wentDown) {
-                            craftRecipe(recipes[firstRecipeIndex + itemIndex]);
-                        }
-                    }
-                }
-            }
-            for (var particleIndex = 0; particleIndex < particles.length; particleIndex++) {
-                var particle_2 = particles[particleIndex];
-                if ((particle_2.color === 'grey' || particle_2.color === 'yellow' || particle_2.color === 'lightcoral' || particle_2.color === 'black') &&
-                    particle_2.radius < 15) {
-                    var particleAngle = angleBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y);
-                    var particleSpeed = rotateVector(6, 0, particleAngle);
-                    particle_2.accelX = 0;
-                    particle_2.accelY = 0;
-                    particle_2.x += particleSpeed[0] - particle_2.speedX;
-                    particle_2.y -= particleSpeed[1] + particle_2.speedY;
-                    if (distanceBetweenPoints(particle_2.x, particle_2.y, gameObject.x, gameObject.y) <= 5) {
-                        removeParticle(particleIndex);
-                    }
-                }
-                drawLight(particle_2.x + particle_2.radius, particle_2.y + particle_2.radius, particle_2.radius * 4);
-                if (gameObject.width / 2 + particle_2.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y) &&
-                    timers[gameObject.unhitableTimer] <= 0) {
-                    if (particle_2.color === 'red') {
-                        gameObject.hitpoints -= 50;
-                        timers[gameObject.unhitableTimer] = 180;
-                    }
-                }
-            }
-            if (controls_1.mouse.isDown && mouseTile) {
-                moveToTile(mouseTile);
-            }
-            if (mouseTile && controls_1.mouse.isDown && mouseTile.toughness) {
-                if (gameObject.goForward === false && gameObject.goBackward === false &&
-                    gameObject.goLeft === false && gameObject.goRight === false) {
-                    var isThereAnItem = false;
-                    for (var slotIndex = 0; slotIndex < mouseTile.inventory.length; slotIndex++) {
-                        if (mouseTile.inventory[slotIndex].item !== Item.NONE) {
-                            isThereAnItem = true;
-                        }
-                    }
-                    if (!isThereAnItem) {
-                        if (mouseTile.upperLayer === TileType.IRON && !isInventoryFullForItem(Item.IRON)) {
-                            mouseTile.toughness--;
-                        }
-                        if (mouseTile.upperLayer === TileType.AURIT && !isInventoryFullForItem(Item.AURIT)) {
-                            mouseTile.toughness--;
-                        }
-                        if (mouseTile.upperLayer === TileType.CRYSTAL && !isInventoryFullForItem(Item.CRYSTAL)) {
-                            mouseTile.toughness--;
-                        }
-                        if (mouseTile.upperLayer === TileType.SILIKON && !isInventoryFullForItem(Item.SILIKON)) {
-                            mouseTile.toughness--;
-                        }
-                        if (mouseTile.upperLayer === TileType.MELTER && !isInventoryFullForItem(Item.MELTER)) {
-                            mouseTile.toughness--;
-                        }
-                        if (mouseTile.upperLayer === TileType.SPLITTER && !isInventoryFullForItem(Item.SPLITTER)) {
-                            mouseTile.toughness--;
-                        }
-                        if (mouseTile.upperLayer === TileType.SUN_BATERY && !isInventoryFullForItem(Item.SUN_BATERY)) {
-                            mouseTile.toughness--;
-                        }
-                        if (mouseTile.upperLayer === TileType.STORAGE && !isInventoryFullForItem(Item.STORAGE)) {
-                            mouseTile.toughness--;
-                        }
-                    }
-                    if ((mouseTile.toughness % 200 === 0 || mouseTile.toughness === 0)) {
-                        var color = null;
-                        if (mouseTile.upperLayer === TileType.IRON) {
-                            color = 'grey';
-                        }
-                        if (mouseTile.upperLayer === TileType.AURIT) {
-                            color = 'yellow';
-                        }
-                        if (mouseTile.upperLayer === TileType.CRYSTAL) {
-                            color = 'lightcoral';
-                        }
-                        if (mouseTile.upperLayer === TileType.SILIKON) {
-                            color = 'black';
-                        }
-                        if (color !== null) {
-                            burstParticles({
-                                x: controls_1.mouse.worldX,
-                                y: controls_1.mouse.worldY,
-                                color: color,
-                                speed: 1,
-                                size: 20,
-                                decrease: 0,
-                                accel: 0,
-                                count: 5
-                            });
-                        }
-                    }
-                }
-                if (mouseTile.toughness <= 0) {
-                    var x = mouseTile.x;
-                    var y = mouseTile.y;
-                    if (mouseTile.upperLayer === TileType.MELTER) {
-                        addItem(Item.MELTER, 1);
-                    }
-                    if (mouseTile.upperLayer === TileType.SPLITTER) {
-                        addItem(Item.SPLITTER, 1);
-                    }
-                    if (mouseTile.upperLayer === TileType.SUN_BATERY) {
-                        addItem(Item.SUN_BATERY, 1);
-                    }
-                    if (mouseTile.upperLayer === TileType.STORAGE) {
-                        addItem(Item.STORAGE, 1);
-                        if (mouseTile === controlledStorage) {
-                            controlledStorage = null;
-                        }
-                    }
-                    mouseTile.upperLayer = TileType.NONE;
-                }
-                var stripeWidth = 300;
-                var width_1 = stripeWidth * (mouseTile.toughness / mouseTile.firstToughness);
-                drawRect(camera.x + width_1 / 2 - 150, camera.y + camera.height / 4, width_1, 50, 0, 'green', false, drawing_2.Layer.UI);
             }
             if (!gameObject.doNotDraw && gameObject.sunBateryLvl === 1) {
                 drawSprite(gameObject.x, gameObject.y, drawing_2.imgSunBatteryAdd, gameObject.angle, gameObject.width, gameObject.height, drawing_2.Layer.PLAYER);
