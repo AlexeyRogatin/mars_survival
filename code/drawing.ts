@@ -1,6 +1,5 @@
 import { Key } from "./controls";
 
-
 export const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 export const ctx = canvas.getContext("2d");
 canvas.width = innerWidth;
@@ -127,7 +126,12 @@ export let imgSilicon5 = loadImage('../sprites/silicon5.png');
 export let imgSiliconItem = loadImage('../sprites/siliconItem.png');
 export let imgVolcano = imgMountain;
 export let imgMagmaBall = loadImage('../sprites/magmaBall.png');
-export let imgStorage = loadImage('../sprites/imgStorage.png');
+export let imgStorage = loadImage('../sprites/storage.png');
+export let imgGoldenCamera = loadImage('../sprites/cameraGold.png');
+export let imgExtraSlot = loadImage('../sprites/extraSlot.png');
+export let imgExtraSlotItem = loadImage('../sprites/extraSlotItem.png');
+export let imgAlert = loadImage('../sprites/alert.png');
+export let imgShockProofBody = loadImage('../sprites/shockproof_body.png');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {

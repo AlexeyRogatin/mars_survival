@@ -1,6 +1,6 @@
 System.register("drawing", [], function (exports_1, context_1) {
     "use strict";
-    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgItems, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage;
+    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgItems, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlot, imgExtraSlotItem, imgAlert, imgShockProofBody;
     var __moduleName = context_1 && context_1.id;
     function resourceLoaded(src) {
         resourcesLoadedCount++;
@@ -178,13 +178,18 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgSiliconItem", imgSiliconItem = loadImage('../sprites/siliconItem.png'));
             exports_1("imgVolcano", imgVolcano = imgMountain);
             exports_1("imgMagmaBall", imgMagmaBall = loadImage('../sprites/magmaBall.png'));
-            exports_1("imgStorage", imgStorage = loadImage('../sprites/imgStorage.png'));
+            exports_1("imgStorage", imgStorage = loadImage('../sprites/storage.png'));
+            exports_1("imgGoldenCamera", imgGoldenCamera = loadImage('../sprites/cameraGold.png'));
+            exports_1("imgExtraSlot", imgExtraSlot = loadImage('../sprites/extraSlot.png'));
+            exports_1("imgExtraSlotItem", imgExtraSlotItem = loadImage('../sprites/extraSlotItem.png'));
+            exports_1("imgAlert", imgAlert = loadImage('../sprites/alert.png'));
+            exports_1("imgShockProofBody", imgShockProofBody = loadImage('../sprites/shockproof_body.png'));
         }
     };
 });
 System.register("controls", ["drawing"], function (exports_2, context_2) {
     "use strict";
-    var drawing_1, mouseX, mouseY, KeyCode, Key, Mouse, upKey, leftKey, downKey, rightKey, mouse;
+    var drawing_1, mouseX, mouseY, KeyCode, Key, Mouse, upKey, leftKey, downKey, rightKey, mouse, qKey;
     var __moduleName = context_2 && context_2.id;
     function handleKeyDown(event, keyCode, key) {
         if (keyCode === event.keyCode) {
@@ -211,6 +216,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
         clearKey(downKey);
         clearKey(upKey);
         clearKey(rightKey);
+        clearKey(qKey);
         mouse.wentUp = false;
         mouse.wentDown = false;
     }
@@ -229,6 +235,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
                 KeyCode[KeyCode["LEFT"] = 65] = "LEFT";
                 KeyCode[KeyCode["DOWN"] = 83] = "DOWN";
                 KeyCode[KeyCode["UP"] = 87] = "UP";
+                KeyCode[KeyCode["Q"] = 81] = "Q";
             })(KeyCode || (KeyCode = {}));
             exports_2("KeyCode", KeyCode);
             Key = (function () {
@@ -251,17 +258,20 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
             exports_2("downKey", downKey = new Key());
             exports_2("rightKey", rightKey = new Key());
             exports_2("mouse", mouse = new Mouse());
+            exports_2("qKey", qKey = new Key());
             window.onkeydown = function onkeydown(event) {
                 handleKeyDown(event, KeyCode.UP, upKey);
                 handleKeyDown(event, KeyCode.DOWN, downKey);
                 handleKeyDown(event, KeyCode.LEFT, leftKey);
                 handleKeyDown(event, KeyCode.RIGHT, rightKey);
+                handleKeyDown(event, KeyCode.Q, qKey);
             };
             window.onkeyup = function onkeyup(event) {
                 handleKeyUp(event, KeyCode.UP, upKey);
                 handleKeyUp(event, KeyCode.DOWN, downKey);
                 handleKeyUp(event, KeyCode.LEFT, leftKey);
                 handleKeyUp(event, KeyCode.RIGHT, rightKey);
+                handleKeyUp(event, KeyCode.Q, qKey);
             };
             window.onmousemove = function onmousemove(event) {
                 mouse.x = event.clientX - drawing_1.canvas.clientLeft;
@@ -284,7 +294,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
 });
 System.register("index", ["controls", "drawing"], function (exports_3, context_3) {
     "use strict";
-    var controls_1, drawing_2, GameObjectType, TileType, TILE, InventorySlot, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, SLOT_COUNT, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, MAX_RANGE, STORAGE_SLOT_COUNT;
+    var controls_1, drawing_2, GameObjectType, TileType, TILE, InventorySlot, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, slotCount, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, MAX_RANGE, STORAGE_SLOT_COUNT;
     var __moduleName = context_3 && context_3.id;
     function getIndexFromCoords(x, y) {
         var result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
@@ -387,7 +397,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
     }
     function isInventoryFullForItem(result) {
         var inventoryFull = true;
-        for (var inventoryIndex = 0; inventoryIndex < SLOT_COUNT; inventoryIndex++) {
+        for (var inventoryIndex = 0; inventoryIndex < slotCount; inventoryIndex++) {
             if (inventory[inventoryIndex].item === Item.NONE || inventory[inventoryIndex].item === result) {
                 inventoryFull = false;
             }
@@ -410,6 +420,10 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             var slot = getInventorySlotWithItem(part.item);
             if (!(slot && slot.count >= part.count)) {
                 canCraft = false;
+                break;
+            }
+            if (slot && slot.count >= part.count) {
+                canCraft = true;
                 break;
             }
         }
@@ -507,6 +521,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             type: type,
             x: x,
             y: y,
+            firstX: x,
+            firstY: y,
             width: 100,
             height: 100,
             angle: 0,
@@ -535,6 +551,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             unhitableTimer: 0,
             doNotDraw: false,
             sunBateryLvl: 0,
+            cameraLvl: 0,
             stuckable: false,
             lifeTime: 0,
             angleZ: randomFloat(0.25 * Math.PI, 0.5 * Math.PI)
@@ -818,10 +835,13 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 {
                     sprite = drawing_2.imgGeyser;
                     if (tile.upperLayer === TileType.NONE) {
-                        if (tile.x * TILE.width > globalPlayer.x - camera.width / 2
-                            && tile.x * TILE.width < globalPlayer.x + camera.width / 2
-                            && tile.y * TILE.height > globalPlayer.y - camera.height / 2
-                            && tile.y * TILE.height < globalPlayer.y + camera.height / 2) {
+                        if (tile.x * TILE.width > camera.x - camera.width / 2 - tile.width / 2
+                            && tile.x * TILE.width < camera.x + camera.width / 2 + tile.width / 2
+                            && tile.y * TILE.height > camera.y - camera.height / 2 - tile.height / 2
+                            && tile.y * TILE.height < camera.y + camera.height / 2 + tile.height / 2) {
+                            if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < 200 && timers[tile.specialTimer] > 150) {
+                                drawSprite(tile.x * tile.width, tile.y * tile.height, drawing_2.imgAlert, 0, tile.width, tile.height, drawing_2.Layer.ON_TILE);
+                            }
                             if (timers[tile.specialTimer] <= 0) {
                                 timers[tile.specialTimer] = randomInt(500, 2000);
                             }
@@ -1003,7 +1023,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             case TileType.VOLCANO:
                 {
                     sprite = drawing_2.imgVolcano;
-                    if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.width) < VOLCANO_RADIUS) {
+                    if (distanceBetweenPoints(camera.x, camera.y, tile.x * TILE.width, tile.y * TILE.width) < VOLCANO_RADIUS) {
                         if (timers[tile.specialTimer] === 0) {
                             addGameObject(GameObjectType.MAGMA_BALL, tile.x * TILE.width, tile.y * TILE.height);
                             timers[tile.specialTimer] = randomInt(50, 500);
@@ -1042,7 +1062,11 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
         if (!gameObject.doNotDraw) {
             if (gameObject.sprite) {
-                drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, drawing_2.Layer.PLAYER);
+                if (gameObject.type === GameObjectType.MAGMA_BALL) {
+                    drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, drawing_2.Layer.PLAYER);
+                }
+                else
+                    drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, drawing_2.Layer.PLAYER);
             }
             else {
                 drawRect(gameObject.x, gameObject.y, gameObject.width, gameObject.height, -gameObject.angle, gameObject.color, false);
@@ -1071,8 +1095,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             if (gameObject.y + gameObject.speedY > TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY) {
                 gameObject.y -= (gameObject.y + gameObject.speedY) - (TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY);
             }
-            for (var slotIndex = 0; slotIndex < SLOT_COUNT; slotIndex++) {
-                drawRect(camera.x - SLOT_COUNT * 40 / 2 + slotIndex * 50, camera.y + camera.height / 2 - 50, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
+            for (var slotIndex = 0; slotIndex < slotCount; slotIndex++) {
+                drawRect(camera.x - slotCount * 40 / 2 + slotIndex * 50, camera.y + camera.height / 2 - 50, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
             }
             drawSprite(camera.x - camera.width / 2 + 10, camera.y - camera.height / 4, drawing_2.imgArrow, 0, 30, 50, drawing_2.Layer.UI);
             var STRIPE_WIDTH = 200;
@@ -1086,6 +1110,12 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 50, 'blue', Math.floor((ONE_DAY - timers[dayTimer]) / hour) + " : " + Math.floor((ONE_DAY - timers[dayTimer]) / minute) % 60, 25, drawing_2.Layer.UI);
             drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 100, 'blue', "x: " + Math.round((gameObject.x) / TILE.width), 25, drawing_2.Layer.UI);
             drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 130, 'blue', "y: " + Math.round((gameObject.y) / TILE.height), 25, drawing_2.Layer.UI);
+            if (controls_1.qKey.wentDown) {
+                inventory[mainSlot] = { item: Item.NONE, count: 0 };
+            }
+            if (isInventoryFullForItem(Item.NONE)) {
+                drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, drawing_2.Layer.UI);
+            }
             if (controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 - 10 &&
                 controls_1.mouse.worldX < camera.x - camera.width / 2 + 25 &&
                 controls_1.mouse.worldY > camera.y - camera.height / 4 - 25 &&
@@ -1108,7 +1138,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             for (var itemIndex = 0; itemIndex <= inventory.length; itemIndex++) {
                 if (inventory[itemIndex]) {
-                    var x = camera.x - SLOT_COUNT * 20;
+                    var x = camera.x - slotCount * 20;
                     var y = camera.y + camera.height / 2 - 50;
                     var sprite = null;
                     if (inventory[itemIndex].item === Item.NONE) {
@@ -1147,6 +1177,15 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     if (inventory[itemIndex].item === Item.STORAGE) {
                         sprite = drawing_2.imgStorage;
                     }
+                    if (inventory[itemIndex].item === Item.GOLDEN_CAMERA) {
+                        sprite = drawing_2.imgGoldenCamera;
+                    }
+                    if (inventory[itemIndex].item === Item.EXTRA_SLOT) {
+                        sprite = drawing_2.imgExtraSlotItem;
+                    }
+                    if (inventory[itemIndex].item === Item.SHOCKPROOF_BODY) {
+                        sprite = drawing_2.imgShockProofBody;
+                    }
                     if (itemIndex === mainSlot) {
                         drawRect(x + 50 * itemIndex, y, 50, 50, 0, 'green', true, drawing_2.Layer.UI);
                     }
@@ -1156,8 +1195,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
             }
-            for (var slotIndex = 0; slotIndex < SLOT_COUNT; slotIndex++) {
-                var slotX = camera.x - SLOT_COUNT * 40 / 2 + slotIndex * 50;
+            for (var slotIndex = 0; slotIndex < slotCount; slotIndex++) {
+                var slotX = camera.x - slotCount * 40 / 2 + slotIndex * 50;
                 var slotY = camera.y + camera.height / 2 - 50;
                 if (controls_1.mouse.wentDown &&
                     controls_1.mouse.worldX > slotX - 20 &&
@@ -1173,7 +1212,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.MELTER &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
-                    TILE.width + globalPlayer.width) {
+                    TILE.width + gameObject.width) {
                 if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
                     (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT)) {
                     mouseTile.inventory[0].item = inventory[mainSlot].item;
@@ -1194,7 +1233,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.SPLITTER &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
-                    <= TILE.width + globalPlayer.width) {
+                    <= TILE.width + gameObject.width) {
                 if (inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
                     while (timers[gameObject.energy] <= gameObject.maxEnergy && inventory[mainSlot].count > 0) {
                         timers[gameObject.energy] += 2000;
@@ -1208,12 +1247,12 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             if ((controlledStorage
                 &&
                     distanceBetweenPoints(gameObject.x, gameObject.y, controlledStorage.x * TILE.width, controlledStorage.y * TILE.width)
-                        > TILE.width + globalPlayer.width) || (mouseTile && mouseTile && controls_1.mouse.wentDown && mouseTile === controlledStorage)) {
+                        > TILE.width + gameObject.width) || (mouseTile && mouseTile && controls_1.mouse.wentDown && mouseTile === controlledStorage)) {
                 controlledStorage = null;
             }
             else if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.STORAGE &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
-                    <= TILE.width + globalPlayer.width && !controlledStorage) {
+                    <= TILE.width + gameObject.width && !controlledStorage) {
                 controlledStorage = mouseTile;
             }
             if (controlledStorage) {
@@ -1266,6 +1305,15 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     if (controlledStorage.inventory[slotIndex].item === Item.STORAGE) {
                         sprite = drawing_2.imgStorage;
                     }
+                    if (controlledStorage.inventory[slotIndex].item === Item.GOLDEN_CAMERA) {
+                        sprite = drawing_2.imgGoldenCamera;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.EXTRA_SLOT) {
+                        sprite = drawing_2.imgExtraSlotItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.SHOCKPROOF_BODY) {
+                        sprite = drawing_2.imgShockProofBody;
+                    }
                     drawSprite(x, y, sprite, 0, 40, 40, drawing_2.Layer.UI);
                     if (controlledStorage.inventory[slotIndex].count !== 0) {
                         drawText(x, y - 50, 'green', "" + controlledStorage.inventory[slotIndex].count, 25, drawing_2.Layer.UI);
@@ -1282,30 +1330,61 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
             }
-            if (controls_1.mouse.wentDown && inventory[mainSlot] && inventory[mainSlot].item === Item.TOOLKIT &&
-                globalPlayer.hitpoints !== globalPlayer.maxHitpoints) {
-                globalPlayer.hitpoints += 100;
-                if (globalPlayer.hitpoints > globalPlayer.maxHitpoints) {
-                    globalPlayer.hitpoints = globalPlayer.maxHitpoints;
-                }
-                removeItem(inventory[mainSlot].item, 1);
-            }
-            if (controls_1.mouse.wentDown && inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY) {
-                if (controls_1.mouse.worldX >= globalPlayer.x - globalPlayer.width / 2 &&
-                    controls_1.mouse.worldX <= globalPlayer.x + globalPlayer.width / 2 &&
-                    controls_1.mouse.worldY >= globalPlayer.y - globalPlayer.height / 2 &&
-                    controls_1.mouse.worldY <= globalPlayer.y + globalPlayer.height / 2) {
-                    if (gameObject.sunBateryLvl === 0) {
-                        globalPlayer.sunBateryLvl = 1;
-                        timers[globalPlayer.energy] *= 0.5;
-                        globalPlayer.maxEnergy *= 0.5;
+            if (controls_1.mouse.wentDown && inventory[mainSlot]) {
+                if (inventory[mainSlot].item === Item.TOOLKIT &&
+                    gameObject.hitpoints !== gameObject.maxHitpoints) {
+                    gameObject.hitpoints += 100;
+                    if (gameObject.hitpoints > gameObject.maxHitpoints) {
+                        gameObject.hitpoints = gameObject.maxHitpoints;
                     }
-                    removeItem(Item.SUN_BATERY, 1);
+                    removeItem(inventory[mainSlot].item, 1);
+                }
+                if (controls_1.mouse.worldX >= gameObject.x - gameObject.width / 2 &&
+                    controls_1.mouse.worldX <= gameObject.x + gameObject.width / 2 &&
+                    controls_1.mouse.worldY >= gameObject.y - gameObject.height / 2 &&
+                    controls_1.mouse.worldY <= gameObject.y + gameObject.height / 2) {
+                    if (inventory[mainSlot].item === Item.SUN_BATERY) {
+                        if (gameObject.sunBateryLvl === 0) {
+                            gameObject.sunBateryLvl = 1;
+                            timers[gameObject.energy] *= 0.25;
+                            gameObject.maxEnergy *= 0.25;
+                            removeItem(Item.SUN_BATERY, 1);
+                        }
+                    }
+                    else if (inventory[mainSlot].item === Item.GOLDEN_CAMERA) {
+                        if (gameObject.cameraLvl === 0) {
+                            gameObject.cameraLvl = 1;
+                            removeItem(Item.GOLDEN_CAMERA, 1);
+                        }
+                    }
+                    else if (inventory[mainSlot].item === Item.EXTRA_SLOT) {
+                        if (slotCount === 5) {
+                            slotCount++;
+                            inventory[slotCount - 1] = { item: Item.NONE, count: 0 };
+                            removeItem(Item.EXTRA_SLOT, 1);
+                        }
+                    }
+                    else if (inventory[mainSlot].item === Item.SHOCKPROOF_BODY) {
+                        if (gameObject.sprite !== drawing_2.imgShockProofBody) {
+                            gameObject.hitpoints = 150;
+                            gameObject.maxHitpoints = 150;
+                            gameObject.sprite = drawing_2.imgShockProofBody;
+                            removeItem(Item.SHOCKPROOF_BODY, 1);
+                        }
+                    }
+                    else {
+                        if (gameObject.sunBateryLvl === 1 && !isInventoryFullForItem(Item.SUN_BATERY)) {
+                            gameObject.sunBateryLvl = 0;
+                            timers[gameObject.energy] *= 100 / 25;
+                            gameObject.maxEnergy *= 100 / 25;
+                            addItem(Item.SUN_BATERY, 1);
+                        }
+                    }
                 }
             }
             if (mouseTile && controls_1.mouse.wentDown && !mouseTile.upperLayer &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height)
-                    <= TILE.width + globalPlayer.width + 50 &&
+                    <= TILE.width + gameObject.width + 50 &&
                 !(craftMode &&
                     controls_1.mouse.worldX >= camera.x - camera.width / 2 &&
                     controls_1.mouse.worldX <= camera.x - camera.width / 2 + 300 &&
@@ -1315,10 +1394,10 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     controls_1.mouse.worldX <= camera.x + 145 &&
                     controls_1.mouse.worldY >= camera.y + camera.height / 2 - 70 &&
                     controls_1.mouse.worldY <= camera.y + camera.height / 2 - 30)) {
-                if (!(globalPlayer.x >= mouseTile.x * TILE.width - TILE.width / 2 - globalPlayer.width / 2 &&
-                    globalPlayer.x <= mouseTile.x * TILE.width + TILE.width / 2 + globalPlayer.width / 2 &&
-                    globalPlayer.y >= mouseTile.y * TILE.height - TILE.height / 2 - globalPlayer.height / 2 &&
-                    globalPlayer.y <= mouseTile.y * TILE.height + TILE.height / 2 + globalPlayer.height / 2)) {
+                if (!(gameObject.x >= mouseTile.x * TILE.width - TILE.width / 2 - gameObject.width / 2 &&
+                    gameObject.x <= mouseTile.x * TILE.width + TILE.width / 2 + gameObject.width / 2 &&
+                    gameObject.y >= mouseTile.y * TILE.height - TILE.height / 2 - gameObject.height / 2 &&
+                    gameObject.y <= mouseTile.y * TILE.height + TILE.height / 2 + gameObject.height / 2)) {
                     if (inventory[mainSlot] && inventory[mainSlot].item === Item.MELTER && mouseTile.baseLayer === TileType.LAVA) {
                         mouseTile.upperLayer = TileType.MELTER;
                         mouseTile.toughness = 200;
@@ -1385,7 +1464,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 var particle_2 = particles[particleIndex];
                 if ((particle_2.color === 'grey' || particle_2.color === 'yellow' || particle_2.color === 'lightcoral' || particle_2.color === 'black') &&
                     particle_2.radius < 15) {
-                    var particleAngle = angleBetweenPoints(globalPlayer.x, globalPlayer.y, particle_2.x, particle_2.y);
+                    var particleAngle = angleBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y);
                     var particleSpeed = rotateVector(6, 0, particleAngle);
                     particle_2.accelX = 0;
                     particle_2.accelY = 0;
@@ -1408,8 +1487,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 moveToTile(mouseTile);
             }
             if (mouseTile && controls_1.mouse.isDown && mouseTile.toughness) {
-                if (globalPlayer.goForward === false && globalPlayer.goBackward === false &&
-                    globalPlayer.goLeft === false && globalPlayer.goRight === false) {
+                if (gameObject.goForward === false && gameObject.goBackward === false &&
+                    gameObject.goLeft === false && gameObject.goRight === false) {
                     var isThereAnItem = false;
                     for (var slotIndex = 0; slotIndex < mouseTile.inventory.length; slotIndex++) {
                         if (mouseTile.inventory[slotIndex].item !== Item.NONE) {
@@ -1498,8 +1577,15 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 drawSprite(gameObject.x, gameObject.y, drawing_2.imgSunBatteryAdd, gameObject.angle, gameObject.width, gameObject.height, drawing_2.Layer.PLAYER);
             }
             var angle = angleBetweenPoints(controls_1.mouse.worldX, controls_1.mouse.worldY, gameObject.x, gameObject.y);
+            var cameraSprite = drawing_2.imgNone;
+            if (gameObject.cameraLvl === 0) {
+                cameraSprite = drawing_2.imgCamera;
+            }
+            if (gameObject.cameraLvl === 1) {
+                cameraSprite = drawing_2.imgGoldenCamera;
+            }
             if (!gameObject.doNotDraw) {
-                drawSprite(gameObject.x, gameObject.y, drawing_2.imgCamera, angle, 30, 30, drawing_2.Layer.PLAYER);
+                drawSprite(gameObject.x, gameObject.y, cameraSprite, angle, 30, 30, drawing_2.Layer.PLAYER);
             }
             var _a = rotateVector(46, 40, -gameObject.angle), wheel1X = _a[0], wheel1Y = _a[1];
             var _b = rotateVector(9, 45, -gameObject.angle), wheel2X = _b[0], wheel2Y = _b[1];
@@ -1613,7 +1699,12 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             gameObject.speedX = speedVector[0];
             gameObject.speedY = speedVector[1];
             var height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
-            gameObject.angle += Math.PI / 180;
+            var range = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
+            var rangeProjections = rotateVector(range, 0, gameObject.angle);
+            if (globalPlayer.cameraLvl === 1) {
+                drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, drawing_2.Layer.ON_TILE);
+                drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 90, 90, drawing_2.Layer.ON_TILE);
+            }
             drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
             gameObject.width = 100 + height;
             gameObject.height = 100 + height;
@@ -1692,6 +1783,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 GameObjectType[GameObjectType["NONE"] = 0] = "NONE";
                 GameObjectType[GameObjectType["PLAYER"] = 1] = "PLAYER";
                 GameObjectType[GameObjectType["MAGMA_BALL"] = 2] = "MAGMA_BALL";
+                GameObjectType[GameObjectType["METEORITE"] = 3] = "METEORITE";
             })(GameObjectType || (GameObjectType = {}));
             (function (TileType) {
                 TileType[TileType["NONE"] = 0] = "NONE";
@@ -1801,6 +1893,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 Item[Item["SUN_BATERY"] = 9] = "SUN_BATERY";
                 Item[Item["SILIKON"] = 10] = "SILIKON";
                 Item[Item["STORAGE"] = 11] = "STORAGE";
+                Item[Item["GOLDEN_CAMERA"] = 12] = "GOLDEN_CAMERA";
+                Item[Item["EXTRA_SLOT"] = 13] = "EXTRA_SLOT";
+                Item[Item["SHOCKPROOF_BODY"] = 14] = "SHOCKPROOF_BODY";
             })(Item || (Item = {}));
             RecipePart = (function () {
                 function RecipePart() {
@@ -1832,6 +1927,15 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     description3: 'Нужно что-то посерьёзнее'
                 },
                 {
+                    result: Item.STORAGE,
+                    parts: [{ item: Item.IRON_INGOT, count: 20, sprite: drawing_2.imgIronIngot }],
+                    sprite: drawing_2.imgStorage,
+                    name: 'Хранилище',
+                    description1: 'Это сундук из Майнкрафта,',
+                    description2: 'ни больше, ни меньше.',
+                    description3: 'Хватит вопросов!'
+                },
+                {
                     result: Item.TOOLKIT,
                     parts: [{ item: Item.IRON_INGOT, count: 5, sprite: drawing_2.imgIronIngot }],
                     sprite: drawing_2.imgToolkit,
@@ -1839,6 +1943,15 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     description1: 'Все травмы можно залатать,',
                     description2: 'если они не душевные.',
                     description3: 'Восполняет жизни (расходник)'
+                },
+                {
+                    result: Item.EXTRA_SLOT,
+                    parts: [{ item: Item.IRON_INGOT, count: 40, sprite: drawing_2.imgIronIngot }],
+                    sprite: drawing_2.imgExtraSlotItem,
+                    name: 'Допслот',
+                    description1: 'Как же замечательно иметь ещё',
+                    description2: 'чуть-чуть места под рукой! Сюда',
+                    description3: 'можно положить немного счастья.'
                 },
                 {
                     result: Item.SUN_BATERY,
@@ -1850,20 +1963,35 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     description3: 'уменьшает запас энергии в 2 раза...'
                 },
                 {
-                    result: Item.STORAGE,
-                    parts: [{ item: Item.IRON_INGOT, count: 20, sprite: drawing_2.imgIronIngot }],
-                    sprite: drawing_2.imgStorage,
-                    name: 'Хранилище',
-                    description1: 'Это сундук из Майнкрафта,',
-                    description2: 'ни больше, ни меньше.',
-                    description3: 'Хватит вопросов!'
+                    result: Item.GOLDEN_CAMERA,
+                    parts: [{ item: Item.AURIT_INGOT, count: 40, sprite: drawing_2.imgAuritIngot }],
+                    sprite: drawing_2.imgGoldenCamera,
+                    name: 'Зоркая камера',
+                    description1: 'Действительно ауритовая вещь!',
+                    description2: 'Позволяет видеть опасности,',
+                    description3: 'если хорошо приглядеться.'
+                },
+                {
+                    result: Item.SHOCKPROOF_BODY,
+                    parts: [{ item: Item.SILIKON, count: 30, sprite: drawing_2.imgSiliconItem },
+                        { item: Item.AURIT_INGOT, count: 30, sprite: drawing_2.imgAuritIngot }],
+                    sprite: drawing_2.imgShockProofBody,
+                    name: 'Крепкое тело',
+                    description1: 'Красивый ауритовый корпус говорит',
+                    description2: 'о непрочности, но слой силикона',
+                    description3: 'говорит обратное. Больше жизней'
                 },
             ];
-            SLOT_COUNT = 5;
+            slotCount = 5;
             inventory = [];
-            for (var i = 0; i < SLOT_COUNT; i++) {
+            for (var i = 0; i < slotCount; i++) {
                 inventory.push(new InventorySlot());
             }
+            addItem(Item.IRON_INGOT, 20);
+            addItem(Item.IRON, 20);
+            addItem(Item.AURIT, 20);
+            addItem(Item.AURIT_INGOT, 20);
+            addItem(Item.SILIKON, 20);
             drawQueue = [];
             alpha = 0;
             MORNING_LENGTH = 6000;
@@ -1980,7 +2108,6 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
             }
             globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
-            addItem(Item.STORAGE, 1);
             craftMode = false;
             firstRecipeIndex = 0;
             mainSlot = 0;

@@ -1,4 +1,4 @@
-import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, Key, mouseX } from "./controls";
+import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, Key, mouseX, qKey } from "./controls";
 import {
     ctx, canvas, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera,
     imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgIron1, imgIron2, imgIron3, imgIron4,
@@ -6,13 +6,14 @@ import {
     imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritIngot, imgAuritItem,
     imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, backCtx, backBuffer, imgToolkit,
     imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem,
-    imgVolcano, imgMagmaBall, imgStorage
+    imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody
 } from "./drawing";
 
 enum GameObjectType {
     NONE,
     PLAYER,
     MAGMA_BALL,
+    METEORITE,
 }
 
 enum TileType {
@@ -154,6 +155,9 @@ enum Item {
     SUN_BATERY,
     SILIKON,
     STORAGE,
+    GOLDEN_CAMERA,
+    EXTRA_SLOT,
+    SHOCKPROOF_BODY,
 }
 
 class RecipePart {
@@ -192,6 +196,15 @@ let recipes: Recipe[] = [
         description3: 'Нужно что-то посерьёзнее',
     },
     {
+        result: Item.STORAGE,
+        parts: [{ item: Item.IRON_INGOT, count: 20, sprite: imgIronIngot }],
+        sprite: imgStorage,
+        name: 'Хранилище',
+        description1: 'Это сундук из Майнкрафта,',
+        description2: 'ни больше, ни меньше.',
+        description3: 'Хватит вопросов!',
+    },
+    {
         result: Item.TOOLKIT,
         parts: [{ item: Item.IRON_INGOT, count: 5, sprite: imgIronIngot }],
         sprite: imgToolkit,
@@ -199,6 +212,15 @@ let recipes: Recipe[] = [
         description1: 'Все травмы можно залатать,',
         description2: 'если они не душевные.',
         description3: 'Восполняет жизни (расходник)',
+    },
+    {
+        result: Item.EXTRA_SLOT,
+        parts: [{ item: Item.IRON_INGOT, count: 40, sprite: imgIronIngot }],
+        sprite: imgExtraSlotItem,
+        name: 'Допслот',
+        description1: 'Как же замечательно иметь ещё',
+        description2: 'чуть-чуть места под рукой! Сюда',
+        description3: 'можно положить немного счастья.',
     },
     {
         result: Item.SUN_BATERY,
@@ -210,19 +232,29 @@ let recipes: Recipe[] = [
         description3: 'уменьшает запас энергии в 2 раза...',
     },
     {
-        result: Item.STORAGE,
-        parts: [{ item: Item.IRON_INGOT, count: 20, sprite: imgIronIngot }],
-        sprite: imgStorage,
-        name: 'Хранилище',
-        description1: 'Это сундук из Майнкрафта,',
-        description2: 'ни больше, ни меньше.',
-        description3: 'Хватит вопросов!',
+        result: Item.GOLDEN_CAMERA,
+        parts: [{ item: Item.AURIT_INGOT, count: 40, sprite: imgAuritIngot }],
+        sprite: imgGoldenCamera,
+        name: 'Зоркая камера',
+        description1: 'Действительно ауритовая вещь!',
+        description2: 'Позволяет видеть опасности,',
+        description3: 'если хорошо приглядеться.',
+    },
+    {
+        result: Item.SHOCKPROOF_BODY,
+        parts: [{ item: Item.SILIKON, count: 30, sprite: imgSiliconItem },
+        { item: Item.AURIT_INGOT, count: 30, sprite: imgAuritIngot }],
+        sprite: imgShockProofBody,
+        name: 'Крепкое тело',
+        description1: 'Красивый ауритовый корпус говорит',
+        description2: 'о непрочности, но слой силикона',
+        description3: 'говорит обратное. Больше жизней',
     },
 ];
 
-const SLOT_COUNT = 5;
+let slotCount = 5;
 let inventory: InventorySlot[] = [];
-for (let i = 0; i < SLOT_COUNT; i++) {
+for (let i = 0; i < slotCount; i++) {
     inventory.push(new InventorySlot());
 }
 
@@ -242,6 +274,12 @@ function addItem(item: Item, count: number) {
     resultSlot.item = item;
     resultSlot.count += count;
 }
+
+addItem(Item.IRON_INGOT, 20);
+addItem(Item.IRON, 20);
+addItem(Item.AURIT, 20);
+addItem(Item.AURIT_INGOT, 20);
+addItem(Item.SILIKON, 20);
 
 function addItemToStorage(item: Item, count: number, tile: Tile) {
     let resultSlot = getStorageSlotWithItem(item, tile);
@@ -321,7 +359,7 @@ function getStorageSlotWithItem(item: Item, tile: Tile) {
 
 function isInventoryFullForItem(result: Item) {
     let inventoryFull = true;
-    for (let inventoryIndex = 0; inventoryIndex < SLOT_COUNT; inventoryIndex++) {
+    for (let inventoryIndex = 0; inventoryIndex < slotCount; inventoryIndex++) {
         if (inventory[inventoryIndex].item === Item.NONE || inventory[inventoryIndex].item === result) {
             inventoryFull = false;
         }
@@ -346,6 +384,10 @@ function craftRecipe(recipe: Recipe) {
         let slot = getInventorySlotWithItem(part.item);
         if (!(slot && slot.count >= part.count)) {
             canCraft = false;
+            break;
+        }
+        if (slot && slot.count >= part.count) {
+            canCraft = true;
             break;
         }
     }
@@ -468,6 +510,8 @@ class GameObject {
     type: GameObjectType = GameObjectType.NONE;
     x: number;
     y: number;
+    firstX: number;
+    firstY: number;
     width: number;
     height: number;
     angle: number;
@@ -508,6 +552,7 @@ class GameObject {
     doNotDraw: boolean;
 
     sunBateryLvl: number;
+    cameraLvl: number;
 
     stuckable: boolean;
 
@@ -522,6 +567,8 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
 
         x: x,
         y: y,
+        firstX: x,
+        firstY: y,
 
         width: 100,
         height: 100,
@@ -560,6 +607,7 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         doNotDraw: false,
 
         sunBateryLvl: 0,
+        cameraLvl: 0,
 
         stuckable: false,
 
@@ -952,8 +1000,6 @@ function distanceBetweenPoints(x1: number, y1: number, x2: number, y2: number) {
 
 let globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
 
-addItem(Item.STORAGE, 1)
-
 function moveToTile(mouseTile: Tile) {
     let [x, y] = tilesToPixels(mouseTile.x, mouseTile.y);
     let angle = angleBetweenPoints(x, y, globalPlayer.x, globalPlayer.y);
@@ -1010,11 +1056,14 @@ function updateTile(tileType: TileType, tile: Tile) {
             sprite = imgGeyser;
             if (tile.upperLayer === TileType.NONE) {
                 if (
-                    tile.x * TILE.width > globalPlayer.x - camera.width / 2
-                    && tile.x * TILE.width < globalPlayer.x + camera.width / 2
-                    && tile.y * TILE.height > globalPlayer.y - camera.height / 2
-                    && tile.y * TILE.height < globalPlayer.y + camera.height / 2
+                    tile.x * TILE.width > camera.x - camera.width / 2 - tile.width / 2
+                    && tile.x * TILE.width < camera.x + camera.width / 2 + tile.width / 2
+                    && tile.y * TILE.height > camera.y - camera.height / 2 - tile.height / 2
+                    && tile.y * TILE.height < camera.y + camera.height / 2 + tile.height / 2
                 ) {
+                    if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < 200 && timers[tile.specialTimer] > 150) {
+                        drawSprite(tile.x * tile.width, tile.y * tile.height, imgAlert, 0, tile.width, tile.height, Layer.ON_TILE);
+                    }
                     if (timers[tile.specialTimer] <= 0) {
                         timers[tile.specialTimer] = randomInt(500, 2000);
                     }
@@ -1169,7 +1218,7 @@ function updateTile(tileType: TileType, tile: Tile) {
         case TileType.VOLCANO: {
             sprite = imgVolcano;
             if (
-                distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.width) < VOLCANO_RADIUS
+                distanceBetweenPoints(camera.x, camera.y, tile.x * TILE.width, tile.y * TILE.width) < VOLCANO_RADIUS
             ) {
                 if (timers[tile.specialTimer] === 0) {
                     addGameObject(GameObjectType.MAGMA_BALL, tile.x * TILE.width, tile.y * TILE.height);
@@ -1214,7 +1263,10 @@ function updateGameObject(gameObject: GameObject) {
     //прорисовка
     if (!gameObject.doNotDraw) {
         if (gameObject.sprite) {
-            drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, Layer.PLAYER);
+            if (gameObject.type === GameObjectType.MAGMA_BALL) {
+                drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, Layer.PLAYER);
+            } else
+                drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, Layer.PLAYER);
         } else {
             drawRect(gameObject.x, gameObject.y, gameObject.width, gameObject.height, -gameObject.angle, gameObject.color, false);
         }
@@ -1254,8 +1306,8 @@ function updateGameObject(gameObject: GameObject) {
         }
 
         //итемы
-        for (let slotIndex = 0; slotIndex < SLOT_COUNT; slotIndex++) {
-            drawRect(camera.x - SLOT_COUNT * 40 / 2 + slotIndex * 50, camera.y + camera.height / 2 - 50, 50, 50, 0, 'grey', true, Layer.UI);
+        for (let slotIndex = 0; slotIndex < slotCount; slotIndex++) {
+            drawRect(camera.x - slotCount * 40 / 2 + slotIndex * 50, camera.y + camera.height / 2 - 50, 50, 50, 0, 'grey', true, Layer.UI);
         }
 
         //стрелочка крафтов
@@ -1299,6 +1351,16 @@ function updateGameObject(gameObject: GameObject) {
             `y: ${Math.round((gameObject.y) / TILE.height)}`, 25, Layer.UI
         );
 
+        //выброс
+
+        if (qKey.wentDown) {
+            inventory[mainSlot] = { item: Item.NONE, count: 0 };
+        }
+
+        if (isInventoryFullForItem(Item.NONE)) {
+            drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, Layer.UI);
+        }
+
         //время крафта
         if (mouse.wentDown && mouse.worldX > camera.x - camera.width / 2 - 10 &&
             mouse.worldX < camera.x - camera.width / 2 + 25 &&
@@ -1327,7 +1389,7 @@ function updateGameObject(gameObject: GameObject) {
 
         for (let itemIndex = 0; itemIndex <= inventory.length; itemIndex++) {
             if (inventory[itemIndex]) {
-                let x = camera.x - SLOT_COUNT * 20;
+                let x = camera.x - slotCount * 20;
                 let y = camera.y + camera.height / 2 - 50;
                 let sprite = null;
                 if (inventory[itemIndex].item === Item.NONE) {
@@ -1366,6 +1428,15 @@ function updateGameObject(gameObject: GameObject) {
                 if (inventory[itemIndex].item === Item.STORAGE) {
                     sprite = imgStorage;
                 }
+                if (inventory[itemIndex].item === Item.GOLDEN_CAMERA) {
+                    sprite = imgGoldenCamera;
+                }
+                if (inventory[itemIndex].item === Item.EXTRA_SLOT) {
+                    sprite = imgExtraSlotItem;
+                }
+                if (inventory[itemIndex].item === Item.SHOCKPROOF_BODY) {
+                    sprite = imgShockProofBody;
+                }
 
                 if (itemIndex === mainSlot) {
                     drawRect(x + 50 * itemIndex, y, 50, 50, 0, 'green', true, Layer.UI);
@@ -1380,8 +1451,8 @@ function updateGameObject(gameObject: GameObject) {
 
         //главный слот
 
-        for (let slotIndex = 0; slotIndex < SLOT_COUNT; slotIndex++) {
-            let slotX = camera.x - SLOT_COUNT * 40 / 2 + slotIndex * 50;
+        for (let slotIndex = 0; slotIndex < slotCount; slotIndex++) {
+            let slotX = camera.x - slotCount * 40 / 2 + slotIndex * 50;
             let slotY = camera.y + camera.height / 2 - 50;
             if (
                 mouse.wentDown &&
@@ -1403,7 +1474,7 @@ function updateGameObject(gameObject: GameObject) {
         if (
             mouseTile && mouse.wentDown && mouseTile.upperLayer === TileType.MELTER &&
             distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
-            TILE.width + globalPlayer.width
+            TILE.width + gameObject.width
         ) {
             if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
                 (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT)) {
@@ -1428,7 +1499,7 @@ function updateGameObject(gameObject: GameObject) {
 
         if (mouseTile && mouse.wentDown && mouseTile.upperLayer === TileType.SPLITTER &&
             distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
-            <= TILE.width + globalPlayer.width) {
+            <= TILE.width + gameObject.width) {
             if (inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
                 while (timers[gameObject.energy] <= gameObject.maxEnergy && inventory[mainSlot].count > 0) {
                     timers[gameObject.energy] += 2000;
@@ -1446,12 +1517,12 @@ function updateGameObject(gameObject: GameObject) {
             (controlledStorage
                 &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, controlledStorage.x * TILE.width, controlledStorage.y * TILE.width)
-                > TILE.width + globalPlayer.width) || (mouseTile && mouseTile && mouse.wentDown && mouseTile === controlledStorage)
+                > TILE.width + gameObject.width) || (mouseTile && mouseTile && mouse.wentDown && mouseTile === controlledStorage)
         ) {
             controlledStorage = null;
         } else if (mouseTile && mouse.wentDown && mouseTile.upperLayer === TileType.STORAGE &&
             distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
-            <= TILE.width + globalPlayer.width && !controlledStorage) {
+            <= TILE.width + gameObject.width && !controlledStorage) {
             controlledStorage = mouseTile;
         }
 
@@ -1506,6 +1577,15 @@ function updateGameObject(gameObject: GameObject) {
                 if (controlledStorage.inventory[slotIndex].item === Item.STORAGE) {
                     sprite = imgStorage;
                 }
+                if (controlledStorage.inventory[slotIndex].item === Item.GOLDEN_CAMERA) {
+                    sprite = imgGoldenCamera;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.EXTRA_SLOT) {
+                    sprite = imgExtraSlotItem;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.SHOCKPROOF_BODY) {
+                    sprite = imgShockProofBody;
+                }
                 drawSprite(x, y, sprite, 0, 40, 40, Layer.UI);
                 if (controlledStorage.inventory[slotIndex].count !== 0) {
                     drawText(x, y - 50, 'green', `${controlledStorage.inventory[slotIndex].count}`, 25, Layer.UI);
@@ -1527,30 +1607,55 @@ function updateGameObject(gameObject: GameObject) {
         }
 
         //используем предметы
-
-        if (mouse.wentDown && inventory[mainSlot] && inventory[mainSlot].item === Item.TOOLKIT &&
-            globalPlayer.hitpoints !== globalPlayer.maxHitpoints) {
-            globalPlayer.hitpoints += 100;
-            if (globalPlayer.hitpoints > globalPlayer.maxHitpoints) {
-                globalPlayer.hitpoints = globalPlayer.maxHitpoints;
-            }
-            removeItem(inventory[mainSlot].item, 1);
-        }
-
-        if (mouse.wentDown && inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY
-        ) {
-            if (
-                mouse.worldX >= globalPlayer.x - globalPlayer.width / 2 &&
-                mouse.worldX <= globalPlayer.x + globalPlayer.width / 2 &&
-                mouse.worldY >= globalPlayer.y - globalPlayer.height / 2 &&
-                mouse.worldY <= globalPlayer.y + globalPlayer.height / 2
-            ) {
-                if (gameObject.sunBateryLvl === 0) {
-                    globalPlayer.sunBateryLvl = 1;
-                    timers[globalPlayer.energy] *= 0.5;
-                    globalPlayer.maxEnergy *= 0.5;
+        if (mouse.wentDown && inventory[mainSlot]) {
+            if (inventory[mainSlot].item === Item.TOOLKIT &&
+                gameObject.hitpoints !== gameObject.maxHitpoints) {
+                gameObject.hitpoints += 100;
+                if (gameObject.hitpoints > gameObject.maxHitpoints) {
+                    gameObject.hitpoints = gameObject.maxHitpoints;
                 }
-                removeItem(Item.SUN_BATERY, 1);
+                removeItem(inventory[mainSlot].item, 1);
+            }
+            if (
+                mouse.worldX >= gameObject.x - gameObject.width / 2 &&
+                mouse.worldX <= gameObject.x + gameObject.width / 2 &&
+                mouse.worldY >= gameObject.y - gameObject.height / 2 &&
+                mouse.worldY <= gameObject.y + gameObject.height / 2
+            ) {
+                if (inventory[mainSlot].item === Item.SUN_BATERY) {
+                    if (gameObject.sunBateryLvl === 0) {
+                        gameObject.sunBateryLvl = 1;
+                        timers[gameObject.energy] *= 0.25;
+                        gameObject.maxEnergy *= 0.25;
+                        removeItem(Item.SUN_BATERY, 1);
+                    }
+                }
+                else if (inventory[mainSlot].item === Item.GOLDEN_CAMERA) {
+                    if (gameObject.cameraLvl === 0) {
+                        gameObject.cameraLvl = 1;
+                        removeItem(Item.GOLDEN_CAMERA, 1);
+                    }
+                } else if (inventory[mainSlot].item === Item.EXTRA_SLOT) {
+                    if (slotCount === 5) {
+                        slotCount++;
+                        inventory[slotCount - 1] = { item: Item.NONE, count: 0 }
+                        removeItem(Item.EXTRA_SLOT, 1);
+                    }
+                } else if (inventory[mainSlot].item === Item.SHOCKPROOF_BODY) {
+                    if (gameObject.sprite !== imgShockProofBody) {
+                        gameObject.hitpoints = 150;
+                        gameObject.maxHitpoints = 150;
+                        gameObject.sprite = imgShockProofBody;
+                        removeItem(Item.SHOCKPROOF_BODY, 1);
+                    }
+                } else {
+                    if (gameObject.sunBateryLvl === 1 && !isInventoryFullForItem(Item.SUN_BATERY)) {
+                        gameObject.sunBateryLvl = 0;
+                        timers[gameObject.energy] *= 100 / 25;
+                        gameObject.maxEnergy *= 100 / 25;
+                        addItem(Item.SUN_BATERY, 1);
+                    }
+                }
             }
         }
 
@@ -1558,7 +1663,7 @@ function updateGameObject(gameObject: GameObject) {
 
         if (mouseTile && mouse.wentDown && !mouseTile.upperLayer &&
             distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height)
-            <= TILE.width + globalPlayer.width + 50 &&
+            <= TILE.width + gameObject.width + 50 &&
             !(craftMode &&
                 mouse.worldX >= camera.x - camera.width / 2 &&
                 mouse.worldX <= camera.x - camera.width / 2 + 300 &&
@@ -1571,10 +1676,10 @@ function updateGameObject(gameObject: GameObject) {
                 mouse.worldY <= camera.y + camera.height / 2 - 30
             )
         ) {
-            if (!(globalPlayer.x >= mouseTile.x * TILE.width - TILE.width / 2 - globalPlayer.width / 2 &&
-                globalPlayer.x <= mouseTile.x * TILE.width + TILE.width / 2 + globalPlayer.width / 2 &&
-                globalPlayer.y >= mouseTile.y * TILE.height - TILE.height / 2 - globalPlayer.height / 2 &&
-                globalPlayer.y <= mouseTile.y * TILE.height + TILE.height / 2 + globalPlayer.height / 2)) {
+            if (!(gameObject.x >= mouseTile.x * TILE.width - TILE.width / 2 - gameObject.width / 2 &&
+                gameObject.x <= mouseTile.x * TILE.width + TILE.width / 2 + gameObject.width / 2 &&
+                gameObject.y >= mouseTile.y * TILE.height - TILE.height / 2 - gameObject.height / 2 &&
+                gameObject.y <= mouseTile.y * TILE.height + TILE.height / 2 + gameObject.height / 2)) {
                 if (inventory[mainSlot] && inventory[mainSlot].item === Item.MELTER && mouseTile.baseLayer === TileType.LAVA) {
                     mouseTile.upperLayer = TileType.MELTER;
                     mouseTile.toughness = 200;
@@ -1678,7 +1783,7 @@ function updateGameObject(gameObject: GameObject) {
             let particle = particles[particleIndex];
             if ((particle.color === 'grey' || particle.color === 'yellow' || particle.color === 'lightcoral' || particle.color === 'black') &&
                 particle.radius < 15) {
-                let particleAngle = angleBetweenPoints(globalPlayer.x, globalPlayer.y, particle.x, particle.y);
+                let particleAngle = angleBetweenPoints(gameObject.x, gameObject.y, particle.x, particle.y);
                 let particleSpeed = rotateVector(6, 0, particleAngle);
                 particle.accelX = 0;
                 particle.accelY = 0;
@@ -1708,8 +1813,8 @@ function updateGameObject(gameObject: GameObject) {
         //собираем предметы
 
         if (mouseTile && mouse.isDown && mouseTile.toughness) {
-            if (globalPlayer.goForward === false && globalPlayer.goBackward === false &&
-                globalPlayer.goLeft === false && globalPlayer.goRight === false) {
+            if (gameObject.goForward === false && gameObject.goBackward === false &&
+                gameObject.goLeft === false && gameObject.goRight === false) {
                 let isThereAnItem = false;
                 for (let slotIndex = 0; slotIndex < mouseTile.inventory.length; slotIndex++) {
                     if (mouseTile.inventory[slotIndex].item !== Item.NONE) {
@@ -1804,8 +1909,17 @@ function updateGameObject(gameObject: GameObject) {
 
         let angle = angleBetweenPoints(mouse.worldX, mouse.worldY, gameObject.x, gameObject.y);
 
+        let cameraSprite = imgNone;
+
+        if (gameObject.cameraLvl === 0) {
+            cameraSprite = imgCamera;
+        }
+        if (gameObject.cameraLvl === 1) {
+            cameraSprite = imgGoldenCamera;
+        }
+
         if (!gameObject.doNotDraw) {
-            drawSprite(gameObject.x, gameObject.y, imgCamera, angle, 30, 30, Layer.PLAYER);
+            drawSprite(gameObject.x, gameObject.y, cameraSprite, angle, 30, 30, Layer.PLAYER);
         }
 
         let [wheel1X, wheel1Y] = rotateVector(46, 40, -gameObject.angle);
@@ -1932,17 +2046,18 @@ function updateGameObject(gameObject: GameObject) {
 
         let height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
 
-        gameObject.angle += Math.PI / 180;
+        let range = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
 
-        // if (height > CAMERA_HEIGHT) {
-        //     gameObject.sprite = imgNone;
-        //     // drawCircle(gameObject.x, gameObject.y, 50, 'black', Layer.ON_TILE);
-        // } else {
-        //     gameObject.sprite = imgMagmaBall;
+        let rangeProjections = rotateVector(range, 0, gameObject.angle);
+
+        if (globalPlayer.cameraLvl === 1) {
+            drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, Layer.ON_TILE);
+            drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 90, 90, Layer.ON_TILE);
+        }
+
         drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
         gameObject.width = 100 + height;
         gameObject.height = 100 + height;
-        // }
 
         if (height <= 0) {
             gameObject.exists = false;
