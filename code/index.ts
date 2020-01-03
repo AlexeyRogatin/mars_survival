@@ -6,7 +6,7 @@ import {
     imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritIngot, imgAuritItem,
     imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, backCtx, backBuffer, imgToolkit,
     imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem,
-    imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody
+    imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous
 } from "./drawing";
 
 enum GameObjectType {
@@ -35,6 +35,7 @@ enum TileType {
     SUN_BATERY,
     SILIKON,
     STORAGE,
+    IGNEOUS,
 }
 
 let TILE = {
@@ -63,6 +64,7 @@ class Tile {
     specialTimer: number;
     toughness: number;
     firstToughness: number;
+    oreCount: number;
     inventory: InventorySlot[];
 }
 
@@ -158,6 +160,8 @@ enum Item {
     GOLDEN_CAMERA,
     EXTRA_SLOT,
     SHOCKPROOF_BODY,
+    IGNEOUS,
+    IGNEOUS_INGOT,
 }
 
 class RecipePart {
@@ -274,12 +278,6 @@ function addItem(item: Item, count: number) {
     resultSlot.item = item;
     resultSlot.count += count;
 }
-
-addItem(Item.IRON_INGOT, 20);
-addItem(Item.IRON, 20);
-addItem(Item.AURIT, 20);
-addItem(Item.AURIT_INGOT, 20);
-addItem(Item.SILIKON, 20);
 
 function addItemToStorage(item: Item, count: number, tile: Tile) {
     let resultSlot = getStorageSlotWithItem(item, tile);
@@ -602,7 +600,7 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         energy: 0,
         maxEnergy: 0,
 
-        unhitableTimer: 0,
+        unhitableTimer: addTimer(0),
         doNotDraw: false,
 
         sunBateryLvl: 0,
@@ -612,7 +610,7 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
 
         lifeTime: 0,
 
-        angleZ: randomFloat(0.25 * Math.PI, 0.5 * Math.PI),
+        angleZ: 0,
     }
 
     if (gameObject.type === GameObjectType.PLAYER) {
@@ -622,14 +620,17 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         gameObject.energy = addTimer(25000);
         gameObject.maxEnergy = 25000;
         gameObject.stuckable = true;
-        gameObject.unhitableTimer = addTimer(0);
     }
 
     if (gameObject.type === GameObjectType.MAGMA_BALL) {
         gameObject.sprite = imgMagmaBall;
         gameObject.angle = randomFloat(0, Math.PI * 2);
-        gameObject.speedLimit = 5;
-        gameObject.unhitableTimer = addTimer(0);
+        gameObject.angleZ = randomFloat(0.25 * Math.PI, 0.5 * Math.PI);
+    }
+    if (gameObject.type === GameObjectType.METEORITE) {
+        gameObject.sprite = imgMeteorite;
+        gameObject.angle = randomFloat(0, Math.PI * 2);
+        gameObject.angleZ = -randomFloat(0.25 * Math.PI, 0.5 * Math.PI);
     }
 
     if (gameObject.type === GameObjectType.NONE) {
@@ -889,8 +890,11 @@ function removeParticle(particleIndex: number) {
     if (particles[particleIndex].color === 'lightcoral') {
         addItem(Item.CRYSTAL, 1);
     }
-    if (particles[particleIndex].color === 'black') {
+    if (particles[particleIndex].color === 'dimgray') {
         addItem(Item.SILIKON, 1);
+    }
+    if (particles[particleIndex].color === 'sienna') {
+        addItem(Item.IGNEOUS, 1);
     }
     particles[particleIndex] = lastParticle;
     particles.pop();
@@ -914,7 +918,7 @@ for (let chunkY = 0; chunkY < TILE.chunkCountY; chunkY++) {
                 let index = getIndexFromCoords(x, y);
                 map[index] = {
                     baseLayer: downTileType, upperLayer: upTileType, x, y, specialTimer: null, toughness: null,
-                    firstToughness: null, inventory: [], width: TILE.width, height: TILE.height
+                    firstToughness: null, oreCount: 5, inventory: [], width: TILE.width, height: TILE.height
                 };
                 if (char === '0') {
                     downTileType = TileType.NONE;
@@ -1037,12 +1041,26 @@ let mainSlot = 0;
 let controlledStorage: Tile = null;
 
 let dayTimer = addTimer(ONE_DAY);
+let gameLength = ONE_DAY * 1;
+let gameTimer = addTimer(gameLength);
+
+enum Event {
+    NONE,
+    METEORITE_RAIN,
+}
+
+let event = Event.NONE;
+
+const EVENT_LENGTH = 1800;
+const TIME_BETWEEN_EVENTS = gameLength / 4;
+let eventEnd = gameLength;
 
 const VOLCANO_RADIUS = TILE.width * TILE.chunkSizeX * 1.5;
 const MAGMA_BALL_SPEED = 35;
 const VOLCANO_HEIGHT = 100;
 const GRAVITATION = 0.5;
-// const CAMERA_HEIGHT = 500;
+const CAMERA_HEIGHT = 1325;
+const METEORITE_SPEED = 35;
 
 const MAX_RANGE = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
 
@@ -1211,6 +1229,12 @@ function updateTile(tileType: TileType, tile: Tile) {
                 sprite = imgSilicon5;
             }
         } break;
+        case TileType.IGNEOUS: {
+            sprite = imgIgneous;
+            if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) < 100 && timers[globalPlayer.unhitableTimer] <= 0) {
+                globalPlayer.hitpoints -= 0.1;
+            }
+        } break;
         case TileType.MOUNTAIN: {
             sprite = imgMountain;
         } break;
@@ -1222,7 +1246,7 @@ function updateTile(tileType: TileType, tile: Tile) {
             ) {
                 if (timers[tile.specialTimer] === 0) {
                     addGameObject(GameObjectType.MAGMA_BALL, tile.x * TILE.width, tile.y * TILE.height);
-                    timers[tile.specialTimer] = randomInt(50, 500);
+                    timers[tile.specialTimer] = randomInt(60, 240);
                 }
             }
         } break;
@@ -1365,7 +1389,10 @@ function updateGameObject(gameObject: GameObject) {
         //частицы и столковения с ними
         for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
             let particle = particles[particleIndex];
-            if ((particle.color === 'grey' || particle.color === 'yellow' || particle.color === 'lightcoral' || particle.color === 'black') &&
+            if (
+                (particle.color === 'grey' || particle.color === 'yellow' ||
+                    particle.color === 'lightcoral' || particle.color === 'dimgray' ||
+                    particle.color === 'sienna') &&
                 particle.radius < 15) {
                 let particleAngle = angleBetweenPoints(gameObject.x, gameObject.y, particle.x, particle.y);
                 let particleSpeed = rotateVector(6, 0, particleAngle);
@@ -1439,6 +1466,12 @@ function updateGameObject(gameObject: GameObject) {
                 }
                 if (inventory[itemIndex].item === Item.SHOCKPROOF_BODY) {
                     sprite = imgShockProofBody;
+                }
+                if (inventory[itemIndex].item === Item.IGNEOUS) {
+                    sprite = imgCamera;
+                }
+                if (inventory[itemIndex].item === Item.IGNEOUS_INGOT) {
+                    sprite = imgCamera;
                 }
 
                 if (itemIndex === mainSlot) {
@@ -1545,7 +1578,7 @@ function updateGameObject(gameObject: GameObject) {
                 TILE.width + gameObject.width
             ) {
                 if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
-                    (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT)) {
+                    (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT || inventory[mainSlot].item === Item.IGNEOUS_INGOT)) {
                     mouseTile.inventory[0].item = inventory[mainSlot].item;
                     mouseTile.inventory[0].count = inventory[mainSlot].count;
                     removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
@@ -1557,6 +1590,9 @@ function updateGameObject(gameObject: GameObject) {
                     }
                     if (mouseTile.inventory[0].item === Item.AURIT) {
                         addItem(Item.AURIT_INGOT, mouseTile.inventory[0].count);
+                    }
+                    if (mouseTile.inventory[0].item === Item.IGNEOUS) {
+                        addItem(Item.IGNEOUS_INGOT, mouseTile.inventory[0].count);
                     }
                     mouseTile.inventory[0].item = Item.NONE;
                     timers[mouseTile.specialTimer] = null;
@@ -1744,8 +1780,11 @@ function updateGameObject(gameObject: GameObject) {
                         if (mouseTile.upperLayer === TileType.STORAGE && !isInventoryFullForItem(Item.STORAGE)) {
                             mouseTile.toughness--;
                         }
+                        if (mouseTile.upperLayer === TileType.IGNEOUS && !isInventoryFullForItem(Item.IGNEOUS)) {
+                            mouseTile.toughness--;
+                        }
                     }
-                    if ((mouseTile.toughness % 200 === 0 || mouseTile.toughness === 0)) {
+                    if ((mouseTile.toughness % Math.round(mouseTile.firstToughness / mouseTile.oreCount) === 0 || mouseTile.toughness === 0)) {
                         let color = null;
                         if (mouseTile.upperLayer === TileType.IRON) {
                             color = 'grey';
@@ -1757,7 +1796,10 @@ function updateGameObject(gameObject: GameObject) {
                             color = 'lightcoral';
                         }
                         if (mouseTile.upperLayer === TileType.SILIKON) {
-                            color = 'black';
+                            color = 'dimgray';
+                        }
+                        if (mouseTile.upperLayer === TileType.IGNEOUS) {
+                            color = 'sienna';
                         }
                         if (color !== null) {
                             burstParticles({
@@ -1884,6 +1926,12 @@ function updateGameObject(gameObject: GameObject) {
                 }
                 if (controlledStorage.inventory[slotIndex].item === Item.SHOCKPROOF_BODY) {
                     sprite = imgShockProofBody;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS) {
+                    sprite = imgCamera;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS_INGOT) {
+                    sprite = imgCamera;
                 }
                 drawSprite(x, y, sprite, 0, 40, 40, Layer.UI);
                 if (controlledStorage.inventory[slotIndex].count !== 0) {
@@ -2065,21 +2113,74 @@ function updateGameObject(gameObject: GameObject) {
 
         if (height <= 0) {
             gameObject.exists = false;
-            burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.35, accel: 0 });
+            burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.75, accel: 0 });
             let x = Math.round(gameObject.x / TILE.width);
             let y = Math.round(gameObject.y / TILE.height);
             let tileIndex = getIndexFromCoords(x, y);
-            let chance = randomInt(1, 2);
+            let chance = randomFloat(0, 1);
             if (map[tileIndex]) {
                 if (map[tileIndex].upperLayer !== TileType.NONE) {
-                    if (chance === 1 && map[tileIndex].upperLayer !== TileType.VOLCANO) {
+                    if (chance < 0.25 && map[tileIndex].upperLayer !== TileType.VOLCANO) {
                         map[tileIndex].upperLayer = TileType.NONE;
                     }
                 } else {
-                    if (chance === 1 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER
+                    if (chance < 0.25 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER
                         && map[tileIndex].baseLayer !== TileType.VOLCANO) {
-                        map[tileIndex].baseLayer = TileType.LAVA;
+                        map[tileIndex].baseLayer = TileType.EARTH_1;
+                        map[tileIndex].upperLayer = TileType.IGNEOUS;
+                        map[tileIndex].toughness = 500;
+                        map[tileIndex].firstToughness = 500;
+                        map[tileIndex].oreCount = 1;
                     }
+                }
+            }
+        }
+    }
+
+    if (gameObject.type === GameObjectType.METEORITE) {
+        gameObject.x += gameObject.speedX;
+        gameObject.y += gameObject.speedY;
+
+        gameObject.lifeTime++;
+
+        let speedZ = METEORITE_SPEED * Math.sin(gameObject.angleZ);
+
+        let speedXY = METEORITE_SPEED * Math.cos(gameObject.angleZ);
+
+        let speedVector = rotateVector(speedXY, 0, gameObject.angle);
+
+        gameObject.speedX = speedVector[0];
+        gameObject.speedY = speedVector[1];
+
+        let height = CAMERA_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+
+        // let range = METEORITE_SPEED * METEORITE_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
+
+        // let rangeProjections = rotateVector(range, 0, gameObject.angle);
+
+        // if (globalPlayer.cameraLvl === 1) {
+        //     drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, Layer.ON_TILE);
+        //     drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 90, 90, Layer.ON_TILE);
+        // }
+
+        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
+        gameObject.width = 100 + height;
+        gameObject.height = 100 + height;
+
+        if (height <= 0) {
+            console.log(distanceBetweenPoints(globalPlayer.firstX, globalPlayer.firstY, gameObject.x, gameObject.y))
+            gameObject.exists = false;
+            burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
+            let chance = randomFloat(0, 1);
+            if (chance < 0.25) {
+                let x = Math.round(gameObject.x / TILE.width);
+                let y = Math.round(gameObject.y / TILE.height);
+                let tileIndex = getIndexFromCoords(x, y);
+                if (map[tileIndex] && map[tileIndex].baseLayer !== TileType.LAVA && map[tileIndex].baseLayer !== TileType.MOUNTAIN) {
+                    map[tileIndex].upperLayer = TileType.IGNEOUS;
+                    map[tileIndex].toughness = 500;
+                    map[tileIndex].firstToughness = 500;
+                    map[tileIndex].oreCount = 1;
                 }
             }
         }
@@ -2113,6 +2214,18 @@ function loop() {
     backCtx.fillRect(0, 0, canvas.width, canvas.height);
 
     updateTileMap();
+
+    if (timers[gameTimer] < eventEnd - TIME_BETWEEN_EVENTS && randomFloat(0, 1) <= 0.0001) {
+        event = Event.METEORITE_RAIN;
+        eventEnd = Math.abs(timers[gameTimer] - EVENT_LENGTH);
+    }
+    if (timers[gameTimer] === eventEnd) {
+        event = Event.NONE;
+    }
+
+    if (event === Event.METEORITE_RAIN && timers[gameTimer] % 3 === 0) {
+        addGameObject(GameObjectType.METEORITE, randomInt(globalPlayer.x - 5000, globalPlayer.x + 5000), randomInt(globalPlayer.y - 5000, globalPlayer.y + 5000));
+    }
 
     for (let gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {
         let gameObject = gameObjects[gameObjectIndex];

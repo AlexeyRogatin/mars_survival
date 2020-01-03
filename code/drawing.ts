@@ -132,6 +132,8 @@ export let imgExtraSlot = loadImage('../sprites/extraSlot.png');
 export let imgExtraSlotItem = loadImage('../sprites/extraSlotItem.png');
 export let imgAlert = loadImage('../sprites/alert.png');
 export let imgShockProofBody = loadImage('../sprites/shockproof_body.png');
+export let imgMeteorite = loadImage('../sprites/meteorite.png');
+export let imgIgneous = loadImage('../sprites/igneous.png');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {
