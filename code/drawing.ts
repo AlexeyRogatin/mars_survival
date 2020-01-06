@@ -134,6 +134,9 @@ export let imgAlert = loadImage('../sprites/alert.png');
 export let imgShockProofBody = loadImage('../sprites/shockproof_body.png');
 export let imgMeteorite = loadImage('../sprites/meteorite.png');
 export let imgIgneous = loadImage('../sprites/igneous.png');
+export let imgIgneousItem = loadImage('../sprites/igneousItem.png');
+export let imgIgneousIngot = loadImage('../sprites/igneousIngot.png');
+export let imgMeteoriteStuff = loadImage('../sprites/meteoriteStuff.png');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {

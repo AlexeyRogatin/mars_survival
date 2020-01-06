@@ -6,7 +6,8 @@ import {
     imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritIngot, imgAuritItem,
     imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, backCtx, backBuffer, imgToolkit,
     imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem,
-    imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous
+    imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous,
+    imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff
 } from "./drawing";
 
 enum GameObjectType {
@@ -49,9 +50,12 @@ let TILE = {
     chunkCountY: 20,
 }
 
+let timers: number[] = [];
+
 class InventorySlot {
     item: Item = Item.NONE;
     count: number = 0;
+    cooldown: number = addTimer(0);
 }
 
 class Tile {
@@ -162,6 +166,7 @@ enum Item {
     SHOCKPROOF_BODY,
     IGNEOUS,
     IGNEOUS_INGOT,
+    METEORITE_STUFF,
 }
 
 class RecipePart {
@@ -253,6 +258,15 @@ let recipes: Recipe[] = [
         description1: 'Красивый ауритовый корпус говорит',
         description2: 'о непрочности, но слой силикона',
         description3: 'говорит обратное. Больше жизней',
+    },
+    {
+        result: Item.METEORITE_STUFF,
+        parts: [{ item: Item.IGNEOUS_INGOT, count: 20, sprite: imgIgneousIngot }],
+        sprite: imgMeteoriteStuff,
+        name: 'Метеопосох',
+        description1: 'Эта вещь может вызвать метеорит,',
+        description2: 'который упадёт на выбранную ',
+        description3: 'область. Хороший взрыв',
     },
 ];
 
@@ -499,7 +513,6 @@ let camera = {
     angle: 0,
 }
 
-let timers: number[] = [];
 
 let gameObjects: GameObject[] = [];
 
@@ -556,6 +569,8 @@ class GameObject {
     lifeTime: number;
 
     angleZ: number;
+
+    summoned: boolean;
 }
 
 function addGameObject(type: GameObjectType, x: number, y: number) {
@@ -611,6 +626,8 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         lifeTime: 0,
 
         angleZ: 0,
+
+        summoned: false,
     }
 
     if (gameObject.type === GameObjectType.PLAYER) {
@@ -627,8 +644,11 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         gameObject.angle = randomFloat(0, Math.PI * 2);
         gameObject.angleZ = randomFloat(0.25 * Math.PI, 0.5 * Math.PI);
     }
+
     if (gameObject.type === GameObjectType.METEORITE) {
         gameObject.sprite = imgMeteorite;
+        gameObject.width = 1;
+        gameObject.height = 1;
         gameObject.angle = randomFloat(0, Math.PI * 2);
         gameObject.angleZ = -randomFloat(0.25 * Math.PI, 0.5 * Math.PI);
     }
@@ -649,6 +669,12 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
     gameObjects[freeIndex] = gameObject;
 
     return gameObject;
+}
+
+function summonMeteorite(x: number, y: number) {
+    let meteorite = addGameObject(GameObjectType.METEORITE, x, y);
+    meteorite.summoned = true;
+    meteorite.angleZ = -Math.PI * 0.5;
 }
 
 function controlPlayer(gameObject: GameObject) {
@@ -864,18 +890,49 @@ function burstParticles({ x, y, color, speed, size, count, decrease, accel }: Pa
 function drawParticles() {
     for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
         let particle = particles[particleIndex];
-        drawCircle(particle.x, particle.y, particle.radius, particle.color, false, Layer.PARTICLES);
-        particle.radius -= particle.sizeDecrease;
-        particle.x += particle.speedX;
-        particle.y += particle.speedY;
+        if (!pause) {
+            particle.radius -= particle.sizeDecrease;
+            particle.x += particle.speedX;
+            particle.y += particle.speedY;
 
-        particle.speedX += particle.accelX;
-        particle.speedY += particle.accelY;
+            particle.speedX += particle.accelX;
+            particle.speedY += particle.accelY;
+
+            if (
+                (particle.color === 'grey' || particle.color === 'yellow' ||
+                    particle.color === 'lightcoral' || particle.color === 'dimgray' ||
+                    particle.color === 'sienna') &&
+                particle.radius < 15) {
+                let particleAngle = angleBetweenPoints(globalPlayer.x, globalPlayer.y, particle.x, particle.y);
+                let particleSpeed = rotateVector(6, 0, particleAngle);
+                particle.accelX = 0;
+                particle.accelY = 0;
+                particle.x += particleSpeed[0] - particle.speedX;
+                particle.y -= particleSpeed[1] + particle.speedY;
+                if (distanceBetweenPoints(particle.x, particle.y, globalPlayer.x, globalPlayer.y) <= 5) {
+                    removeParticle(particleIndex);
+                }
+            }
+        }
 
 
         if (particle.radius <= 0) {
             removeParticle(particleIndex);
+        } else {
+            drawLight(particle.x + particle.radius, particle.y + particle.radius, particle.radius * 4);
+            drawCircle(particle.x, particle.y, particle.radius, particle.color, false, Layer.PARTICLES);
         }
+
+        //частицы и столковения с ними
+
+        if (globalPlayer.width / 2 + particle.radius >= distanceBetweenPoints(globalPlayer.x, globalPlayer.y, particle.x, particle.y) &&
+            timers[globalPlayer.unhitableTimer] <= 0) {
+            if (particle.color === 'red') {
+                globalPlayer.hitpoints -= 50;
+                timers[globalPlayer.unhitableTimer] = 180;
+            }
+        }
+
     }
 }
 
@@ -1036,12 +1093,13 @@ function moveToTile(mouseTile: Tile) {
 }
 
 let craftMode = false;
+let pause = false;
 let firstRecipeIndex = 0;
 let mainSlot = 0;
 let controlledStorage: Tile = null;
 
 let dayTimer = addTimer(ONE_DAY);
-let gameLength = ONE_DAY * 1;
+let gameLength = ONE_DAY * 3;
 let gameTimer = addTimer(gameLength);
 
 enum Event {
@@ -1052,7 +1110,7 @@ enum Event {
 let event = Event.NONE;
 
 const EVENT_LENGTH = 1800;
-const TIME_BETWEEN_EVENTS = gameLength / 4;
+let timeBetweenEvents = gameLength / 4;
 let eventEnd = gameLength;
 
 const VOLCANO_RADIUS = TILE.width * TILE.chunkSizeX * 1.5;
@@ -1061,6 +1119,8 @@ const VOLCANO_HEIGHT = 100;
 const GRAVITATION = 0.5;
 const CAMERA_HEIGHT = 1325;
 const METEORITE_SPEED = 35;
+
+const METEOR_STUFF_COOLDOWN = 500;
 
 const MAX_RANGE = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
 
@@ -1084,7 +1144,7 @@ function updateTile(tileType: TileType, tile: Tile) {
                     if (timers[tile.specialTimer] <= 0) {
                         timers[tile.specialTimer] = randomInt(500, 2000);
                     }
-                    if (timers[tile.specialTimer] <= 150) {
+                    if (timers[tile.specialTimer] <= 150 && !pause) {
                         burstParticles({
                             x: tile.x * TILE.width,
                             y: tile.y * TILE.height,
@@ -1231,6 +1291,7 @@ function updateTile(tileType: TileType, tile: Tile) {
         } break;
         case TileType.IGNEOUS: {
             sprite = imgIgneous;
+            drawLight(tile.x * TILE.width, tile.y * TILE.height, tile.width * 1.2)
             if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) < 100 && timers[globalPlayer.unhitableTimer] <= 0) {
                 globalPlayer.hitpoints -= 0.1;
             }
@@ -1244,7 +1305,7 @@ function updateTile(tileType: TileType, tile: Tile) {
             if (
                 distanceBetweenPoints(camera.x, camera.y, tile.x * TILE.width, tile.y * TILE.width) < VOLCANO_RADIUS
             ) {
-                if (timers[tile.specialTimer] === 0) {
+                if (timers[tile.specialTimer] === 0 && !pause) {
                     addGameObject(GameObjectType.MAGMA_BALL, tile.x * TILE.width, tile.y * TILE.height);
                     timers[tile.specialTimer] = randomInt(60, 240);
                 }
@@ -1274,6 +1335,12 @@ function updateTileMap() {
 }
 
 function updateGameObject(gameObject: GameObject) {
+    if (craftMode) {
+        pause = true;
+    } else {
+        pause = false;
+    }
+
     let mouseTile = getTileUnderMouse();
 
     //мерцание при ударе
@@ -1288,7 +1355,7 @@ function updateGameObject(gameObject: GameObject) {
     //прорисовка
     if (!gameObject.doNotDraw) {
         if (gameObject.sprite) {
-            if (gameObject.type === GameObjectType.MAGMA_BALL) {
+            if (gameObject.type === GameObjectType.MAGMA_BALL || gameObject.type === GameObjectType.METEORITE) {
                 drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, Layer.PLAYER);
             } else
                 drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, Layer.PLAYER);
@@ -1314,20 +1381,20 @@ function updateGameObject(gameObject: GameObject) {
             camera.y = gameObject.y;
         }
 
-        if (gameObject.x + gameObject.speedX <= TILE.firstX - TILE.width / 2) {
-            gameObject.x += (TILE.firstX - TILE.width / 2) - (gameObject.x + gameObject.speedX);
+        if (gameObject.x + gameObject.speedX <= camera.x - camera.width / 2) {
+            gameObject.x = camera.x - camera.width / 2;
         }
 
-        if (gameObject.x + gameObject.speedX >= TILE.firstX - TILE.width / 2 + TILE.width * TILE.chunkSizeX * TILE.chunkCountX) {
-            gameObject.x -= (gameObject.x + gameObject.speedX) - (TILE.firstX - TILE.width / 2 + TILE.width * TILE.chunkSizeX * TILE.chunkCountX);
+        if (gameObject.x + gameObject.speedX >= camera.x + camera.width / 2) {
+            gameObject.x = camera.x + camera.width / 2;
         }
 
-        if (gameObject.y + gameObject.speedY <= TILE.firstY - TILE.height / 2) {
-            gameObject.y += (TILE.firstY - TILE.height / 2) - (gameObject.y + gameObject.speedY);
+        if (gameObject.y + gameObject.speedY <= camera.y - camera.height / 2) {
+            gameObject.y = camera.y - camera.height / 2;
         }
 
-        if (gameObject.y + gameObject.speedY > TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY) {
-            gameObject.y -= (gameObject.y + gameObject.speedY) - (TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY);
+        if (gameObject.y + gameObject.speedY >= camera.y + camera.height / 2) {
+            gameObject.y = camera.y - camera.height / 2;
         }
 
         //итемы
@@ -1379,40 +1446,11 @@ function updateGameObject(gameObject: GameObject) {
         //выброс
 
         if (qKey.wentDown) {
-            inventory[mainSlot] = { item: Item.NONE, count: 0 };
+            inventory[mainSlot] = { item: Item.NONE, count: 0, cooldown: addTimer(0) };
         }
 
         if (isInventoryFullForItem(Item.NONE)) {
             drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, Layer.UI);
-        }
-
-        //частицы и столковения с ними
-        for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
-            let particle = particles[particleIndex];
-            if (
-                (particle.color === 'grey' || particle.color === 'yellow' ||
-                    particle.color === 'lightcoral' || particle.color === 'dimgray' ||
-                    particle.color === 'sienna') &&
-                particle.radius < 15) {
-                let particleAngle = angleBetweenPoints(gameObject.x, gameObject.y, particle.x, particle.y);
-                let particleSpeed = rotateVector(6, 0, particleAngle);
-                particle.accelX = 0;
-                particle.accelY = 0;
-                particle.x += particleSpeed[0] - particle.speedX;
-                particle.y -= particleSpeed[1] + particle.speedY;
-                if (distanceBetweenPoints(particle.x, particle.y, gameObject.x, gameObject.y) <= 5) {
-                    removeParticle(particleIndex);
-                }
-            }
-            drawLight(particle.x + particle.radius, particle.y + particle.radius, particle.radius * 4);
-
-            if (gameObject.width / 2 + particle.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle.x, particle.y) &&
-                timers[gameObject.unhitableTimer] <= 0) {
-                if (particle.color === 'red') {
-                    gameObject.hitpoints -= 50;
-                    timers[gameObject.unhitableTimer] = 180;
-                }
-            }
         }
 
         //рисование предметов в инвентаре
@@ -1468,10 +1506,13 @@ function updateGameObject(gameObject: GameObject) {
                     sprite = imgShockProofBody;
                 }
                 if (inventory[itemIndex].item === Item.IGNEOUS) {
-                    sprite = imgCamera;
+                    sprite = imgIgneousItem;
                 }
                 if (inventory[itemIndex].item === Item.IGNEOUS_INGOT) {
-                    sprite = imgCamera;
+                    sprite = imgIgneousIngot;
+                }
+                if (inventory[itemIndex].item === Item.METEORITE_STUFF) {
+                    sprite = imgMeteoriteStuff;
                 }
 
                 if (itemIndex === mainSlot) {
@@ -1479,9 +1520,19 @@ function updateGameObject(gameObject: GameObject) {
                 }
 
                 drawSprite(x + 50 * itemIndex, y, sprite, 0, 40, 40, Layer.UI);
-                if (inventory[itemIndex].count !== 0) {
+                if (inventory[itemIndex].count > 1) {
                     drawText(x - 5 + 50 * itemIndex, y - 34, 'green', `${inventory[itemIndex].count}`, 25, Layer.UI);
                 }
+
+                let STRIPE_HEIGHT = 10;
+                let STRIPE_WIDTH = 30;
+
+                //перезарядка
+                width = timers[inventory[mainSlot].cooldown] / METEOR_STUFF_COOLDOWN * STRIPE_WIDTH;
+
+                drawRect(
+                    x, y + 30, width, STRIPE_HEIGHT, 0, 'white', false, Layer.UI
+                );
             }
         }
 
@@ -1503,6 +1554,10 @@ function updateGameObject(gameObject: GameObject) {
                     removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
                 }
             }
+        }
+
+        if (upKey.isDown || downKey.isDown || rightKey.isDown || leftKey.isDown) {
+            craftMode = false;
         }
 
         //время крафта
@@ -1577,8 +1632,12 @@ function updateGameObject(gameObject: GameObject) {
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
                 TILE.width + gameObject.width
             ) {
-                if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
-                    (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT || inventory[mainSlot].item === Item.IGNEOUS_INGOT)) {
+                if (
+                    mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
+                    (
+                        inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT ||
+                        inventory[mainSlot].item === Item.IGNEOUS)
+                ) {
                     mouseTile.inventory[0].item = inventory[mainSlot].item;
                     mouseTile.inventory[0].count = inventory[mainSlot].count;
                     removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
@@ -1640,6 +1699,9 @@ function updateGameObject(gameObject: GameObject) {
                         gameObject.hitpoints = gameObject.maxHitpoints;
                     }
                     removeItem(inventory[mainSlot].item, 1);
+                } else if (inventory[mainSlot].item === Item.METEORITE_STUFF && timers[inventory[mainSlot].cooldown] === 0) {
+                    summonMeteorite(mouse.worldX, mouse.worldY);
+                    timers[inventory[mainSlot].cooldown] = METEOR_STUFF_COOLDOWN;
                 }
                 if (
                     mouse.worldX >= gameObject.x - gameObject.width / 2 &&
@@ -1663,7 +1725,7 @@ function updateGameObject(gameObject: GameObject) {
                     } else if (inventory[mainSlot].item === Item.EXTRA_SLOT) {
                         if (slotCount === 5) {
                             slotCount++;
-                            inventory[slotCount - 1] = { item: Item.NONE, count: 0 }
+                            inventory[slotCount - 1] = { item: Item.NONE, count: 0, cooldown: addTimer(0) }
                             removeItem(Item.EXTRA_SLOT, 1);
                         }
                     } else if (inventory[mainSlot].item === Item.SHOCKPROOF_BODY) {
@@ -1710,7 +1772,7 @@ function updateGameObject(gameObject: GameObject) {
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         mouseTile.specialTimer = addTimer(0);
-                        mouseTile.inventory[0] = { item: Item.NONE, count: 0 };
+                        mouseTile.inventory[0] = { item: Item.NONE, count: 0, cooldown: addTimer(0) };
                         removeItem(Item.MELTER, 1);
                     }
                     if (
@@ -1737,7 +1799,7 @@ function updateGameObject(gameObject: GameObject) {
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         for (let i = 0; i < STORAGE_SLOT_COUNT; i++) {
-                            mouseTile.inventory[i] = { item: Item.NONE, count: 0 };
+                            mouseTile.inventory[i] = { item: Item.NONE, count: 0, cooldown: addTimer(0) };
                         }
                         removeItem(Item.STORAGE, 1);
                     }
@@ -1747,6 +1809,10 @@ function updateGameObject(gameObject: GameObject) {
             //собираем предметы
 
             if (mouseTile && mouse.isDown && mouseTile.toughness) {
+                //управление мышкой
+
+                moveToTile(mouseTile);
+
                 if (gameObject.goForward === false && gameObject.goBackward === false &&
                     gameObject.goLeft === false && gameObject.goRight === false) {
                     let isThereAnItem = false;
@@ -1840,14 +1906,6 @@ function updateGameObject(gameObject: GameObject) {
                 let width = stripeWidth * (mouseTile.toughness / mouseTile.firstToughness);
                 drawRect(camera.x + width / 2 - 150, camera.y + camera.height / 4, width, 50, 0, 'green', false, Layer.UI);
             }
-
-            //управление мышкой
-
-            if (mouse.isDown && mouseTile) {
-                moveToTile(mouseTile);
-            }
-
-
         }
 
         //меняем крафты
@@ -1928,10 +1986,13 @@ function updateGameObject(gameObject: GameObject) {
                     sprite = imgShockProofBody;
                 }
                 if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS) {
-                    sprite = imgCamera;
+                    sprite = imgIgneousItem;
                 }
                 if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS_INGOT) {
-                    sprite = imgCamera;
+                    sprite = imgIgneousIngot;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.METEORITE_STUFF) {
+                    sprite = imgMeteoriteStuff;
                 }
                 drawSprite(x, y, sprite, 0, 40, 40, Layer.UI);
                 if (controlledStorage.inventory[slotIndex].count !== 0) {
@@ -2078,112 +2139,118 @@ function updateGameObject(gameObject: GameObject) {
         }
 
         //двигаем игрока
-        moveGameObject(gameObject);
+        if (!pause) {
+            moveGameObject(gameObject);
+        }
     }
 
     if (gameObject.type === GameObjectType.MAGMA_BALL) {
-        gameObject.x += gameObject.speedX;
-        gameObject.y += gameObject.speedY;
+        if (!pause) {
+            gameObject.x += gameObject.speedX;
+            gameObject.y += gameObject.speedY;
 
-        gameObject.lifeTime++;
+            gameObject.lifeTime++;
 
-        let speedZ = MAGMA_BALL_SPEED * Math.sin(gameObject.angleZ)
+            let speedZ = MAGMA_BALL_SPEED * Math.sin(gameObject.angleZ)
 
-        let speedXY = MAGMA_BALL_SPEED * Math.cos(gameObject.angleZ);
+            let speedXY = MAGMA_BALL_SPEED * Math.cos(gameObject.angleZ);
 
-        let speedVector = rotateVector(speedXY, 0, gameObject.angle);
+            let speedVector = rotateVector(speedXY, 0, gameObject.angle);
 
-        gameObject.speedX = speedVector[0];
-        gameObject.speedY = speedVector[1];
+            gameObject.speedX = speedVector[0];
+            gameObject.speedY = speedVector[1];
 
-        let height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+            let height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
 
-        let range = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
+            let range = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
 
-        let rangeProjections = rotateVector(range, 0, gameObject.angle);
+            let rangeProjections = rotateVector(range, 0, gameObject.angle);
 
-        if (globalPlayer.cameraLvl === 1) {
-            drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, Layer.ON_TILE);
-            drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 90, 90, Layer.ON_TILE);
-        }
-
-        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
-        gameObject.width = 100 + height;
-        gameObject.height = 100 + height;
-
-        if (height <= 0) {
-            gameObject.exists = false;
-            burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.75, accel: 0 });
-            let x = Math.round(gameObject.x / TILE.width);
-            let y = Math.round(gameObject.y / TILE.height);
-            let tileIndex = getIndexFromCoords(x, y);
-            let chance = randomFloat(0, 1);
-            if (map[tileIndex]) {
-                if (map[tileIndex].upperLayer !== TileType.NONE) {
-                    if (chance < 0.25 && map[tileIndex].upperLayer !== TileType.VOLCANO) {
-                        map[tileIndex].upperLayer = TileType.NONE;
-                    }
-                } else {
-                    if (chance < 0.25 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER
-                        && map[tileIndex].baseLayer !== TileType.VOLCANO) {
-                        map[tileIndex].baseLayer = TileType.EARTH_1;
-                        map[tileIndex].upperLayer = TileType.IGNEOUS;
-                        map[tileIndex].toughness = 500;
-                        map[tileIndex].firstToughness = 500;
-                        map[tileIndex].oreCount = 1;
-                    }
-                }
+            if (globalPlayer.cameraLvl === 1) {
+                drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, Layer.ON_TILE);
+                drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 90, 90, Layer.ON_TILE);
             }
-        }
-    }
 
-    if (gameObject.type === GameObjectType.METEORITE) {
-        gameObject.x += gameObject.speedX;
-        gameObject.y += gameObject.speedY;
+            gameObject.width = 100 + height;
+            gameObject.height = 100 + height;
 
-        gameObject.lifeTime++;
-
-        let speedZ = METEORITE_SPEED * Math.sin(gameObject.angleZ);
-
-        let speedXY = METEORITE_SPEED * Math.cos(gameObject.angleZ);
-
-        let speedVector = rotateVector(speedXY, 0, gameObject.angle);
-
-        gameObject.speedX = speedVector[0];
-        gameObject.speedY = speedVector[1];
-
-        let height = CAMERA_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
-
-        // let range = METEORITE_SPEED * METEORITE_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
-
-        // let rangeProjections = rotateVector(range, 0, gameObject.angle);
-
-        // if (globalPlayer.cameraLvl === 1) {
-        //     drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, Layer.ON_TILE);
-        //     drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 90, 90, Layer.ON_TILE);
-        // }
-
-        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
-        gameObject.width = 100 + height;
-        gameObject.height = 100 + height;
-
-        if (height <= 0) {
-            console.log(distanceBetweenPoints(globalPlayer.firstX, globalPlayer.firstY, gameObject.x, gameObject.y))
-            gameObject.exists = false;
-            burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
-            let chance = randomFloat(0, 1);
-            if (chance < 0.25) {
+            if (height <= 0) {
+                gameObject.exists = false;
+                burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.75, accel: 0 });
                 let x = Math.round(gameObject.x / TILE.width);
                 let y = Math.round(gameObject.y / TILE.height);
                 let tileIndex = getIndexFromCoords(x, y);
-                if (map[tileIndex] && map[tileIndex].baseLayer !== TileType.LAVA && map[tileIndex].baseLayer !== TileType.MOUNTAIN) {
-                    map[tileIndex].upperLayer = TileType.IGNEOUS;
-                    map[tileIndex].toughness = 500;
-                    map[tileIndex].firstToughness = 500;
-                    map[tileIndex].oreCount = 1;
+                let chance = randomFloat(0, 1);
+                if (map[tileIndex]) {
+                    if (map[tileIndex].upperLayer !== TileType.NONE) {
+                        if (chance < 0.25 && map[tileIndex].upperLayer !== TileType.VOLCANO) {
+                            map[tileIndex].upperLayer = TileType.NONE;
+                        }
+                    } else {
+                        if (chance < 0.25 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER
+                            && map[tileIndex].baseLayer !== TileType.VOLCANO) {
+                            map[tileIndex].baseLayer = TileType.EARTH_1;
+                            map[tileIndex].upperLayer = TileType.IGNEOUS;
+                            map[tileIndex].toughness = 500;
+                            map[tileIndex].firstToughness = 500;
+                            map[tileIndex].oreCount = 1;
+                        }
+                    }
                 }
             }
         }
+
+        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
+    }
+
+    if (gameObject.type === GameObjectType.METEORITE) {
+        if (!pause) {
+            gameObject.x += gameObject.speedX;
+            gameObject.y += gameObject.speedY;
+
+            gameObject.lifeTime++;
+
+            let speedZ = METEORITE_SPEED * Math.sin(gameObject.angleZ);
+
+            let speedXY = METEORITE_SPEED * Math.cos(gameObject.angleZ);
+
+            let speedVector = rotateVector(speedXY, 0, gameObject.angle);
+
+            let height = CAMERA_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+
+            gameObject.width = 100 + height;
+            gameObject.height = 100 + height;
+
+            if (height <= 0) {
+                gameObject.exists = false;
+                burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
+                let x = Math.round(gameObject.x / TILE.width);
+                let y = Math.round(gameObject.y / TILE.height);
+                let tileIndex = getIndexFromCoords(x, y);
+                if (gameObject.summoned) {
+                    if (map[tileIndex].upperLayer) {
+                        map[tileIndex].upperLayer = TileType.NONE;
+                    }
+                    if (map[tileIndex].baseLayer === TileType.MOUNTAIN) {
+                        map[tileIndex].baseLayer = TileType.EARTH_1;
+                    }
+                } else {
+                    let chance = randomFloat(0, 1);
+                    if (chance < 0.25) {
+                        if (
+                            map[tileIndex] && map[tileIndex].baseLayer !== TileType.LAVA && map[tileIndex].baseLayer !== TileType.MOUNTAIN &&
+                            map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.VOLCANO
+                        ) {
+                            map[tileIndex].upperLayer = TileType.IGNEOUS;
+                            map[tileIndex].toughness = 500;
+                            map[tileIndex].firstToughness = 500;
+                            map[tileIndex].oreCount = 1;
+                        }
+                    }
+                }
+            }
+        }
+        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
     }
 
     //смерть
@@ -2215,12 +2282,18 @@ function loop() {
 
     updateTileMap();
 
-    if (timers[gameTimer] < eventEnd - TIME_BETWEEN_EVENTS && randomFloat(0, 1) <= 0.0001) {
+    if (timers[gameTimer] < eventEnd - timeBetweenEvents) {
         event = Event.METEORITE_RAIN;
-        eventEnd = Math.abs(timers[gameTimer] - EVENT_LENGTH);
+        eventEnd = timers[gameTimer] - EVENT_LENGTH;
+
+        if (eventEnd <= 0) {
+            eventEnd = 0;
+        }
     }
+
     if (timers[gameTimer] === eventEnd) {
         event = Event.NONE;
+        timeBetweenEvents = randomInt(timeBetweenEvents - timeBetweenEvents / 6, timeBetweenEvents + timeBetweenEvents / 6);
     }
 
     if (event === Event.METEORITE_RAIN && timers[gameTimer] % 3 === 0) {
@@ -2252,7 +2325,9 @@ function loop() {
 
     ctx.restore();
 
-    updateTimers();
+    if (!pause) {
+        updateTimers();
+    }
     clearAllKeys();
     requestAnimationFrame(loop);
 }

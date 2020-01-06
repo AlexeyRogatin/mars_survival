@@ -1,6 +1,6 @@
 System.register("drawing", [], function (exports_1, context_1) {
     "use strict";
-    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgItems, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlot, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous;
+    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgItems, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlot, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous, imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff;
     var __moduleName = context_1 && context_1.id;
     function resourceLoaded(src) {
         resourcesLoadedCount++;
@@ -186,6 +186,9 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgShockProofBody", imgShockProofBody = loadImage('../sprites/shockproof_body.png'));
             exports_1("imgMeteorite", imgMeteorite = loadImage('../sprites/meteorite.png'));
             exports_1("imgIgneous", imgIgneous = loadImage('../sprites/igneous.png'));
+            exports_1("imgIgneousItem", imgIgneousItem = loadImage('../sprites/igneousItem.png'));
+            exports_1("imgIgneousIngot", imgIgneousIngot = loadImage('../sprites/igneousIngot.png'));
+            exports_1("imgMeteoriteStuff", imgMeteoriteStuff = loadImage('../sprites/meteoriteStuff.png'));
         }
     };
 });
@@ -296,7 +299,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
 });
 System.register("index", ["controls", "drawing"], function (exports_3, context_3) {
     "use strict";
-    var controls_1, drawing_2, GameObjectType, TileType, TILE, InventorySlot, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, slotCount, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, timers, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, gameLength, gameTimer, Event, event, EVENT_LENGTH, TIME_BETWEEN_EVENTS, eventEnd, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, CAMERA_HEIGHT, METEORITE_SPEED, MAX_RANGE, STORAGE_SLOT_COUNT;
+    var controls_1, drawing_2, GameObjectType, TileType, TILE, timers, InventorySlot, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, slotCount, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, pause, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, gameLength, gameTimer, Event, event, EVENT_LENGTH, timeBetweenEvents, eventEnd, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, CAMERA_HEIGHT, METEORITE_SPEED, METEOR_STUFF_COOLDOWN, MAX_RANGE, STORAGE_SLOT_COUNT;
     var __moduleName = context_3 && context_3.id;
     function getIndexFromCoords(x, y) {
         var result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
@@ -555,7 +558,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             cameraLvl: 0,
             stuckable: false,
             lifeTime: 0,
-            angleZ: 0
+            angleZ: 0,
+            summoned: false
         };
         if (gameObject.type === GameObjectType.PLAYER) {
             gameObject.sprite = drawing_2.imgPlayer;
@@ -572,6 +576,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
         if (gameObject.type === GameObjectType.METEORITE) {
             gameObject.sprite = drawing_2.imgMeteorite;
+            gameObject.width = 1;
+            gameObject.height = 1;
             gameObject.angle = randomFloat(0, Math.PI * 2);
             gameObject.angleZ = -randomFloat(0.25 * Math.PI, 0.5 * Math.PI);
         }
@@ -588,6 +594,11 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
         gameObjects[freeIndex] = gameObject;
         return gameObject;
+    }
+    function summonMeteorite(x, y) {
+        var meteorite = addGameObject(GameObjectType.METEORITE, x, y);
+        meteorite.summoned = true;
+        meteorite.angleZ = -Math.PI * 0.5;
     }
     function controlPlayer(gameObject) {
         if (controls_1.upKey.isDown) {
@@ -752,14 +763,40 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
     function drawParticles() {
         for (var particleIndex = 0; particleIndex < particles.length; particleIndex++) {
             var particle_1 = particles[particleIndex];
-            drawCircle(particle_1.x, particle_1.y, particle_1.radius, particle_1.color, false, drawing_2.Layer.PARTICLES);
-            particle_1.radius -= particle_1.sizeDecrease;
-            particle_1.x += particle_1.speedX;
-            particle_1.y += particle_1.speedY;
-            particle_1.speedX += particle_1.accelX;
-            particle_1.speedY += particle_1.accelY;
+            if (!pause) {
+                particle_1.radius -= particle_1.sizeDecrease;
+                particle_1.x += particle_1.speedX;
+                particle_1.y += particle_1.speedY;
+                particle_1.speedX += particle_1.accelX;
+                particle_1.speedY += particle_1.accelY;
+                if ((particle_1.color === 'grey' || particle_1.color === 'yellow' ||
+                    particle_1.color === 'lightcoral' || particle_1.color === 'dimgray' ||
+                    particle_1.color === 'sienna') &&
+                    particle_1.radius < 15) {
+                    var particleAngle = angleBetweenPoints(globalPlayer.x, globalPlayer.y, particle_1.x, particle_1.y);
+                    var particleSpeed = rotateVector(6, 0, particleAngle);
+                    particle_1.accelX = 0;
+                    particle_1.accelY = 0;
+                    particle_1.x += particleSpeed[0] - particle_1.speedX;
+                    particle_1.y -= particleSpeed[1] + particle_1.speedY;
+                    if (distanceBetweenPoints(particle_1.x, particle_1.y, globalPlayer.x, globalPlayer.y) <= 5) {
+                        removeParticle(particleIndex);
+                    }
+                }
+            }
             if (particle_1.radius <= 0) {
                 removeParticle(particleIndex);
+            }
+            else {
+                drawLight(particle_1.x + particle_1.radius, particle_1.y + particle_1.radius, particle_1.radius * 4);
+                drawCircle(particle_1.x, particle_1.y, particle_1.radius, particle_1.color, false, drawing_2.Layer.PARTICLES);
+            }
+            if (globalPlayer.width / 2 + particle_1.radius >= distanceBetweenPoints(globalPlayer.x, globalPlayer.y, particle_1.x, particle_1.y) &&
+                timers[globalPlayer.unhitableTimer] <= 0) {
+                if (particle_1.color === 'red') {
+                    globalPlayer.hitpoints -= 50;
+                    timers[globalPlayer.unhitableTimer] = 180;
+                }
             }
         }
     }
@@ -852,7 +889,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             if (timers[tile.specialTimer] <= 0) {
                                 timers[tile.specialTimer] = randomInt(500, 2000);
                             }
-                            if (timers[tile.specialTimer] <= 150) {
+                            if (timers[tile.specialTimer] <= 150 && !pause) {
                                 burstParticles({
                                     x: tile.x * TILE.width,
                                     y: tile.y * TILE.height,
@@ -1025,6 +1062,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             case TileType.IGNEOUS:
                 {
                     sprite = drawing_2.imgIgneous;
+                    drawLight(tile.x * TILE.width, tile.y * TILE.height, tile.width * 1.2);
                     if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) < 100 && timers[globalPlayer.unhitableTimer] <= 0) {
                         globalPlayer.hitpoints -= 0.1;
                     }
@@ -1040,7 +1078,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     sprite = drawing_2.imgVolcano;
                     drawLight(tile.x * tile.width, tile.y * tile.height, tile.width * 1.2);
                     if (distanceBetweenPoints(camera.x, camera.y, tile.x * TILE.width, tile.y * TILE.width) < VOLCANO_RADIUS) {
-                        if (timers[tile.specialTimer] === 0) {
+                        if (timers[tile.specialTimer] === 0 && !pause) {
                             addGameObject(GameObjectType.MAGMA_BALL, tile.x * TILE.width, tile.y * TILE.height);
                             timers[tile.specialTimer] = randomInt(60, 240);
                         }
@@ -1070,6 +1108,12 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
     }
     function updateGameObject(gameObject) {
+        if (craftMode) {
+            pause = true;
+        }
+        else {
+            pause = false;
+        }
         var mouseTile = getTileUnderMouse();
         if (timers[gameObject.unhitableTimer] > 0) {
             gameObject.doNotDraw = !gameObject.doNotDraw;
@@ -1079,7 +1123,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
         if (!gameObject.doNotDraw) {
             if (gameObject.sprite) {
-                if (gameObject.type === GameObjectType.MAGMA_BALL) {
+                if (gameObject.type === GameObjectType.MAGMA_BALL || gameObject.type === GameObjectType.METEORITE) {
                     drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, drawing_2.Layer.PLAYER);
                 }
                 else
@@ -1100,17 +1144,17 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 gameObject.y + camera.height / 2 <= TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY) {
                 camera.y = gameObject.y;
             }
-            if (gameObject.x + gameObject.speedX <= TILE.firstX - TILE.width / 2) {
-                gameObject.x += (TILE.firstX - TILE.width / 2) - (gameObject.x + gameObject.speedX);
+            if (gameObject.x + gameObject.speedX <= camera.x - camera.width / 2) {
+                gameObject.x = camera.x - camera.width / 2;
             }
-            if (gameObject.x + gameObject.speedX >= TILE.firstX - TILE.width / 2 + TILE.width * TILE.chunkSizeX * TILE.chunkCountX) {
-                gameObject.x -= (gameObject.x + gameObject.speedX) - (TILE.firstX - TILE.width / 2 + TILE.width * TILE.chunkSizeX * TILE.chunkCountX);
+            if (gameObject.x + gameObject.speedX >= camera.x + camera.width / 2) {
+                gameObject.x = camera.x + camera.width / 2;
             }
-            if (gameObject.y + gameObject.speedY <= TILE.firstY - TILE.height / 2) {
-                gameObject.y += (TILE.firstY - TILE.height / 2) - (gameObject.y + gameObject.speedY);
+            if (gameObject.y + gameObject.speedY <= camera.y - camera.height / 2) {
+                gameObject.y = camera.y - camera.height / 2;
             }
-            if (gameObject.y + gameObject.speedY > TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY) {
-                gameObject.y -= (gameObject.y + gameObject.speedY) - (TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY);
+            if (gameObject.y + gameObject.speedY >= camera.y + camera.height / 2) {
+                gameObject.y = camera.y - camera.height / 2;
             }
             for (var slotIndex = 0; slotIndex < slotCount; slotIndex++) {
                 drawRect(camera.x - slotCount * 40 / 2 + slotIndex * 50, camera.y + camera.height / 2 - 50, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
@@ -1128,35 +1172,10 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 100, 'blue', "x: " + Math.round((gameObject.x) / TILE.width), 25, drawing_2.Layer.UI);
             drawText(camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 130, 'blue', "y: " + Math.round((gameObject.y) / TILE.height), 25, drawing_2.Layer.UI);
             if (controls_1.qKey.wentDown) {
-                inventory[mainSlot] = { item: Item.NONE, count: 0 };
+                inventory[mainSlot] = { item: Item.NONE, count: 0, cooldown: addTimer(0) };
             }
             if (isInventoryFullForItem(Item.NONE)) {
                 drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, drawing_2.Layer.UI);
-            }
-            for (var particleIndex = 0; particleIndex < particles.length; particleIndex++) {
-                var particle_2 = particles[particleIndex];
-                if ((particle_2.color === 'grey' || particle_2.color === 'yellow' ||
-                    particle_2.color === 'lightcoral' || particle_2.color === 'dimgray' ||
-                    particle_2.color === 'sienna') &&
-                    particle_2.radius < 15) {
-                    var particleAngle = angleBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y);
-                    var particleSpeed = rotateVector(6, 0, particleAngle);
-                    particle_2.accelX = 0;
-                    particle_2.accelY = 0;
-                    particle_2.x += particleSpeed[0] - particle_2.speedX;
-                    particle_2.y -= particleSpeed[1] + particle_2.speedY;
-                    if (distanceBetweenPoints(particle_2.x, particle_2.y, gameObject.x, gameObject.y) <= 5) {
-                        removeParticle(particleIndex);
-                    }
-                }
-                drawLight(particle_2.x + particle_2.radius, particle_2.y + particle_2.radius, particle_2.radius * 4);
-                if (gameObject.width / 2 + particle_2.radius >= distanceBetweenPoints(gameObject.x, gameObject.y, particle_2.x, particle_2.y) &&
-                    timers[gameObject.unhitableTimer] <= 0) {
-                    if (particle_2.color === 'red') {
-                        gameObject.hitpoints -= 50;
-                        timers[gameObject.unhitableTimer] = 180;
-                    }
-                }
             }
             for (var itemIndex = 0; itemIndex <= inventory.length; itemIndex++) {
                 if (inventory[itemIndex]) {
@@ -1209,18 +1228,25 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         sprite = drawing_2.imgShockProofBody;
                     }
                     if (inventory[itemIndex].item === Item.IGNEOUS) {
-                        sprite = drawing_2.imgCamera;
+                        sprite = drawing_2.imgIgneousItem;
                     }
                     if (inventory[itemIndex].item === Item.IGNEOUS_INGOT) {
-                        sprite = drawing_2.imgCamera;
+                        sprite = drawing_2.imgIgneousIngot;
+                    }
+                    if (inventory[itemIndex].item === Item.METEORITE_STUFF) {
+                        sprite = drawing_2.imgMeteoriteStuff;
                     }
                     if (itemIndex === mainSlot) {
                         drawRect(x + 50 * itemIndex, y, 50, 50, 0, 'green', true, drawing_2.Layer.UI);
                     }
                     drawSprite(x + 50 * itemIndex, y, sprite, 0, 40, 40, drawing_2.Layer.UI);
-                    if (inventory[itemIndex].count !== 0) {
+                    if (inventory[itemIndex].count > 1) {
                         drawText(x - 5 + 50 * itemIndex, y - 34, 'green', "" + inventory[itemIndex].count, 25, drawing_2.Layer.UI);
                     }
+                    var STRIPE_HEIGHT_1 = 10;
+                    var STRIPE_WIDTH_1 = 30;
+                    width = timers[inventory[mainSlot].cooldown] / METEOR_STUFF_COOLDOWN * STRIPE_WIDTH_1;
+                    drawRect(x, y + 30, width, STRIPE_HEIGHT_1, 0, 'white', false, drawing_2.Layer.UI);
                 }
             }
             for (var slotIndex = 0; slotIndex < slotCount; slotIndex++) {
@@ -1237,6 +1263,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
                     }
                 }
+            }
+            if (controls_1.upKey.isDown || controls_1.downKey.isDown || controls_1.rightKey.isDown || controls_1.leftKey.isDown) {
+                craftMode = false;
             }
             if (controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 - 10 &&
                 controls_1.mouse.worldX < camera.x - camera.width / 2 + 25 &&
@@ -1277,7 +1306,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
                         TILE.width + gameObject.width) {
                     if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
-                        (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT || inventory[mainSlot].item === Item.IGNEOUS_INGOT)) {
+                        (inventory[mainSlot].item === Item.IRON || inventory[mainSlot].item === Item.AURIT ||
+                            inventory[mainSlot].item === Item.IGNEOUS)) {
                         mouseTile.inventory[0].item = inventory[mainSlot].item;
                         mouseTile.inventory[0].count = inventory[mainSlot].count;
                         removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
@@ -1330,6 +1360,10 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         }
                         removeItem(inventory[mainSlot].item, 1);
                     }
+                    else if (inventory[mainSlot].item === Item.METEORITE_STUFF && timers[inventory[mainSlot].cooldown] === 0) {
+                        summonMeteorite(controls_1.mouse.worldX, controls_1.mouse.worldY);
+                        timers[inventory[mainSlot].cooldown] = METEOR_STUFF_COOLDOWN;
+                    }
                     if (controls_1.mouse.worldX >= gameObject.x - gameObject.width / 2 &&
                         controls_1.mouse.worldX <= gameObject.x + gameObject.width / 2 &&
                         controls_1.mouse.worldY >= gameObject.y - gameObject.height / 2 &&
@@ -1351,7 +1385,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         else if (inventory[mainSlot].item === Item.EXTRA_SLOT) {
                             if (slotCount === 5) {
                                 slotCount++;
-                                inventory[slotCount - 1] = { item: Item.NONE, count: 0 };
+                                inventory[slotCount - 1] = { item: Item.NONE, count: 0, cooldown: addTimer(0) };
                                 removeItem(Item.EXTRA_SLOT, 1);
                             }
                         }
@@ -1394,7 +1428,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             mouseTile.toughness = 200;
                             mouseTile.firstToughness = 200;
                             mouseTile.specialTimer = addTimer(0);
-                            mouseTile.inventory[0] = { item: Item.NONE, count: 0 };
+                            mouseTile.inventory[0] = { item: Item.NONE, count: 0, cooldown: addTimer(0) };
                             removeItem(Item.MELTER, 1);
                         }
                         if (inventory[mainSlot] && inventory[mainSlot].item === Item.SPLITTER &&
@@ -1417,13 +1451,14 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             mouseTile.toughness = 200;
                             mouseTile.firstToughness = 200;
                             for (var i = 0; i < STORAGE_SLOT_COUNT; i++) {
-                                mouseTile.inventory[i] = { item: Item.NONE, count: 0 };
+                                mouseTile.inventory[i] = { item: Item.NONE, count: 0, cooldown: addTimer(0) };
                             }
                             removeItem(Item.STORAGE, 1);
                         }
                     }
                 }
                 if (mouseTile && controls_1.mouse.isDown && mouseTile.toughness) {
+                    moveToTile(mouseTile);
                     if (gameObject.goForward === false && gameObject.goBackward === false &&
                         gameObject.goLeft === false && gameObject.goRight === false) {
                         var isThereAnItem = false;
@@ -1516,9 +1551,6 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     var width_1 = stripeWidth * (mouseTile.toughness / mouseTile.firstToughness);
                     drawRect(camera.x + width_1 / 2 - 150, camera.y + camera.height / 4, width_1, 50, 0, 'green', false, drawing_2.Layer.UI);
                 }
-                if (controls_1.mouse.isDown && mouseTile) {
-                    moveToTile(mouseTile);
-                }
             }
             if (craftMode && controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 + 130 &&
                 controls_1.mouse.worldX < camera.x - camera.width / 2 + 170 &&
@@ -1594,10 +1626,13 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         sprite = drawing_2.imgShockProofBody;
                     }
                     if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS) {
-                        sprite = drawing_2.imgCamera;
+                        sprite = drawing_2.imgIgneousItem;
                     }
                     if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS_INGOT) {
-                        sprite = drawing_2.imgCamera;
+                        sprite = drawing_2.imgIgneousIngot;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.METEORITE_STUFF) {
+                        sprite = drawing_2.imgMeteoriteStuff;
                     }
                     drawSprite(x, y, sprite, 0, 40, 40, drawing_2.Layer.UI);
                     if (controlledStorage.inventory[slotIndex].count !== 0) {
@@ -1729,83 +1764,97 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
                 }
             }
-            moveGameObject(gameObject);
+            if (!pause) {
+                moveGameObject(gameObject);
+            }
         }
         if (gameObject.type === GameObjectType.MAGMA_BALL) {
-            gameObject.x += gameObject.speedX;
-            gameObject.y += gameObject.speedY;
-            gameObject.lifeTime++;
-            var speedZ = MAGMA_BALL_SPEED * Math.sin(gameObject.angleZ);
-            var speedXY = MAGMA_BALL_SPEED * Math.cos(gameObject.angleZ);
-            var speedVector = rotateVector(speedXY, 0, gameObject.angle);
-            gameObject.speedX = speedVector[0];
-            gameObject.speedY = speedVector[1];
-            var height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
-            var range = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
-            var rangeProjections = rotateVector(range, 0, gameObject.angle);
-            if (globalPlayer.cameraLvl === 1) {
-                drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, drawing_2.Layer.ON_TILE);
-                drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 90, 90, drawing_2.Layer.ON_TILE);
-            }
-            drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
-            gameObject.width = 100 + height;
-            gameObject.height = 100 + height;
-            if (height <= 0) {
-                gameObject.exists = false;
-                burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.75, accel: 0 });
-                var x = Math.round(gameObject.x / TILE.width);
-                var y = Math.round(gameObject.y / TILE.height);
-                var tileIndex = getIndexFromCoords(x, y);
-                var chance = randomFloat(0, 1);
-                if (map[tileIndex]) {
-                    if (map[tileIndex].upperLayer !== TileType.NONE) {
-                        if (chance < 0.25 && map[tileIndex].upperLayer !== TileType.VOLCANO) {
-                            map[tileIndex].upperLayer = TileType.NONE;
-                        }
-                    }
-                    else {
-                        if (chance < 0.25 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER
-                            && map[tileIndex].baseLayer !== TileType.VOLCANO) {
-                            map[tileIndex].baseLayer = TileType.EARTH_1;
-                            map[tileIndex].upperLayer = TileType.IGNEOUS;
-                            map[tileIndex].toughness = 500;
-                            map[tileIndex].firstToughness = 500;
-                            map[tileIndex].oreCount = 1;
-                        }
-                    }
+            if (!pause) {
+                gameObject.x += gameObject.speedX;
+                gameObject.y += gameObject.speedY;
+                gameObject.lifeTime++;
+                var speedZ = MAGMA_BALL_SPEED * Math.sin(gameObject.angleZ);
+                var speedXY = MAGMA_BALL_SPEED * Math.cos(gameObject.angleZ);
+                var speedVector = rotateVector(speedXY, 0, gameObject.angle);
+                gameObject.speedX = speedVector[0];
+                gameObject.speedY = speedVector[1];
+                var height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+                var range = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
+                var rangeProjections = rotateVector(range, 0, gameObject.angle);
+                if (globalPlayer.cameraLvl === 1) {
+                    drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, drawing_2.Layer.ON_TILE);
+                    drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 90, 90, drawing_2.Layer.ON_TILE);
                 }
-            }
-        }
-        if (gameObject.type === GameObjectType.METEORITE) {
-            gameObject.x += gameObject.speedX;
-            gameObject.y += gameObject.speedY;
-            gameObject.lifeTime++;
-            var speedZ = METEORITE_SPEED * Math.sin(gameObject.angleZ);
-            var speedXY = METEORITE_SPEED * Math.cos(gameObject.angleZ);
-            var speedVector = rotateVector(speedXY, 0, gameObject.angle);
-            gameObject.speedX = speedVector[0];
-            gameObject.speedY = speedVector[1];
-            var height = CAMERA_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
-            drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
-            gameObject.width = 100 + height;
-            gameObject.height = 100 + height;
-            if (height <= 0) {
-                console.log(distanceBetweenPoints(globalPlayer.firstX, globalPlayer.firstY, gameObject.x, gameObject.y));
-                gameObject.exists = false;
-                burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
-                var chance = randomFloat(0, 1);
-                if (chance < 0.25) {
+                gameObject.width = 100 + height;
+                gameObject.height = 100 + height;
+                if (height <= 0) {
+                    gameObject.exists = false;
+                    burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.75, accel: 0 });
                     var x = Math.round(gameObject.x / TILE.width);
                     var y = Math.round(gameObject.y / TILE.height);
                     var tileIndex = getIndexFromCoords(x, y);
-                    if (map[tileIndex] && map[tileIndex].baseLayer !== TileType.LAVA && map[tileIndex].baseLayer !== TileType.MOUNTAIN) {
-                        map[tileIndex].upperLayer = TileType.IGNEOUS;
-                        map[tileIndex].toughness = 500;
-                        map[tileIndex].firstToughness = 500;
-                        map[tileIndex].oreCount = 1;
+                    var chance = randomFloat(0, 1);
+                    if (map[tileIndex]) {
+                        if (map[tileIndex].upperLayer !== TileType.NONE) {
+                            if (chance < 0.25 && map[tileIndex].upperLayer !== TileType.VOLCANO) {
+                                map[tileIndex].upperLayer = TileType.NONE;
+                            }
+                        }
+                        else {
+                            if (chance < 0.25 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER
+                                && map[tileIndex].baseLayer !== TileType.VOLCANO) {
+                                map[tileIndex].baseLayer = TileType.EARTH_1;
+                                map[tileIndex].upperLayer = TileType.IGNEOUS;
+                                map[tileIndex].toughness = 500;
+                                map[tileIndex].firstToughness = 500;
+                                map[tileIndex].oreCount = 1;
+                            }
+                        }
                     }
                 }
             }
+            drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
+        }
+        if (gameObject.type === GameObjectType.METEORITE) {
+            if (!pause) {
+                gameObject.x += gameObject.speedX;
+                gameObject.y += gameObject.speedY;
+                gameObject.lifeTime++;
+                var speedZ = METEORITE_SPEED * Math.sin(gameObject.angleZ);
+                var speedXY = METEORITE_SPEED * Math.cos(gameObject.angleZ);
+                var speedVector = rotateVector(speedXY, 0, gameObject.angle);
+                var height = CAMERA_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+                gameObject.width = 100 + height;
+                gameObject.height = 100 + height;
+                if (height <= 0) {
+                    gameObject.exists = false;
+                    burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
+                    var x = Math.round(gameObject.x / TILE.width);
+                    var y = Math.round(gameObject.y / TILE.height);
+                    var tileIndex = getIndexFromCoords(x, y);
+                    if (gameObject.summoned) {
+                        if (map[tileIndex].upperLayer) {
+                            map[tileIndex].upperLayer = TileType.NONE;
+                        }
+                        if (map[tileIndex].baseLayer === TileType.MOUNTAIN) {
+                            map[tileIndex].baseLayer = TileType.EARTH_1;
+                        }
+                    }
+                    else {
+                        var chance = randomFloat(0, 1);
+                        if (chance < 0.25) {
+                            if (map[tileIndex] && map[tileIndex].baseLayer !== TileType.LAVA && map[tileIndex].baseLayer !== TileType.MOUNTAIN &&
+                                map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.VOLCANO) {
+                                map[tileIndex].upperLayer = TileType.IGNEOUS;
+                                map[tileIndex].toughness = 500;
+                                map[tileIndex].firstToughness = 500;
+                                map[tileIndex].oreCount = 1;
+                            }
+                        }
+                    }
+                }
+            }
+            drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
         }
         if ((gameObject.hitpoints <= 0 || timers[gameObject.energy] <= 0) && gameObject.type === GameObjectType.PLAYER) {
             gameObject.exists = false;
@@ -1824,12 +1873,16 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         drawing_2.backCtx.fillStyle = "rgba(0,0,0," + alpha + ")";
         drawing_2.backCtx.fillRect(0, 0, drawing_2.canvas.width, drawing_2.canvas.height);
         updateTileMap();
-        if (timers[gameTimer] < eventEnd - TIME_BETWEEN_EVENTS && randomFloat(0, 1) <= 0.0001) {
+        if (timers[gameTimer] < eventEnd - timeBetweenEvents) {
             event = Event.METEORITE_RAIN;
-            eventEnd = Math.abs(timers[gameTimer] - EVENT_LENGTH);
+            eventEnd = timers[gameTimer] - EVENT_LENGTH;
+            if (eventEnd <= 0) {
+                eventEnd = 0;
+            }
         }
         if (timers[gameTimer] === eventEnd) {
             event = Event.NONE;
+            timeBetweenEvents = randomInt(timeBetweenEvents - timeBetweenEvents / 6, timeBetweenEvents + timeBetweenEvents / 6);
         }
         if (event === Event.METEORITE_RAIN && timers[gameTimer] % 3 === 0) {
             addGameObject(GameObjectType.METEORITE, randomInt(globalPlayer.x - 5000, globalPlayer.x + 5000), randomInt(globalPlayer.y - 5000, globalPlayer.y + 5000));
@@ -1852,7 +1905,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
         drawing_2.backCtx.restore();
         drawing_2.ctx.restore();
-        updateTimers();
+        if (!pause) {
+            updateTimers();
+        }
         controls_1.clearAllKeys();
         requestAnimationFrame(loop);
     }
@@ -1903,10 +1958,12 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 chunkCountX: 20,
                 chunkCountY: 20
             };
+            timers = [];
             InventorySlot = (function () {
                 function InventorySlot() {
                     this.item = Item.NONE;
                     this.count = 0;
+                    this.cooldown = addTimer(0);
                 }
                 return InventorySlot;
             }());
@@ -1986,6 +2043,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 Item[Item["SHOCKPROOF_BODY"] = 14] = "SHOCKPROOF_BODY";
                 Item[Item["IGNEOUS"] = 15] = "IGNEOUS";
                 Item[Item["IGNEOUS_INGOT"] = 16] = "IGNEOUS_INGOT";
+                Item[Item["METEORITE_STUFF"] = 17] = "METEORITE_STUFF";
             })(Item || (Item = {}));
             RecipePart = (function () {
                 function RecipePart() {
@@ -2071,6 +2129,15 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     description2: 'о непрочности, но слой силикона',
                     description3: 'говорит обратное. Больше жизней'
                 },
+                {
+                    result: Item.METEORITE_STUFF,
+                    parts: [{ item: Item.IGNEOUS_INGOT, count: 20, sprite: drawing_2.imgIgneousIngot }],
+                    sprite: drawing_2.imgMeteoriteStuff,
+                    name: 'Метеопосох',
+                    description1: 'Эта вещь может вызвать метеорит,',
+                    description2: 'который упадёт на выбранную ',
+                    description3: 'область. Хороший взрыв'
+                },
             ];
             slotCount = 5;
             inventory = [];
@@ -2091,7 +2158,6 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 height: drawing_2.canvas.height,
                 angle: 0
             };
-            timers = [];
             gameObjects = [];
             GameObject = (function () {
                 function GameObject() {
@@ -2194,11 +2260,12 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
             craftMode = false;
+            pause = false;
             firstRecipeIndex = 0;
             mainSlot = 0;
             controlledStorage = null;
             dayTimer = addTimer(ONE_DAY);
-            gameLength = ONE_DAY * 1;
+            gameLength = ONE_DAY * 3;
             gameTimer = addTimer(gameLength);
             (function (Event) {
                 Event[Event["NONE"] = 0] = "NONE";
@@ -2206,7 +2273,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             })(Event || (Event = {}));
             event = Event.NONE;
             EVENT_LENGTH = 1800;
-            TIME_BETWEEN_EVENTS = gameLength / 4;
+            timeBetweenEvents = gameLength / 4;
             eventEnd = gameLength;
             VOLCANO_RADIUS = TILE.width * TILE.chunkSizeX * 1.5;
             MAGMA_BALL_SPEED = 35;
@@ -2214,6 +2281,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             GRAVITATION = 0.5;
             CAMERA_HEIGHT = 1325;
             METEORITE_SPEED = 35;
+            METEOR_STUFF_COOLDOWN = 500;
             MAX_RANGE = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
             STORAGE_SLOT_COUNT = 10;
             requestAnimationFrame(loop);
