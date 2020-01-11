@@ -1,6 +1,6 @@
 System.register("drawing", [], function (exports_1, context_1) {
     "use strict";
-    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgEarth4, imgEarth5, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgItems, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgMainSlot, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlot, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous, imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff;
+    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlot, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous, imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand;
     var __moduleName = context_1 && context_1.id;
     function resourceLoaded(src) {
         resourcesLoadedCount++;
@@ -25,7 +25,12 @@ System.register("drawing", [], function (exports_1, context_1) {
                     ctx.rotate(item.angle);
                     var compWidth = item.width || item.sprite.width;
                     var compHeight = item.height || item.sprite.height;
-                    ctx.drawImage(item.sprite, -compWidth / 2, -compHeight / 2, compWidth, compHeight);
+                    if (!item.fromThePoint) {
+                        ctx.drawImage(item.sprite, -compWidth / 2, -compHeight / 2, compWidth, compHeight);
+                    }
+                    else {
+                        ctx.drawImage(item.sprite, -compWidth, -compHeight / 2, compWidth, compHeight);
+                    }
                     ctx.restore();
                 }
                 break;
@@ -91,10 +96,12 @@ System.register("drawing", [], function (exports_1, context_1) {
                 Layer[Layer["UI"] = 0] = "UI";
                 Layer[Layer["FORGROUND"] = 1] = "FORGROUND";
                 Layer[Layer["PARTICLES"] = 2] = "PARTICLES";
-                Layer[Layer["PLAYER"] = 3] = "PLAYER";
-                Layer[Layer["ON_TILE"] = 4] = "ON_TILE";
-                Layer[Layer["TILE"] = 5] = "TILE";
-                Layer[Layer["NONE"] = 6] = "NONE";
+                Layer[Layer["BOSS"] = 3] = "BOSS";
+                Layer[Layer["BOSS_LEG"] = 4] = "BOSS_LEG";
+                Layer[Layer["PLAYER"] = 5] = "PLAYER";
+                Layer[Layer["ON_TILE"] = 6] = "ON_TILE";
+                Layer[Layer["TILE"] = 7] = "TILE";
+                Layer[Layer["NONE"] = 8] = "NONE";
             })(Layer || (Layer = {}));
             exports_1("Layer", Layer);
             (function (DrawQueueType) {
@@ -118,6 +125,8 @@ System.register("drawing", [], function (exports_1, context_1) {
                     this.text = '';
                     this.textSize = 60;
                     this.outlineOnly = false;
+                    this.fromThePoint = false;
+                    this.drawFromThePoint = false;
                 }
                 return DrawQueueItem;
             }());
@@ -132,25 +141,21 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgWheel6", imgWheel6 = loadImage('../sprites/weel6.png'));
             exports_1("imgCamera", imgCamera = loadImage('../sprites/camera.png'));
             exports_1("imgEarth1", imgEarth1 = loadImage('../sprites/earth1.png'));
-            exports_1("imgEarth2", imgEarth2 = loadImage('../sprites/earth2.png'));
-            exports_1("imgEarth3", imgEarth3 = loadImage('../sprites/earth3.png'));
-            exports_1("imgEarth4", imgEarth4 = loadImage('../sprites/earth4.png'));
-            exports_1("imgEarth5", imgEarth5 = loadImage('../sprites/earth5.png'));
+            exports_1("imgEarth2", imgEarth2 = loadImage('../sprites/sasha/earth2.png'));
+            exports_1("imgEarth3", imgEarth3 = loadImage('../sprites/sasha/earth3.png'));
             exports_1("imgGeyser", imgGeyser = loadImage('../sprites/geyser.png'));
-            exports_1("imgMountain", imgMountain = loadImage('../sprites/mountain.png'));
+            exports_1("imgMountain", imgMountain = loadImage('../sprites/sasha/newMountain.png'));
             exports_1("imgAbyss", imgAbyss = loadImage('../sprites/abyss.png'));
             exports_1("imgIron1", imgIron1 = loadImage('../sprites/iron1.png'));
             exports_1("imgIron2", imgIron2 = loadImage('../sprites/iron2.png'));
             exports_1("imgIron3", imgIron3 = loadImage('../sprites/iron3.png'));
             exports_1("imgIron4", imgIron4 = loadImage('../sprites/iron4.png'));
             exports_1("imgIron5", imgIron5 = loadImage('../sprites/iron5.png'));
-            exports_1("imgItems", imgItems = loadImage('../sprites/items.png'));
             exports_1("imgIronItem", imgIronItem = loadImage('../sprites/ironItem.png'));
             exports_1("imgArrow", imgArrow = loadImage('../sprites/arrow.png'));
             exports_1("imgCrafts", imgCrafts = loadImage('../sprites/crafts.png'));
             exports_1("imgArrow1", imgArrow1 = loadImage('../sprites/arrow1.png'));
             exports_1("imgMelter", imgMelter = loadImage('../sprites/melter.png'));
-            exports_1("imgMainSlot", imgMainSlot = loadImage('../sprites/mainSlot.png'));
             exports_1("imgIronIngot", imgIronIngot = loadImage('../sprites/ironIngotItem.png'));
             exports_1("imgAurit1", imgAurit1 = loadImage('../sprites/gold1.png'));
             exports_1("imgAurit2", imgAurit2 = loadImage('../sprites/gold2.png'));
@@ -176,7 +181,7 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgSilicon4", imgSilicon4 = loadImage('../sprites/silicon4.png'));
             exports_1("imgSilicon5", imgSilicon5 = loadImage('../sprites/silicon5.png'));
             exports_1("imgSiliconItem", imgSiliconItem = loadImage('../sprites/siliconItem.png'));
-            exports_1("imgVolcano", imgVolcano = imgMountain);
+            exports_1("imgVolcano", imgVolcano = loadImage('../sprites/sasha/volcano.png'));
             exports_1("imgMagmaBall", imgMagmaBall = loadImage('../sprites/magmaBall.png'));
             exports_1("imgStorage", imgStorage = loadImage('../sprites/storage.png'));
             exports_1("imgGoldenCamera", imgGoldenCamera = loadImage('../sprites/cameraGold.png'));
@@ -189,6 +194,10 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgIgneousItem", imgIgneousItem = loadImage('../sprites/igneousItem.png'));
             exports_1("imgIgneousIngot", imgIgneousIngot = loadImage('../sprites/igneousIngot.png'));
             exports_1("imgMeteoriteStuff", imgMeteoriteStuff = loadImage('../sprites/meteoriteStuff.png'));
+            exports_1("imgBoss", imgBoss = loadImage('../sprites/boss.png'));
+            exports_1("imgArrow2", imgArrow2 = loadImage('../sprites/arrow2.png'));
+            exports_1("imgManipulator", imgManipulator = loadImage('../sprites/manipulator.png'));
+            exports_1("imgMechanicalHand", imgMechanicalHand = loadImage('../sprites/mechanicalHand.png'));
         }
     };
 });
@@ -299,7 +308,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
 });
 System.register("index", ["controls", "drawing"], function (exports_3, context_3) {
     "use strict";
-    var controls_1, drawing_2, GameObjectType, TileType, TILE, timers, InventorySlot, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, slotCount, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, pause, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, gameLength, gameTimer, Event, event, EVENT_LENGTH, timeBetweenEvents, eventEnd, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, CAMERA_HEIGHT, METEORITE_SPEED, METEOR_STUFF_COOLDOWN, MAX_RANGE, STORAGE_SLOT_COUNT;
+    var controls_1, drawing_2, GameObjectType, TileType, TILE, timers, InventorySlot, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, slotCount, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, pause, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, gameLength, gameTimer, Event, event, EVENT_LENGTH, timeBetweenEvents, eventEnd, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, CAMERA_HEIGHT, METEORITE_SPEED, METEOR_STUFF_COOLDOWN, MAX_RANGE, STORAGE_SLOT_COUNT, globalBoss;
     var __moduleName = context_3 && context_3.id;
     function getIndexFromCoords(x, y) {
         var result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
@@ -439,15 +448,26 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             addItem(recipe.result, 1);
         }
     }
-    function drawSprite(x, y, sprite, angle, width, height, layer) {
+    function drawSprite(x, y, sprite, angle, width, height, fromThePoint, layer) {
         if (width === void 0) { width = 0; }
         if (height === void 0) { height = 0; }
+        if (fromThePoint === void 0) { fromThePoint = false; }
         if (layer === void 0) { layer = drawing_2.Layer.TILE; }
-        if (x > camera.x - camera.width * 0.5 - width / 2 &&
-            x < camera.x + camera.width * 0.5 + width / 2 &&
-            y > camera.y - camera.height * 0.5 - height / 2 &&
-            y < camera.y + camera.height * 0.5 + height / 2) {
-            drawQueue.push({ x: x, y: y, sprite: sprite, angle: angle, width: width, height: height, layer: layer, type: drawing_2.DrawQueueType.IMAGE });
+        if (!fromThePoint) {
+            if (x > camera.x - camera.width * 0.5 - width / 2 &&
+                x < camera.x + camera.width * 0.5 + width / 2 &&
+                y > camera.y - camera.height * 0.5 - height / 2 &&
+                y < camera.y + camera.height * 0.5 + height / 2) {
+                drawQueue.push({ x: x, y: y, sprite: sprite, angle: angle, width: width, height: height, fromThePoint: fromThePoint, layer: layer, type: drawing_2.DrawQueueType.IMAGE });
+            }
+        }
+        else {
+            if (x > camera.x - camera.width * 0.5 - width * 4 &&
+                x < camera.x + camera.width * 0.5 + width * 4 &&
+                y > camera.y - camera.height * 0.5 - height * 4 &&
+                y < camera.y + camera.height * 0.5 + height * 4) {
+                drawQueue.push({ x: x, y: y, sprite: sprite, angle: angle, width: width, height: height, fromThePoint: fromThePoint, layer: layer, type: drawing_2.DrawQueueType.IMAGE });
+            }
         }
     }
     exports_3("drawSprite", drawSprite);
@@ -581,6 +601,17 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             gameObject.angle = randomFloat(0, Math.PI * 2);
             gameObject.angleZ = -randomFloat(0.25 * Math.PI, 0.5 * Math.PI);
         }
+        if (gameObject.type === GameObjectType.BOSS) {
+            gameObject.sprite = drawing_2.imgBoss;
+            gameObject.width = TILE.width * 4;
+            gameObject.height = TILE.width * 3;
+        }
+        if (gameObject.type == GameObjectType.MANIPULATOR) {
+            gameObject.sprite = drawing_2.imgMechanicalHand;
+            gameObject.width = 200;
+            gameObject.height = 200;
+            gameObject.angle = angleBetweenPoints(gameObject.x, gameObject.y, globalBoss.x, globalBoss.y);
+        }
         if (gameObject.type === GameObjectType.NONE) {
             gameObject.exists = false;
         }
@@ -642,10 +673,10 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         gameObject.speedY = gameObject.speed * Math.sin(gameObject.angle);
         for (var tileIndex = 0; tileIndex < map.length; tileIndex++) {
             var other = map[tileIndex];
-            var wallLeft = other.x * TILE.width - other.width / 2;
-            var wallRight = other.x * TILE.width + other.width / 2;
-            var wallTop = other.y * TILE.height - other.height / 2;
-            var wallBottom = other.y * TILE.height + other.height / 2;
+            var wallLeft = other.x * TILE.width - other.collisionWidth / 2;
+            var wallRight = other.x * TILE.width + other.collisionWidth / 2;
+            var wallTop = other.y * TILE.height - other.collisionHeight / 2;
+            var wallBottom = other.y * TILE.height + other.collisionHeight / 2;
             var playerLeft = gameObject.x - gameObject.width / 2;
             var playerRight = gameObject.x + gameObject.width / 2;
             var playerTop = gameObject.y - gameObject.height / 2;
@@ -884,7 +915,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             && tile.y * TILE.height > camera.y - camera.height / 2 - tile.height / 2
                             && tile.y * TILE.height < camera.y + camera.height / 2 + tile.height / 2) {
                             if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < 200 && timers[tile.specialTimer] > 150) {
-                                drawSprite(tile.x * tile.width, tile.y * tile.height, drawing_2.imgAlert, 0, tile.width, tile.height, drawing_2.Layer.ON_TILE);
+                                drawSprite(tile.x * tile.width, tile.y * tile.height, drawing_2.imgAlert, 0, tile.width, tile.height, false, drawing_2.Layer.ON_TILE);
                             }
                             if (timers[tile.specialTimer] <= 0) {
                                 timers[tile.specialTimer] = randomInt(500, 2000);
@@ -918,16 +949,6 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             case TileType.EARTH_3:
                 {
                     sprite = drawing_2.imgEarth3;
-                }
-                break;
-            case TileType.EARTH_4:
-                {
-                    sprite = drawing_2.imgEarth4;
-                }
-                break;
-            case TileType.EARTH_5:
-                {
-                    sprite = drawing_2.imgEarth5;
                 }
                 break;
             case TileType.LAVA:
@@ -1096,7 +1117,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 break;
         }
         var _a = tilesToPixels(tile.x, tile.y), spriteX = _a[0], spriteY = _a[1];
-        drawSprite(spriteX, spriteY, sprite, 0, tile.width, tile.height, drawing_2.Layer.TILE);
+        drawSprite(spriteX, spriteY, sprite, 0, tile.width, tile.height, false, drawing_2.Layer.TILE);
     }
     function updateTileMap() {
         for (var y = 0; y < TILE.chunkCountY * TILE.chunkSizeY; y++) {
@@ -1124,10 +1145,13 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         if (!gameObject.doNotDraw) {
             if (gameObject.sprite) {
                 if (gameObject.type === GameObjectType.MAGMA_BALL || gameObject.type === GameObjectType.METEORITE) {
-                    drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, drawing_2.Layer.PLAYER);
+                }
+                else if (gameObject.type === GameObjectType.BOSS) {
+                    drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, drawing_2.Layer.BOSS);
                 }
                 else
-                    drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, drawing_2.Layer.PLAYER);
             }
             else {
                 drawRect(gameObject.x, gameObject.y, gameObject.width, gameObject.height, -gameObject.angle, gameObject.color, false);
@@ -1156,10 +1180,18 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             if (gameObject.y + gameObject.speedY >= camera.y + camera.height / 2) {
                 gameObject.y = camera.y - camera.height / 2;
             }
+            if (globalBoss &&
+                !(globalBoss.x > camera.x - camera.width / 2 &&
+                    globalBoss.x < camera.x + camera.width / 2 &&
+                    globalBoss.y > camera.y - camera.height / 2 &&
+                    globalBoss.y < camera.y + camera.height / 2)) {
+                var angle_1 = angleBetweenPoints(globalBoss.x, globalBoss.y, camera.x, camera.y);
+                drawSprite(camera.x, camera.y, drawing_2.imgArrow2, angle_1, camera.height, camera.height, false, drawing_2.Layer.UI);
+            }
             for (var slotIndex = 0; slotIndex < slotCount; slotIndex++) {
                 drawRect(camera.x - slotCount * 40 / 2 + slotIndex * 50, camera.y + camera.height / 2 - 50, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
             }
-            drawSprite(camera.x - camera.width / 2 + 10, camera.y - camera.height / 4, drawing_2.imgArrow, 0, 30, 50, drawing_2.Layer.UI);
+            drawSprite(camera.x - camera.width / 2 + 10, camera.y - camera.height / 4, drawing_2.imgArrow, 0, 30, 50, false, drawing_2.Layer.UI);
             var STRIPE_WIDTH = 200;
             var STRIPE_HEIGHT = 50;
             var width = gameObject.hitpoints / gameObject.maxHitpoints * STRIPE_WIDTH;
@@ -1239,7 +1271,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     if (itemIndex === mainSlot) {
                         drawRect(x + 50 * itemIndex, y, 50, 50, 0, 'green', true, drawing_2.Layer.UI);
                     }
-                    drawSprite(x + 50 * itemIndex, y, sprite, 0, 40, 40, drawing_2.Layer.UI);
+                    drawSprite(x + 50 * itemIndex, y, sprite, 0, 40, 40, false, drawing_2.Layer.UI);
                     if (inventory[itemIndex].count > 1) {
                         drawText(x - 5 + 50 * itemIndex, y - 34, 'green', "" + inventory[itemIndex].count, 25, drawing_2.Layer.UI);
                     }
@@ -1274,18 +1306,18 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 craftMode = !craftMode;
             }
             else if (craftMode) {
-                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 200 + 25, drawing_2.imgCrafts, 0, 300, 400, drawing_2.Layer.UI);
-                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 15, drawing_2.imgArrow1, 0, 40, 26, drawing_2.Layer.UI);
-                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 435, drawing_2.imgArrow1, 1 * Math.PI, 40, 26, drawing_2.Layer.UI);
+                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 200 + 25, drawing_2.imgCrafts, 0, 300, 400, false, drawing_2.Layer.UI);
+                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 15, drawing_2.imgArrow1, 0, 40, 26, false, drawing_2.Layer.UI);
+                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 435, drawing_2.imgArrow1, 1 * Math.PI, 40, 26, false, drawing_2.Layer.UI);
                 for (var itemIndex = 0; itemIndex < 3; itemIndex++) {
-                    drawSprite(camera.x - camera.width / 2 + 60, camera.y - camera.height / 4 + 90 + 133 * itemIndex, recipes[firstRecipeIndex + itemIndex].sprite, 0, 70, 70, drawing_2.Layer.UI);
+                    drawSprite(camera.x - camera.width / 2 + 60, camera.y - camera.height / 4 + 90 + 133 * itemIndex, recipes[firstRecipeIndex + itemIndex].sprite, 0, 70, 70, false, drawing_2.Layer.UI);
                     drawText(camera.x - camera.width / 2 + 100, camera.y - camera.height / 4 + 50 + 133 * itemIndex, 'black', recipes[firstRecipeIndex + itemIndex].name, 25, drawing_2.Layer.UI);
                     for (var partIndex = 0; partIndex < recipes[firstRecipeIndex + itemIndex].parts.length; partIndex++) {
                         var row = 0;
                         if (partIndex > 2) {
                             row = 1;
                         }
-                        drawSprite(camera.x - camera.width / 2 + 130 + 50 * partIndex - 150 * row, camera.y - camera.height / 4 + 90 + 133 * itemIndex + 50 * row, recipes[firstRecipeIndex + itemIndex].parts[partIndex].sprite, 0, 30, 30, drawing_2.Layer.UI);
+                        drawSprite(camera.x - camera.width / 2 + 130 + 50 * partIndex - 150 * row, camera.y - camera.height / 4 + 90 + 133 * itemIndex + 50 * row, recipes[firstRecipeIndex + itemIndex].parts[partIndex].sprite, 0, 30, 30, false, drawing_2.Layer.UI);
                         drawText(camera.x - camera.width / 2 + 120 + 50 * partIndex - 150 * row, camera.y - camera.height / 4 + 70 + 133 * itemIndex + 50 * row, 'black', "" + recipes[firstRecipeIndex + itemIndex].parts[partIndex].count, 15, drawing_2.Layer.UI);
                     }
                     if (controls_1.mouse.worldX >= camera.x - camera.width / 2 &&
@@ -1634,7 +1666,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     if (controlledStorage.inventory[slotIndex].item === Item.METEORITE_STUFF) {
                         sprite = drawing_2.imgMeteoriteStuff;
                     }
-                    drawSprite(x, y, sprite, 0, 40, 40, drawing_2.Layer.UI);
+                    drawSprite(x, y, sprite, 0, 40, 40, false, drawing_2.Layer.UI);
                     if (controlledStorage.inventory[slotIndex].count !== 0) {
                         drawText(x, y - 50, 'green', "" + controlledStorage.inventory[slotIndex].count, 25, drawing_2.Layer.UI);
                     }
@@ -1651,7 +1683,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
             }
             if (!gameObject.doNotDraw && gameObject.sunBateryLvl === 1) {
-                drawSprite(gameObject.x, gameObject.y, drawing_2.imgSunBatteryAdd, gameObject.angle, gameObject.width, gameObject.height, drawing_2.Layer.PLAYER);
+                drawSprite(gameObject.x, gameObject.y, drawing_2.imgSunBatteryAdd, gameObject.angle, gameObject.width, gameObject.height, false, drawing_2.Layer.PLAYER);
             }
             var angle = angleBetweenPoints(controls_1.mouse.worldX, controls_1.mouse.worldY, gameObject.x, gameObject.y);
             var cameraSprite = drawing_2.imgNone;
@@ -1662,7 +1694,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 cameraSprite = drawing_2.imgGoldenCamera;
             }
             if (!gameObject.doNotDraw) {
-                drawSprite(gameObject.x, gameObject.y, cameraSprite, angle, 30, 30, drawing_2.Layer.PLAYER);
+                drawSprite(gameObject.x, gameObject.y, cameraSprite, angle, 30, 30, false, drawing_2.Layer.PLAYER);
             }
             var _a = rotateVector(46, 40, -gameObject.angle), wheel1X = _a[0], wheel1Y = _a[1];
             var _b = rotateVector(9, 45, -gameObject.angle), wheel2X = _b[0], wheel2Y = _b[1];
@@ -1704,64 +1736,64 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             if (!gameObject.doNotDraw) {
                 if (gameObject.leftWeel === 1) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.leftWeel === 2) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.leftWeel === 3) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.leftWeel === 4) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.leftWeel === 5) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.leftWeel === 6) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.rightWeel === 1) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.rightWeel === 2) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.rightWeel === 3) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.rightWeel === 4) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.rightWeel === 5) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
                 if (gameObject.rightWeel === 6) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
             }
             if (!pause) {
@@ -1783,7 +1815,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 var rangeProjections = rotateVector(range, 0, gameObject.angle);
                 if (globalPlayer.cameraLvl === 1) {
                     drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, drawing_2.Layer.ON_TILE);
-                    drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 90, 90, drawing_2.Layer.ON_TILE);
+                    drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 90, 90, false, drawing_2.Layer.ON_TILE);
                 }
                 gameObject.width = 100 + height;
                 gameObject.height = 100 + height;
@@ -1856,6 +1888,24 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
         }
+        if (gameObject.type === GameObjectType.BOSS) {
+            if (gameObject.x > camera.x - camera.width / 2 &&
+                gameObject.x < camera.x + camera.width / 2 &&
+                gameObject.y > camera.y - camera.height / 2 &&
+                gameObject.y < camera.y + camera.height / 2) {
+                gameObject.goForward = true;
+            }
+            else {
+                gameObject.goForward = false;
+            }
+            moveGameObject(gameObject);
+        }
+        if (gameObject.type === GameObjectType.MANIPULATOR) {
+            var angle = angleBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y);
+            drawSprite(globalBoss.x, globalBoss.y, drawing_2.imgManipulator, angle, 270, 60, true, drawing_2.Layer.BOSS_LEG);
+            var legVector = rotateVector(250, 0, angle);
+            drawSprite(globalBoss.x - legVector[0], globalBoss.y + legVector[1], drawing_2.imgManipulator, angle, 270, 60, true, drawing_2.Layer.BOSS_LEG);
+        }
         if ((gameObject.hitpoints <= 0 || timers[gameObject.energy] <= 0) && gameObject.type === GameObjectType.PLAYER) {
             gameObject.exists = false;
         }
@@ -1897,7 +1947,30 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         if (timers[dayTimer] === 0) {
             timers[dayTimer] = ONE_DAY;
         }
-        drawSprite(camera.x, camera.y, drawing_2.backBuffer, 0, drawing_2.canvas.width, drawing_2.canvas.height, drawing_2.Layer.FORGROUND);
+        if (timers[gameTimer] === 1) {
+            var y = void 0;
+            if (camera.y - camera.height * 1.5 > TILE.firstX - TILE.width) {
+                y = camera.y - camera.height * 1.5;
+            }
+            else {
+                y = camera.y + camera.height * 1.5;
+            }
+            globalBoss = addGameObject(GameObjectType.BOSS, camera.x, y);
+            var distanceFromManipulators = 500;
+            var hand1Angle = globalBoss.angle - 0.25 * Math.PI;
+            var hand1Vector = rotateVector(distanceFromManipulators, 0, hand1Angle);
+            addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand1Vector[0], globalBoss.y + hand1Vector[1]);
+            var hand2Angle = globalBoss.angle + 0.25 * Math.PI;
+            var hand2Vector = rotateVector(distanceFromManipulators, 0, hand2Angle);
+            addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand2Vector[0], globalBoss.y + hand2Vector[1]);
+            var hand3Angle = globalBoss.angle - 0.75 * Math.PI;
+            var hand3Vector = rotateVector(distanceFromManipulators, 0, hand3Angle);
+            addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand3Vector[0], globalBoss.y + hand3Vector[1]);
+            var hand4Angle = globalBoss.angle + 0.75 * Math.PI;
+            var hand4Vector = rotateVector(distanceFromManipulators, 0, hand4Angle);
+            addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand4Vector[0], globalBoss.y + hand4Vector[1]);
+        }
+        drawSprite(camera.x, camera.y, drawing_2.backBuffer, 0, drawing_2.canvas.width, drawing_2.canvas.height, false, drawing_2.Layer.FORGROUND);
         drawQueue.sort(function (a, b) { return b.layer - a.layer; });
         for (var itemIndex = 0; itemIndex < drawQueue.length; itemIndex++) {
             var item = drawQueue[itemIndex];
@@ -1926,27 +1999,27 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 GameObjectType[GameObjectType["PLAYER"] = 1] = "PLAYER";
                 GameObjectType[GameObjectType["MAGMA_BALL"] = 2] = "MAGMA_BALL";
                 GameObjectType[GameObjectType["METEORITE"] = 3] = "METEORITE";
+                GameObjectType[GameObjectType["BOSS"] = 4] = "BOSS";
+                GameObjectType[GameObjectType["MANIPULATOR"] = 5] = "MANIPULATOR";
             })(GameObjectType || (GameObjectType = {}));
             (function (TileType) {
                 TileType[TileType["NONE"] = 0] = "NONE";
                 TileType[TileType["EARTH_1"] = 1] = "EARTH_1";
                 TileType[TileType["EARTH_2"] = 2] = "EARTH_2";
                 TileType[TileType["EARTH_3"] = 3] = "EARTH_3";
-                TileType[TileType["EARTH_4"] = 4] = "EARTH_4";
-                TileType[TileType["EARTH_5"] = 5] = "EARTH_5";
-                TileType[TileType["MOUNTAIN"] = 6] = "MOUNTAIN";
-                TileType[TileType["GEYSER"] = 7] = "GEYSER";
-                TileType[TileType["VOLCANO"] = 8] = "VOLCANO";
-                TileType[TileType["LAVA"] = 9] = "LAVA";
-                TileType[TileType["IRON"] = 10] = "IRON";
-                TileType[TileType["AURIT"] = 11] = "AURIT";
-                TileType[TileType["CRYSTAL"] = 12] = "CRYSTAL";
-                TileType[TileType["MELTER"] = 13] = "MELTER";
-                TileType[TileType["SPLITTER"] = 14] = "SPLITTER";
-                TileType[TileType["SUN_BATERY"] = 15] = "SUN_BATERY";
-                TileType[TileType["SILIKON"] = 16] = "SILIKON";
-                TileType[TileType["STORAGE"] = 17] = "STORAGE";
-                TileType[TileType["IGNEOUS"] = 18] = "IGNEOUS";
+                TileType[TileType["MOUNTAIN"] = 4] = "MOUNTAIN";
+                TileType[TileType["GEYSER"] = 5] = "GEYSER";
+                TileType[TileType["VOLCANO"] = 6] = "VOLCANO";
+                TileType[TileType["LAVA"] = 7] = "LAVA";
+                TileType[TileType["IRON"] = 8] = "IRON";
+                TileType[TileType["AURIT"] = 9] = "AURIT";
+                TileType[TileType["CRYSTAL"] = 10] = "CRYSTAL";
+                TileType[TileType["MELTER"] = 11] = "MELTER";
+                TileType[TileType["SPLITTER"] = 12] = "SPLITTER";
+                TileType[TileType["SUN_BATERY"] = 13] = "SUN_BATERY";
+                TileType[TileType["SILIKON"] = 14] = "SILIKON";
+                TileType[TileType["STORAGE"] = 15] = "STORAGE";
+                TileType[TileType["IGNEOUS"] = 16] = "IGNEOUS";
             })(TileType || (TileType = {}));
             TILE = {
                 width: 200,
@@ -2188,13 +2261,14 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             var index = getIndexFromCoords(x, y);
                             map[index] = {
                                 baseLayer: downTileType, upperLayer: upTileType, x: x, y: y, specialTimer: null, toughness: null,
-                                firstToughness: null, oreCount: 5, inventory: [], width: TILE.width, height: TILE.height
+                                firstToughness: null, oreCount: 5, inventory: [], width: TILE.width, height: TILE.height,
+                                collisionWidth: TILE.width, collisionHeight: TILE.height
                             };
                             if (char === '0') {
                                 downTileType = TileType.NONE;
                             }
                             else if (char === ' ') {
-                                var chance = randomInt(1, 10);
+                                var chance = randomInt(1, 8);
                                 if (chance >= 1 && chance <= 6) {
                                     downTileType = TileType.EARTH_1;
                                 }
@@ -2203,12 +2277,6 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                                 }
                                 if (chance === 8) {
                                     downTileType = TileType.EARTH_3;
-                                }
-                                if (chance === 9) {
-                                    downTileType = TileType.EARTH_4;
-                                }
-                                if (chance === 10) {
-                                    downTileType = TileType.EARTH_5;
                                 }
                             }
                             else if (char === '#') {
@@ -2223,6 +2291,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                                 downTileType = TileType.VOLCANO;
                                 map[index].width = TILE.width * 3;
                                 map[index].height = TILE.height * 3;
+                                map[index].collisionWidth = TILE.width * 2;
+                                map[index].collisionHeight = TILE.height * 2;
                                 map[index].specialTimer = addTimer(randomInt(50, 500));
                             }
                             else if (char === '!') {
@@ -2265,7 +2335,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             mainSlot = 0;
             controlledStorage = null;
             dayTimer = addTimer(ONE_DAY);
-            gameLength = ONE_DAY * 3;
+            gameLength = 2;
             gameTimer = addTimer(gameLength);
             (function (Event) {
                 Event[Event["NONE"] = 0] = "NONE";
@@ -2284,6 +2354,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             METEOR_STUFF_COOLDOWN = 500;
             MAX_RANGE = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
             STORAGE_SLOT_COUNT = 10;
+            globalBoss = null;
             requestAnimationFrame(loop);
         }
     };

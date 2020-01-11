@@ -21,6 +21,8 @@ export enum Layer {
     UI,
     FORGROUND,
     PARTICLES,
+    BOSS,
+    BOSS_LEG,
     PLAYER,
     ON_TILE,
     TILE,
@@ -50,6 +52,8 @@ export class DrawQueueItem {
     text?: string = '';
     textSize?: number = 60;
     outlineOnly?: boolean = false;
+    fromThePoint?: boolean = false;
+    drawFromThePoint?: boolean = false;
 }
 
 function resourceLoaded(src: string) {
@@ -80,25 +84,21 @@ export let imgWheel5 = loadImage('../sprites/weel5.png');
 export let imgWheel6 = loadImage('../sprites/weel6.png');
 export let imgCamera = loadImage('../sprites/camera.png');
 export let imgEarth1 = loadImage('../sprites/earth1.png');
-export let imgEarth2 = loadImage('../sprites/earth2.png');
-export let imgEarth3 = loadImage('../sprites/earth3.png');
-export let imgEarth4 = loadImage('../sprites/earth4.png');
-export let imgEarth5 = loadImage('../sprites/earth5.png');
+export let imgEarth2 = loadImage('../sprites/sasha/earth2.png');
+export let imgEarth3 = loadImage('../sprites/sasha/earth3.png');
 export let imgGeyser = loadImage('../sprites/geyser.png');
-export let imgMountain = loadImage('../sprites/mountain.png');
+export let imgMountain = loadImage('../sprites/sasha/newMountain.png');
 export let imgAbyss = loadImage('../sprites/abyss.png');
 export let imgIron1 = loadImage('../sprites/iron1.png');
 export let imgIron2 = loadImage('../sprites/iron2.png');
 export let imgIron3 = loadImage('../sprites/iron3.png');
 export let imgIron4 = loadImage('../sprites/iron4.png');
 export let imgIron5 = loadImage('../sprites/iron5.png');
-export let imgItems = loadImage('../sprites/items.png');
 export let imgIronItem = loadImage('../sprites/ironItem.png');
 export let imgArrow = loadImage('../sprites/arrow.png');
 export let imgCrafts = loadImage('../sprites/crafts.png');
 export let imgArrow1 = loadImage('../sprites/arrow1.png');
 export let imgMelter = loadImage('../sprites/melter.png');
-export let imgMainSlot = loadImage('../sprites/mainSlot.png');
 export let imgIronIngot = loadImage('../sprites/ironIngotItem.png');
 export let imgAurit1 = loadImage('../sprites/gold1.png');
 export let imgAurit2 = loadImage('../sprites/gold2.png');
@@ -124,7 +124,7 @@ export let imgSilicon3 = loadImage('../sprites/silicon3.png');
 export let imgSilicon4 = loadImage('../sprites/silicon4.png');
 export let imgSilicon5 = loadImage('../sprites/silicon5.png');
 export let imgSiliconItem = loadImage('../sprites/siliconItem.png');
-export let imgVolcano = imgMountain;
+export let imgVolcano = loadImage('../sprites/sasha/volcano.png');
 export let imgMagmaBall = loadImage('../sprites/magmaBall.png');
 export let imgStorage = loadImage('../sprites/storage.png');
 export let imgGoldenCamera = loadImage('../sprites/cameraGold.png');
@@ -137,17 +137,26 @@ export let imgIgneous = loadImage('../sprites/igneous.png');
 export let imgIgneousItem = loadImage('../sprites/igneousItem.png');
 export let imgIgneousIngot = loadImage('../sprites/igneousIngot.png');
 export let imgMeteoriteStuff = loadImage('../sprites/meteoriteStuff.png');
+export let imgBoss = loadImage('../sprites/boss.png');
+export let imgArrow2 = loadImage('../sprites/arrow2.png');
+export let imgManipulator = loadImage('../sprites/manipulator.png');
+export let imgMechanicalHand = loadImage('../sprites/mechanicalHand.png');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {
         case DrawQueueType.IMAGE: {
             ctx.save();
+
             ctx.translate(item.x, item.y);
 
             ctx.rotate(item.angle);
             let compWidth = item.width || item.sprite.width;
             let compHeight = item.height || item.sprite.height;
-            ctx.drawImage(item.sprite, -compWidth / 2, -compHeight / 2, compWidth, compHeight);
+            if (!item.fromThePoint) {
+                ctx.drawImage(item.sprite, -compWidth / 2, -compHeight / 2, compWidth, compHeight);
+            } else {
+                ctx.drawImage(item.sprite, -compWidth, -compHeight / 2, compWidth, compHeight);
+            }
             ctx.restore();
         } break;
 
@@ -188,6 +197,7 @@ export function renderItem(item: DrawQueueItem) {
             ctx.fillText(item.text, item.x, item.y);
             ctx.restore();
         } break;
+
 
         default: console.assert(false);
     }
