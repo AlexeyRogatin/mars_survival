@@ -533,6 +533,9 @@ class GameObject {
     y: number;
     firstX: number;
     firstY: number;
+    neededX: number;
+    neededY: number;
+
     width: number;
     height: number;
     angle: number;
@@ -592,6 +595,8 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         y: y,
         firstX: x,
         firstY: y,
+        neededX: null,
+        neededY: null,
 
         width: 100,
         height: 100,
@@ -668,13 +673,18 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         gameObject.sprite = imgBoss;
         gameObject.width = TILE.width * 4;
         gameObject.height = TILE.width * 3;
+        gameObject.speedLimit = 7;
     }
 
     if (gameObject.type == GameObjectType.MANIPULATOR) {
+        gameObject.firstX = gameObject.x - globalBoss.x;
+        gameObject.firstY = gameObject.y - globalBoss.y;
+        gameObject.x += randomInt(-100, 100);
         gameObject.sprite = imgMechanicalHand;
         gameObject.width = 200;
         gameObject.height = 200;
         gameObject.angle = angleBetweenPoints(gameObject.x, gameObject.y, globalBoss.x, globalBoss.y);
+        gameObject.speedLimit = globalBoss.speedLimit * 2;
     }
 
     if (gameObject.type === GameObjectType.NONE) {
@@ -2290,6 +2300,7 @@ function updateGameObject(gameObject: GameObject) {
     }
 
     if (gameObject.type === GameObjectType.BOSS) {
+
         if (
             gameObject.x > camera.x - camera.width / 2 &&
             gameObject.x < camera.x + camera.width / 2 &&
@@ -2300,6 +2311,7 @@ function updateGameObject(gameObject: GameObject) {
         } else {
             gameObject.goForward = false;
         }
+
         moveGameObject(gameObject);
     }
 
@@ -2307,7 +2319,29 @@ function updateGameObject(gameObject: GameObject) {
         let angle = angleBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y);
         drawSprite(globalBoss.x, globalBoss.y, imgManipulator, angle, 270, 60, true, Layer.BOSS_LEG);
         let legVector = rotateVector(250, 0, angle);
-        drawSprite(globalBoss.x - legVector[0], globalBoss.y + legVector[1], imgManipulator, angle, 270, 60, true, Layer.BOSS_LEG);
+        drawSprite(globalBoss.x - legVector[0], globalBoss.y + legVector[1], imgManipulator, angle, distanceBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y) - 230, 60, true, Layer.BOSS_LEG);
+
+        if ((distanceBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + gameObject.firstX, globalBoss.y + gameObject.firstY) > 150)) {
+            let angle = angleBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + gameObject.firstX, globalBoss.y + gameObject.firstY) + Math.PI;
+            let manipulatorVector = rotateVector(150, 0, angle);
+            gameObject.neededX = globalBoss.x + gameObject.firstX + manipulatorVector[0];
+            gameObject.neededY = globalBoss.y + gameObject.firstY + manipulatorVector[1];
+        }
+
+        if (gameObject.neededX && gameObject.neededY) {
+            let angle = angleBetweenPoints(gameObject.neededX, gameObject.neededY, gameObject.x, gameObject.y);
+            let movementVector = rotateVector(gameObject.speedLimit, 0, angle);
+            if ((gameObject.x < gameObject.neededX && gameObject.x + movementVector[0] > gameObject.neededX) ||
+                (gameObject.x > gameObject.neededX && gameObject.x + movementVector[0] < gameObject.neededX)) {
+                gameObject.x = gameObject.neededX;
+                gameObject.y = gameObject.neededY;
+                gameObject.neededX = null;
+                gameObject.neededY = null;
+            } else {
+                gameObject.x += movementVector[0];
+                gameObject.y += movementVector[1];
+            }
+        }
     }
 
     //смерть
