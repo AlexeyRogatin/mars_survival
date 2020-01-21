@@ -21,10 +21,10 @@ export enum Layer {
     UI,
     FORGROUND,
     PARTICLES,
+    ON_TILE,
     BOSS,
     BOSS_LEG,
     PLAYER,
-    ON_TILE,
     TILE,
     NONE,
 }

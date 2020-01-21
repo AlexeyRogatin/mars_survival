@@ -673,13 +673,14 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         gameObject.sprite = imgBoss;
         gameObject.width = TILE.width * 4;
         gameObject.height = TILE.width * 3;
-        gameObject.speedLimit = 7;
+        gameObject.speedLimit = 15;
+        gameObject.rotationSpeed = 0.01;
+
     }
 
     if (gameObject.type == GameObjectType.MANIPULATOR) {
         gameObject.firstX = gameObject.x - globalBoss.x;
         gameObject.firstY = gameObject.y - globalBoss.y;
-        gameObject.x += randomInt(-100, 100);
         gameObject.sprite = imgMechanicalHand;
         gameObject.width = 200;
         gameObject.height = 200;
@@ -1410,6 +1411,11 @@ function updateGameObject(gameObject: GameObject) {
         if (gameObject.y - camera.height / 2 >= TILE.firstY - TILE.height / 2 &&
             gameObject.y + camera.height / 2 <= TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY) {
             camera.y = gameObject.y;
+        }
+
+        if (globalBoss) {
+            camera.x = globalBoss.x;
+            camera.y = globalBoss.y;
         }
 
         if (gameObject.x + gameObject.speedX <= camera.x - camera.width / 2) {
@@ -2307,8 +2313,10 @@ function updateGameObject(gameObject: GameObject) {
             gameObject.y > camera.y - camera.height / 2 &&
             gameObject.y < camera.y + camera.height / 2
         ) {
+            gameObject.goLeft = true;
             gameObject.goForward = true;
         } else {
+            gameObject.goLeft = false;
             gameObject.goForward = false;
         }
 
@@ -2321,25 +2329,43 @@ function updateGameObject(gameObject: GameObject) {
         let legVector = rotateVector(250, 0, angle);
         drawSprite(globalBoss.x - legVector[0], globalBoss.y + legVector[1], imgManipulator, angle, distanceBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y) - 230, 60, true, Layer.BOSS_LEG);
 
-        if ((distanceBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + gameObject.firstX, globalBoss.y + gameObject.firstY) > 150)) {
-            let angle = angleBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + gameObject.firstX, globalBoss.y + gameObject.firstY) + Math.PI;
-            let manipulatorVector = rotateVector(150, 0, angle);
-            gameObject.neededX = globalBoss.x + gameObject.firstX + manipulatorVector[0];
-            gameObject.neededY = globalBoss.y + gameObject.firstY + manipulatorVector[1];
+        let legDistance = 150;
+
+        let firstCoordsAngle = Math.PI - angleBetweenPoints(0, 0, gameObject.firstX, gameObject.firstY);
+        let firstCoordsVector = rotateVector(500, 0, -globalBoss.angle + firstCoordsAngle);
+
+        drawCircle(globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1], 20, 'red', false, Layer.UI)
+
+        if (distanceBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1]) > legDistance) {
+            let movementAngle = Math.PI - angleBetweenPoints(globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1], gameObject.x, gameObject.y);
+            gameObject.neededX = globalBoss.x + firstCoordsVector[0];
+            gameObject.neededY = globalBoss.y + firstCoordsVector[1];
+            let neededVector = rotateVector(legDistance - 5, 0, movementAngle);
+            gameObject.neededX -= neededVector[0];
+            gameObject.neededY -= neededVector[1];
         }
+
+        drawCircle(gameObject.neededX, gameObject.neededY, 30, 'green', false, Layer.UI)
 
         if (gameObject.neededX && gameObject.neededY) {
             let angle = angleBetweenPoints(gameObject.neededX, gameObject.neededY, gameObject.x, gameObject.y);
-            let movementVector = rotateVector(gameObject.speedLimit, 0, angle);
+            let speed;
+            if (!globalBoss.speed) {
+                speed = globalBoss.speedLimit;
+            } else {
+                speed = globalBoss.speed * 2;
+            }
+            let movementVector = rotateVector(speed, 0, angle);
             if ((gameObject.x < gameObject.neededX && gameObject.x + movementVector[0] > gameObject.neededX) ||
                 (gameObject.x > gameObject.neededX && gameObject.x + movementVector[0] < gameObject.neededX)) {
                 gameObject.x = gameObject.neededX;
                 gameObject.y = gameObject.neededY;
                 gameObject.neededX = null;
                 gameObject.neededY = null;
-            } else {
+            }
+            else {
                 gameObject.x += movementVector[0];
-                gameObject.y += movementVector[1];
+                gameObject.y -= movementVector[1];
             }
         }
     }

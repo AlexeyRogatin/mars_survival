@@ -96,10 +96,10 @@ System.register("drawing", [], function (exports_1, context_1) {
                 Layer[Layer["UI"] = 0] = "UI";
                 Layer[Layer["FORGROUND"] = 1] = "FORGROUND";
                 Layer[Layer["PARTICLES"] = 2] = "PARTICLES";
-                Layer[Layer["BOSS"] = 3] = "BOSS";
-                Layer[Layer["BOSS_LEG"] = 4] = "BOSS_LEG";
-                Layer[Layer["PLAYER"] = 5] = "PLAYER";
-                Layer[Layer["ON_TILE"] = 6] = "ON_TILE";
+                Layer[Layer["ON_TILE"] = 3] = "ON_TILE";
+                Layer[Layer["BOSS"] = 4] = "BOSS";
+                Layer[Layer["BOSS_LEG"] = 5] = "BOSS_LEG";
+                Layer[Layer["PLAYER"] = 6] = "PLAYER";
                 Layer[Layer["TILE"] = 7] = "TILE";
                 Layer[Layer["NONE"] = 8] = "NONE";
             })(Layer || (Layer = {}));
@@ -607,12 +607,12 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             gameObject.sprite = drawing_2.imgBoss;
             gameObject.width = TILE.width * 4;
             gameObject.height = TILE.width * 3;
-            gameObject.speedLimit = 7;
+            gameObject.speedLimit = 15;
+            gameObject.rotationSpeed = 0.01;
         }
         if (gameObject.type == GameObjectType.MANIPULATOR) {
             gameObject.firstX = gameObject.x - globalBoss.x;
             gameObject.firstY = gameObject.y - globalBoss.y;
-            gameObject.x += randomInt(-100, 100);
             gameObject.sprite = drawing_2.imgMechanicalHand;
             gameObject.width = 200;
             gameObject.height = 200;
@@ -1174,6 +1174,10 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             if (gameObject.y - camera.height / 2 >= TILE.firstY - TILE.height / 2 &&
                 gameObject.y + camera.height / 2 <= TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY) {
                 camera.y = gameObject.y;
+            }
+            if (globalBoss) {
+                camera.x = globalBoss.x;
+                camera.y = globalBoss.y;
             }
             if (gameObject.x + gameObject.speedX <= camera.x - camera.width / 2) {
                 gameObject.x = camera.x - camera.width / 2;
@@ -1900,9 +1904,11 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 gameObject.x < camera.x + camera.width / 2 &&
                 gameObject.y > camera.y - camera.height / 2 &&
                 gameObject.y < camera.y + camera.height / 2) {
+                gameObject.goLeft = true;
                 gameObject.goForward = true;
             }
             else {
+                gameObject.goLeft = false;
                 gameObject.goForward = false;
             }
             moveGameObject(gameObject);
@@ -1912,15 +1918,29 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             drawSprite(globalBoss.x, globalBoss.y, drawing_2.imgManipulator, angle, 270, 60, true, drawing_2.Layer.BOSS_LEG);
             var legVector = rotateVector(250, 0, angle);
             drawSprite(globalBoss.x - legVector[0], globalBoss.y + legVector[1], drawing_2.imgManipulator, angle, distanceBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y) - 230, 60, true, drawing_2.Layer.BOSS_LEG);
-            if ((distanceBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + gameObject.firstX, globalBoss.y + gameObject.firstY) > 150)) {
-                var angle_2 = angleBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + gameObject.firstX, globalBoss.y + gameObject.firstY) + Math.PI;
-                var manipulatorVector = rotateVector(150, 0, angle_2);
-                gameObject.neededX = globalBoss.x + gameObject.firstX + manipulatorVector[0];
-                gameObject.neededY = globalBoss.y + gameObject.firstY + manipulatorVector[1];
+            var legDistance = 150;
+            var firstCoordsAngle = Math.PI - angleBetweenPoints(0, 0, gameObject.firstX, gameObject.firstY);
+            var firstCoordsVector = rotateVector(500, 0, -globalBoss.angle + firstCoordsAngle);
+            drawCircle(globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1], 20, 'red', false, drawing_2.Layer.UI);
+            if (distanceBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1]) > legDistance) {
+                var movementAngle = Math.PI - angleBetweenPoints(globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1], gameObject.x, gameObject.y);
+                gameObject.neededX = globalBoss.x + firstCoordsVector[0];
+                gameObject.neededY = globalBoss.y + firstCoordsVector[1];
+                var neededVector = rotateVector(legDistance - 5, 0, movementAngle);
+                gameObject.neededX -= neededVector[0];
+                gameObject.neededY -= neededVector[1];
             }
+            drawCircle(gameObject.neededX, gameObject.neededY, 30, 'green', false, drawing_2.Layer.UI);
             if (gameObject.neededX && gameObject.neededY) {
-                var angle_3 = angleBetweenPoints(gameObject.neededX, gameObject.neededY, gameObject.x, gameObject.y);
-                var movementVector = rotateVector(gameObject.speedLimit, 0, angle_3);
+                var angle_2 = angleBetweenPoints(gameObject.neededX, gameObject.neededY, gameObject.x, gameObject.y);
+                var speed = void 0;
+                if (!globalBoss.speed) {
+                    speed = globalBoss.speedLimit;
+                }
+                else {
+                    speed = globalBoss.speed * 2;
+                }
+                var movementVector = rotateVector(speed, 0, angle_2);
                 if ((gameObject.x < gameObject.neededX && gameObject.x + movementVector[0] > gameObject.neededX) ||
                     (gameObject.x > gameObject.neededX && gameObject.x + movementVector[0] < gameObject.neededX)) {
                     gameObject.x = gameObject.neededX;
@@ -1930,7 +1950,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
                 else {
                     gameObject.x += movementVector[0];
-                    gameObject.y += movementVector[1];
+                    gameObject.y -= movementVector[1];
                 }
             }
         }
