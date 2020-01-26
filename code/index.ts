@@ -7,7 +7,7 @@ import {
     imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, backCtx, backBuffer, imgToolkit,
     imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem,
     imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous,
-    imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand
+    imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgDrop
 } from "./drawing";
 
 enum GameObjectType {
@@ -17,6 +17,7 @@ enum GameObjectType {
     METEORITE,
     BOSS,
     MANIPULATOR,
+    DROP,
 }
 
 enum TileType {
@@ -441,7 +442,7 @@ export function drawRect(
         x < camera.x + camera.width * 0.5 + width / 2 &&
         y > camera.y - camera.height * 0.5 - height / 2 &&
         y < camera.y + camera.height * 0.5 + height / 2) {
-        drawQueue.push({ x, y, width, height, color, angle, layer, outlineOnly, type: DrawQueueType.RECT });
+        drawQueue.push({ x, y, width, height, color: [color], angle, layer, outlineOnly, type: DrawQueueType.RECT });
     }
 }
 
@@ -450,7 +451,7 @@ export function drawCircle(x: number, y: number, radius: number, color: string, 
         x < camera.x + camera.width * 0.5 + radius &&
         y > camera.y - camera.height * 0.5 - radius &&
         y < camera.y + camera.height * 0.5 + radius) {
-        drawQueue.push({ x, y, radius, color, layer, outlineOnly, type: DrawQueueType.CIRCLE });
+        drawQueue.push({ x, y, radius, color: [color], layer, outlineOnly, type: DrawQueueType.CIRCLE });
     }
 }
 
@@ -459,7 +460,16 @@ export function drawText(x: number, y: number, color: string, text: string, text
         x < camera.x + camera.width * 0.5 + textSize / 2 &&
         y > camera.y - camera.height * 0.5 - textSize / 2 &&
         y < camera.y + camera.height * 0.5 + textSize / 2) {
-        drawQueue.push({ x, y, color, text, layer, type: DrawQueueType.TEXT, textSize });
+        drawQueue.push({ x, y, color: [color], text, layer, type: DrawQueueType.TEXT, textSize });
+    }
+}
+
+export function drawLinearGradient(x: number, y: number, width: number, height: number, color: string[], stop: number[], layer: Layer) {
+    if (x > camera.x - camera.width * 0.5 - width / 2 &&
+        x < camera.x + camera.width * 0.5 + width / 2 &&
+        y > camera.y - camera.height * 0.5 - height / 2 &&
+        y < camera.y + camera.height * 0.5 + height / 2) {
+        drawQueue.push({ x, y, width, height, color, stop, layer, type: DrawQueueType.LINEAR_GRADIENT });
     }
 }
 
@@ -473,6 +483,7 @@ const NIGHT_LENGTH = 6000;
 const ONE_DAY = MORNING_LENGTH + DAY_LENGTH + AFTERNOON_LENGTH + NIGHT_LENGTH;
 
 export function drawLight(x: number, y: number, radius: number) {
+    alpha = 0;
 
     const MORNING_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH + DAY_LENGTH + MORNING_LENGTH;
     const DAY_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH + DAY_LENGTH;
@@ -495,6 +506,7 @@ export function drawLight(x: number, y: number, radius: number) {
     } else if (timers[dayTimer] <= NIGHT_TIME) {
         alpha = 1;
     }
+
     if (x > camera.x - camera.width * 0.5 - radius &&
         x < camera.x + camera.width * 0.5 + radius &&
         y > camera.y - camera.height * 0.5 - radius &&
@@ -505,8 +517,6 @@ export function drawLight(x: number, y: number, radius: number) {
         let Y = y - camera.y + camera.height / 2;
 
         var gradient = backCtx.createRadialGradient(X, Y, 0, X, Y, radius);
-
-        let alpha = 0.25;
 
         gradient.addColorStop(0, `white`);
         gradient.addColorStop(1, 'transparent');
@@ -585,6 +595,8 @@ class GameObject {
     angleZ: number;
 
     summoned: boolean;
+
+    dontMoveWithCamera: boolean;
 }
 
 function addGameObject(type: GameObjectType, x: number, y: number) {
@@ -644,14 +656,16 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         angleZ: 0,
 
         summoned: false,
+
+        dontMoveWithCamera: false,
     }
 
     if (gameObject.type === GameObjectType.PLAYER) {
         gameObject.sprite = imgPlayer;
         gameObject.hitpoints = 100;
         gameObject.maxHitpoints = 100;
-        gameObject.energy = addTimer(25000);
-        gameObject.maxEnergy = 25000;
+        gameObject.energy = addTimer(10800);
+        gameObject.maxEnergy = 10800;
         gameObject.stuckable = true;
     }
 
@@ -678,13 +692,23 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
 
     }
 
-    if (gameObject.type == GameObjectType.MANIPULATOR) {
+    if (gameObject.type === GameObjectType.MANIPULATOR) {
         gameObject.firstX = gameObject.x - globalBoss.x;
         gameObject.firstY = gameObject.y - globalBoss.y;
         gameObject.sprite = imgMechanicalHand;
         gameObject.width = 200;
         gameObject.height = 200;
         gameObject.speedLimit = globalBoss.speedLimit * 2;
+    }
+
+    if (gameObject.type === GameObjectType.DROP) {
+        gameObject.speedLimit = 8;
+        gameObject.width = 25;
+        gameObject.height = 35;
+        gameObject.sprite = imgDrop;
+        gameObject.dontMoveWithCamera = true;
+        gameObject.neededY = camera.y + camera.height / 2 - y;
+        gameObject.neededX = x - (camera.x - camera.width / 2);
     }
 
     if (gameObject.type === GameObjectType.NONE) {
@@ -768,7 +792,7 @@ function moveGameObject(gameObject: GameObject) {
         const playerTop = gameObject.y - gameObject.height / 2;
         const playerBottom = gameObject.y + gameObject.height / 2;
 
-        if (gameObject.stuckable && (other.baseLayer === TileType.MOUNTAIN || other.baseLayer === TileType.VOLCANO ||
+        if (gameObject.stuckable && (other.upperLayer === TileType.MOUNTAIN || other.baseLayer === TileType.VOLCANO ||
             other.upperLayer === TileType.MELTER || other.upperLayer === TileType.SPLITTER ||
             other.upperLayer === TileType.SUN_BATERY || other.upperLayer === TileType.STORAGE)) {
 
@@ -889,6 +913,10 @@ function addParticle(x: number, y: number, color: string, speed: number, size: n
     let [accelX, accelY] = rotateVector(accel, 0, randomAngle);
     let randomSizeDecrease = randomFloat(Math.abs(decrease - 0.15), decrease + 0.15);
 
+    if (color === `rgb(254,0,0,1)`) {
+        accelY += 0.2;
+    }
+
     let particle = {
         x: x,
         y: y,
@@ -947,23 +975,22 @@ function drawParticles() {
                     removeParticle(particleIndex);
                 }
             }
-        }
 
+            //частицы и столковения с ними
 
-        if (particle.radius <= 0) {
-            removeParticle(particleIndex);
-        } else {
-            drawLight(particle.x + particle.radius, particle.y + particle.radius, particle.radius * 4);
-            drawCircle(particle.x, particle.y, particle.radius, particle.color, false, Layer.PARTICLES);
-        }
+            if (particle.color === 'red' && particle.radius > 0) {
+                drawLight(particle.x, particle.y, particle.radius * 4);
+                if (globalPlayer.width / 2 + particle.radius >= distanceBetweenPoints(globalPlayer.x, globalPlayer.y, particle.x, particle.y) &&
+                    timers[globalPlayer.unhitableTimer] <= 0) {
+                    globalPlayer.hitpoints -= 50;
+                    timers[globalPlayer.unhitableTimer] = 180;
+                }
+            }
 
-        //частицы и столковения с ними
-
-        if (globalPlayer.width / 2 + particle.radius >= distanceBetweenPoints(globalPlayer.x, globalPlayer.y, particle.x, particle.y) &&
-            timers[globalPlayer.unhitableTimer] <= 0) {
-            if (particle.color === 'red') {
-                globalPlayer.hitpoints -= 50;
-                timers[globalPlayer.unhitableTimer] = 180;
+            if (particle.radius <= 0) {
+                removeParticle(particleIndex);
+            } else {
+                drawCircle(particle.x, particle.y, particle.radius, particle.color, false, Layer.PARTICLES);
             }
         }
 
@@ -1026,7 +1053,7 @@ for (let chunkY = 0; chunkY < TILE.chunkCountY; chunkY++) {
                         downTileType = TileType.EARTH_3;
                     }
                 } else if (char === '#') {
-                    downTileType = TileType.MOUNTAIN;
+                    downTileType = TileType.EARTH_1;
                     upTileType = TileType.MOUNTAIN;
                 } else if (char === '@') {
                     downTileType = TileType.GEYSER;
@@ -1347,6 +1374,11 @@ function updateTile(tileType: TileType, tile: Tile) {
         } break;
     }
 
+    if (globalBoss && tile.upperLayer !== TileType.NONE && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, globalBoss.x, globalBoss.y) < globalBoss.width / 2) {
+        tile.upperLayer = TileType.NONE;
+        burstParticles({ x: tile.x * TILE.width, y: tile.y * TILE.height, color: 'brown', speed: 2, size: 20, count: 20, decrease: 0.1, accel: 0 });
+    }
+
     let [spriteX, spriteY] = tilesToPixels(tile.x, tile.y);
     drawSprite(spriteX, spriteY, sprite, 0, tile.width, tile.height, false, Layer.TILE);
 }
@@ -1379,25 +1411,11 @@ function updateGameObject(gameObject: GameObject) {
         gameObject.doNotDraw = false;
     }
 
-    //прорисовка
-    if (!gameObject.doNotDraw) {
-        if (gameObject.sprite) {
-            if (gameObject.type === GameObjectType.MAGMA_BALL || gameObject.type === GameObjectType.METEORITE) {
-                drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, Layer.PLAYER);
-            } else if (gameObject.type === GameObjectType.BOSS) {
-                drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, Layer.BOSS);
-            } else
-                drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, Layer.PLAYER);
-        }
-
-
-
-        else {
-            drawRect(gameObject.x, gameObject.y, gameObject.width, gameObject.height, -gameObject.angle, gameObject.color, false);
-        }
-    }
-
     if (gameObject.type === GameObjectType.PLAYER) {
+        //прорисовка
+        if (!gameObject.doNotDraw) {
+            drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, Layer.PLAYER);
+        }
         //считывание кнопок
         controlPlayer(gameObject);
 
@@ -1428,21 +1446,33 @@ function updateGameObject(gameObject: GameObject) {
         drawSprite(camera.x - camera.width / 2 + 10, camera.y - camera.height / 4, imgArrow, 0, 30, 50, false, Layer.UI);
 
         //жизнь
+
         const STRIPE_WIDTH = 200;
         const STRIPE_HEIGHT = 50;
 
         let width = gameObject.hitpoints / gameObject.maxHitpoints * STRIPE_WIDTH;
 
-        drawRect(
-            camera.x - camera.width / 2 + width / 2 + 50, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT, 0, 'green', false, Layer.UI
+        if (width <= 100 && randomFloat(0, 1) < 0.005) {
+            addGameObject(GameObjectType.DROP, randomInt(camera.x - camera.width / 2 + 50 + 25 / 2, camera.x - camera.width / 2 + 50 + width - 25 / 2), camera.y - camera.height / 2 + 50);
+        }
+
+        drawLinearGradient(
+            camera.x - camera.width / 2 + width / 2 + 50, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT,
+            ['red', `rgb(${(1 - width / STRIPE_WIDTH) * 255},${width / STRIPE_WIDTH * 255},0,1)`], [0, 1], Layer.UI
         );
+
+        drawSprite(camera.x - camera.width / 2 + 50 + STRIPE_WIDTH / 2, camera.y - camera.height / 2 + 50, imgHp, 0, STRIPE_WIDTH, STRIPE_HEIGHT, false, Layer.UI);
 
         //энергия
+
         width = timers[gameObject.energy] / gameObject.maxEnergy * STRIPE_WIDTH;
 
-        drawRect(
-            camera.x - camera.width / 2 + width / 2 + 300, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT, 0, 'blue', false, Layer.UI
+        drawLinearGradient(
+            camera.x - camera.width / 2 + width / 2 + 300, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT,
+            ['white', `rgb(${(1 - width / STRIPE_WIDTH) * 255},${(1 - width / STRIPE_WIDTH) * 255},${width / STRIPE_WIDTH * 255 + 255},1)`], [0, 1], Layer.UI
         );
+
+        drawSprite(camera.x - camera.width / 2 + 300 + STRIPE_WIDTH / 2, camera.y - camera.height / 2 + 50, imgEnergy, 0, STRIPE_WIDTH * 1.05, STRIPE_HEIGHT, false, Layer.UI);
 
         //время
         let hour = ONE_DAY / (24 + 37 / 60);
@@ -2184,6 +2214,8 @@ function updateGameObject(gameObject: GameObject) {
     }
 
     if (gameObject.type === GameObjectType.MAGMA_BALL) {
+        //прорисовка
+        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, Layer.METEORITE);
         if (!pause) {
             gameObject.x += gameObject.speedX;
             gameObject.y += gameObject.speedY;
@@ -2243,6 +2275,8 @@ function updateGameObject(gameObject: GameObject) {
     }
 
     if (gameObject.type === GameObjectType.METEORITE) {
+        //прорисовка
+        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, Layer.METEORITE);
         if (!pause) {
             gameObject.x += gameObject.speedX;
             gameObject.y += gameObject.speedY;
@@ -2293,7 +2327,8 @@ function updateGameObject(gameObject: GameObject) {
     }
 
     if (gameObject.type === GameObjectType.BOSS) {
-
+        //прорисовка
+        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, Layer.BOSS);
         if (
             gameObject.x > camera.x - camera.width / 2 &&
             gameObject.x < camera.x + camera.width / 2 &&
@@ -2311,6 +2346,8 @@ function updateGameObject(gameObject: GameObject) {
     }
 
     if (gameObject.type === GameObjectType.MANIPULATOR) {
+        //прорисовка
+        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, Layer.MANIPULATOR);
         gameObject.angle = globalBoss.angle;
         let angle = angleBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y);
         drawSprite(globalBoss.x, globalBoss.y, imgManipulator, angle, 270, 60, true, Layer.BOSS_LEG);
@@ -2322,8 +2359,6 @@ function updateGameObject(gameObject: GameObject) {
         let firstCoordsAngle = Math.PI - angleBetweenPoints(0, 0, gameObject.firstX, gameObject.firstY);
         let firstCoordsVector = rotateVector(500, 0, -globalBoss.angle + firstCoordsAngle);
 
-        drawCircle(globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1], 20, 'red', false, Layer.UI)
-
         if (distanceBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1]) > legDistance) {
             let movementAngle = Math.PI - angleBetweenPoints(globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1], gameObject.x, gameObject.y);
             gameObject.neededX = globalBoss.x + firstCoordsVector[0];
@@ -2332,8 +2367,6 @@ function updateGameObject(gameObject: GameObject) {
             gameObject.neededX -= neededVector[0];
             gameObject.neededY -= neededVector[1];
         }
-
-        drawCircle(gameObject.neededX, gameObject.neededY, 30, 'green', false, Layer.UI)
 
         if (gameObject.neededX && gameObject.neededY) {
             let angle = angleBetweenPoints(gameObject.neededX, gameObject.neededY, gameObject.x, gameObject.y);
@@ -2356,6 +2389,30 @@ function updateGameObject(gameObject: GameObject) {
                 gameObject.y -= movementVector[1];
             }
         }
+    }
+
+    if (gameObject.type === GameObjectType.DROP) {
+        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, Layer.DROP);
+        if (gameObject.neededY > camera.height - 75) {
+            gameObject.neededY -= gameObject.speedLimit / 10;
+        } else {
+            gameObject.neededY -= gameObject.speedLimit;
+        }
+        if (gameObject.neededY <= 0) {
+            gameObject.exists = false;
+            burstParticles({
+                x: gameObject.x,
+                y: gameObject.y,
+                color: `rgb(254,0,0,1)`,
+                speed: gameObject.speedLimit,
+                size: 15,
+                count: 15,
+                decrease: 0,
+                accel: 0.005,
+            })
+        }
+        gameObject.y = camera.y + camera.height / 2 - gameObject.neededY;
+        gameObject.x = camera.x - camera.width / 2 + gameObject.neededX;
     }
 
     //смерть
@@ -2442,13 +2499,17 @@ function loop() {
         addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand4Vector[0], globalBoss.y + hand4Vector[1]);
     }
 
+    drawSprite(camera.x, camera.y, backBuffer, 0, camera.width, camera.height, false, Layer.FORGROUND);
+
+    let color = backCtx.fillStyle = `rgba(0,0,0,${(1 - timers[globalPlayer.energy] / globalPlayer.maxEnergy) * 0.75})`;
+
+    drawRect(camera.x, camera.y, camera.width, camera.height, 0, color, false, Layer.FORGROUND);
+
     drawQueue.sort((a, b) => b.layer - a.layer);
     for (let itemIndex = 0; itemIndex < drawQueue.length; itemIndex++) {
         const item = drawQueue[itemIndex];
         renderItem(item);
     }
-
-    ctx.drawImage(backBuffer, camera.x - camera.width / 2, camera.y - camera.height / 2);
 
     backCtx.restore();
 

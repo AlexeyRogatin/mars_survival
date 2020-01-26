@@ -19,11 +19,14 @@ export let canBeginGame = false;
 
 export enum Layer {
     UI,
+    DROP,
     FORGROUND,
+    METEORITE,
     PARTICLES,
-    ON_TILE,
     BOSS,
     BOSS_LEG,
+    MANIPULATOR,
+    ON_TILE,
     PLAYER,
     TILE,
     NONE,
@@ -36,6 +39,7 @@ export enum DrawQueueType {
     RECT,
     CIRCLE,
     TEXT,
+    LINEAR_GRADIENT,
 }
 
 export class DrawQueueItem {
@@ -46,7 +50,8 @@ export class DrawQueueItem {
     width?: number = 0;
     height?: number = 0;
     angle?: number = 0;
-    color?: string = 'white';
+    color?: string[] = ['white', 'black'];
+    stop?: number[] = [0, 1];
     sprite?: HTMLImageElement = null;
     radius?: number = 0;
     text?: string = '';
@@ -54,6 +59,7 @@ export class DrawQueueItem {
     outlineOnly?: boolean = false;
     fromThePoint?: boolean = false;
     drawFromThePoint?: boolean = false;
+
 }
 
 function resourceLoaded(src: string) {
@@ -141,6 +147,9 @@ export let imgBoss = loadImage('../sprites/boss.png');
 export let imgArrow2 = loadImage('../sprites/arrow2.png');
 export let imgManipulator = loadImage('../sprites/manipulator.png');
 export let imgMechanicalHand = loadImage('../sprites/mechanicalHand.png');
+export let imgEnergy = loadImage('../sprites/energy.png');
+export let imgHp = loadImage('../sprites/hp.png');
+export let imgDrop = loadImage('../sprites/drop.png');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {
@@ -166,10 +175,10 @@ export function renderItem(item: DrawQueueItem) {
             ctx.rotate(-item.angle);
 
             if (item.outlineOnly) {
-                ctx.strokeStyle = item.color;
+                ctx.strokeStyle = item.color[0];
                 ctx.strokeRect(-item.width / 2, -item.height / 2, item.width, item.height);
             } else {
-                ctx.fillStyle = item.color;
+                ctx.fillStyle = item.color[0];
                 ctx.fillRect(-item.width / 2, -item.height / 2, item.width, item.height);
             }
             ctx.restore();
@@ -180,17 +189,17 @@ export function renderItem(item: DrawQueueItem) {
             ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
 
             if (item.outlineOnly) {
-                ctx.strokeStyle = item.color;
+                ctx.strokeStyle = item.color[0];
                 ctx.stroke();
             } else {
-                ctx.fillStyle = item.color;
+                ctx.fillStyle = item.color[0];
                 ctx.fill();
             }
         } break;
 
         case DrawQueueType.TEXT: {
             ctx.save();
-            ctx.fillStyle = item.color;
+            ctx.fillStyle = item.color[0];
             ctx.font = `${item.textSize}px Arial`;
             ctx.textBaseline = 'middle';
             // ctx.textAlign = 'left';
@@ -198,6 +207,23 @@ export function renderItem(item: DrawQueueItem) {
             ctx.restore();
         } break;
 
+        case DrawQueueType.LINEAR_GRADIENT: {
+            ctx.save();
+            let x1 = item.x - item.width / 2;
+            let x2 = item.x + item.width / 2;
+            let y1 = item.y - item.height / 2;
+            let y2 = item.y - item.height / 2;
+            let gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+            for (let colorIndex = 0; colorIndex < item.color.length; colorIndex++) {
+                gradient.addColorStop(item.stop[colorIndex], item.color[colorIndex]);
+            }
+
+            ctx.fillStyle = gradient;
+
+            ctx.fillRect(x1, y1, item.width, item.height);
+
+            ctx.restore();
+        }
 
         default: console.assert(false);
     }
