@@ -1,6 +1,6 @@
 System.register("drawing", [], function (exports_1, context_1) {
     "use strict";
-    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlot, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous, imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgDrop;
+    var canvas, ctx, backBuffer, backCtx, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlot, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous, imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgDrop, imgBossReadyToAttack, imgBossReadyToAttack1, imgBossAttack, imgBossAttack1, imgLazer, imgLazer1;
     var __moduleName = context_1 && context_1.id;
     function resourceLoaded(src) {
         resourcesLoadedCount++;
@@ -74,20 +74,22 @@ System.register("drawing", [], function (exports_1, context_1) {
                     ctx.restore();
                 }
                 break;
-            case DrawQueueType.LINEAR_GRADIENT: {
-                ctx.save();
-                var x1 = item.x - item.width / 2;
-                var x2 = item.x + item.width / 2;
-                var y1 = item.y - item.height / 2;
-                var y2 = item.y - item.height / 2;
-                var gradient = ctx.createLinearGradient(x1, y1, x2, y2);
-                for (var colorIndex = 0; colorIndex < item.color.length; colorIndex++) {
-                    gradient.addColorStop(item.stop[colorIndex], item.color[colorIndex]);
+            case DrawQueueType.LINEAR_GRADIENT:
+                {
+                    ctx.save();
+                    var x1 = item.x - item.width / 2;
+                    var x2 = item.x + item.width / 2;
+                    var y1 = item.y - item.height / 2;
+                    var y2 = item.y - item.height / 2;
+                    var gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+                    for (var colorIndex = 0; colorIndex < item.color.length; colorIndex++) {
+                        gradient.addColorStop(item.stop[colorIndex], item.color[colorIndex]);
+                    }
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x1, y1, item.width, item.height);
+                    ctx.restore();
                 }
-                ctx.fillStyle = gradient;
-                ctx.fillRect(x1, y1, item.width, item.height);
-                ctx.restore();
-            }
+                break;
             default: console.assert(false);
         }
     }
@@ -108,7 +110,7 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("canBeginGame", canBeginGame = false);
             (function (Layer) {
                 Layer[Layer["UI"] = 0] = "UI";
-                Layer[Layer["DROP"] = 1] = "DROP";
+                Layer[Layer["BOSS_EYE"] = 1] = "BOSS_EYE";
                 Layer[Layer["FORGROUND"] = 2] = "FORGROUND";
                 Layer[Layer["METEORITE"] = 3] = "METEORITE";
                 Layer[Layer["PARTICLES"] = 4] = "PARTICLES";
@@ -220,12 +222,18 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgEnergy", imgEnergy = loadImage('../sprites/energy.png'));
             exports_1("imgHp", imgHp = loadImage('../sprites/hp.png'));
             exports_1("imgDrop", imgDrop = loadImage('../sprites/drop.png'));
+            exports_1("imgBossReadyToAttack", imgBossReadyToAttack = loadImage('../sprites/bossReadyToAttack.png'));
+            exports_1("imgBossReadyToAttack1", imgBossReadyToAttack1 = loadImage('../sprites/bossReadyToAttack1.png'));
+            exports_1("imgBossAttack", imgBossAttack = loadImage('../sprites/bossAttack.png'));
+            exports_1("imgBossAttack1", imgBossAttack1 = loadImage('../sprites/bossAttack1.png'));
+            exports_1("imgLazer", imgLazer = loadImage('../sprites/lazer.png'));
+            exports_1("imgLazer1", imgLazer1 = loadImage('../sprites/lazer1.png'));
         }
     };
 });
 System.register("controls", ["drawing"], function (exports_2, context_2) {
     "use strict";
-    var drawing_1, mouseX, mouseY, KeyCode, Key, Mouse, upKey, leftKey, downKey, rightKey, mouse, qKey;
+    var drawing_1, mouseX, mouseY, KeyCode, Key, Mouse, upKey, leftKey, downKey, rightKey, mouse, qKey, shiftKey;
     var __moduleName = context_2 && context_2.id;
     function handleKeyDown(event, keyCode, key) {
         if (keyCode === event.keyCode) {
@@ -253,6 +261,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
         clearKey(upKey);
         clearKey(rightKey);
         clearKey(qKey);
+        clearKey(shiftKey);
         mouse.wentUp = false;
         mouse.wentDown = false;
     }
@@ -272,6 +281,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
                 KeyCode[KeyCode["DOWN"] = 83] = "DOWN";
                 KeyCode[KeyCode["UP"] = 87] = "UP";
                 KeyCode[KeyCode["Q"] = 81] = "Q";
+                KeyCode[KeyCode["SHIFT"] = 16] = "SHIFT";
             })(KeyCode || (KeyCode = {}));
             exports_2("KeyCode", KeyCode);
             Key = (function () {
@@ -295,12 +305,14 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
             exports_2("rightKey", rightKey = new Key());
             exports_2("mouse", mouse = new Mouse());
             exports_2("qKey", qKey = new Key());
+            exports_2("shiftKey", shiftKey = new Key());
             window.onkeydown = function onkeydown(event) {
                 handleKeyDown(event, KeyCode.UP, upKey);
                 handleKeyDown(event, KeyCode.DOWN, downKey);
                 handleKeyDown(event, KeyCode.LEFT, leftKey);
                 handleKeyDown(event, KeyCode.RIGHT, rightKey);
                 handleKeyDown(event, KeyCode.Q, qKey);
+                handleKeyDown(event, KeyCode.SHIFT, shiftKey);
             };
             window.onkeyup = function onkeyup(event) {
                 handleKeyUp(event, KeyCode.UP, upKey);
@@ -308,6 +320,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
                 handleKeyUp(event, KeyCode.LEFT, leftKey);
                 handleKeyUp(event, KeyCode.RIGHT, rightKey);
                 handleKeyUp(event, KeyCode.Q, qKey);
+                handleKeyUp(event, KeyCode.SHIFT, shiftKey);
             };
             window.onmousemove = function onmousemove(event) {
                 mouse.x = event.clientX - drawing_1.canvas.clientLeft;
@@ -330,10 +343,13 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
 });
 System.register("index", ["controls", "drawing"], function (exports_3, context_3) {
     "use strict";
-    var controls_1, drawing_2, GameObjectType, TileType, TILE, timers, InventorySlot, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, slotCount, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, camera, gameObjects, GameObject, particles, particle, globalPlayer, craftMode, pause, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, gameLength, gameTimer, Event, event, EVENT_LENGTH, timeBetweenEvents, eventEnd, VOLCANO_RADIUS, MAGMA_BALL_SPEED, VOLCANO_HEIGHT, GRAVITATION, CAMERA_HEIGHT, METEORITE_SPEED, METEOR_STUFF_COOLDOWN, MAX_RANGE, STORAGE_SLOT_COUNT, globalBoss;
+    var controls_1, drawing_2, GameObjectType, TileType, camera, TILE, timers, InventorySlot, Tile, map, chunkPrototypes, Item, RecipePart, Recipe, recipes, slotCount, inventory, drawQueue, alpha, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, gameObjects, GameObject, particles, particle, globalPlayer, screenShakes, craftMode, pause, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, gameLength, gameTimer, Event, event, EVENT_LENGTH, timeBetweenEvents, eventEnd, VOLCANO_RADIUS, VOLCANO_HEIGHT, GRAVITATION, CAMERA_HEIGHT, MAGMA_BALL_SPEED, METEORITE_SPEED, LAVA_BALL_SPEED, METEOR_STUFF_COOLDOWN, MAX_RANGE, STORAGE_SLOT_COUNT, hpShakeTimer, globalBoss, recentShake;
     var __moduleName = context_3 && context_3.id;
     function getIndexFromCoords(x, y) {
         var result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
+        if (x > TILE.chunkCountX * TILE.chunkSizeX || y > TILE.chunkCountY * TILE.chunkSizeY || x < 0 || y < 0) {
+            result = -100;
+        }
         return (result);
     }
     function getTileUnderMouse() {
@@ -475,19 +491,23 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         if (height === void 0) { height = 0; }
         if (fromThePoint === void 0) { fromThePoint = false; }
         if (layer === void 0) { layer = drawing_2.Layer.TILE; }
+        var mainSide = width;
+        if (height > width) {
+            mainSide = height;
+        }
         if (!fromThePoint) {
-            if (x > camera.x - camera.width * 0.5 - width / 2 &&
-                x < camera.x + camera.width * 0.5 + width / 2 &&
-                y > camera.y - camera.height * 0.5 - height / 2 &&
-                y < camera.y + camera.height * 0.5 + height / 2) {
+            if (x > camera.x - camera.width * 0.5 - mainSide / 2 &&
+                x < camera.x + camera.width * 0.5 + mainSide / 2 &&
+                y > camera.y - camera.height * 0.5 - mainSide / 2 &&
+                y < camera.y + camera.height * 0.5 + mainSide / 2) {
                 drawQueue.push({ x: x, y: y, sprite: sprite, angle: angle, width: width, height: height, fromThePoint: fromThePoint, layer: layer, type: drawing_2.DrawQueueType.IMAGE });
             }
         }
         else {
-            if (x > camera.x - camera.width * 0.5 - width * 4 &&
-                x < camera.x + camera.width * 0.5 + width * 4 &&
-                y > camera.y - camera.height * 0.5 - height * 4 &&
-                y < camera.y + camera.height * 0.5 + height * 4) {
+            if (x > camera.x - camera.width * 0.5 - mainSide * 4 &&
+                x < camera.x + camera.width * 0.5 + mainSide * 4 &&
+                y > camera.y - camera.height * 0.5 - mainSide * 4 &&
+                y < camera.y + camera.height * 0.5 + mainSide * 4) {
                 drawQueue.push({ x: x, y: y, sprite: sprite, angle: angle, width: width, height: height, fromThePoint: fromThePoint, layer: layer, type: drawing_2.DrawQueueType.IMAGE });
             }
         }
@@ -580,19 +600,19 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             firstY: y,
             neededX: null,
             neededY: null,
-            width: 100,
-            height: 100,
+            width: 100 * camera.range,
+            height: 100 * camera.range,
             angle: 0,
             color: 'grey',
             exists: true,
             speed: 0,
             speedX: 0,
             speedY: 0,
-            speedLimit: 3,
+            speedLimit: 3 * camera.range,
             speedBackReduction: 0.5,
-            friction: 0.95,
+            friction: 0.95 * camera.range,
             accel: 0,
-            accelConst: 0.04,
+            accelConst: 0.04 * camera.range,
             rotationSpeed: 0.08,
             goForward: false,
             goBackward: false,
@@ -613,7 +633,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             lifeTime: 0,
             angleZ: 0,
             summoned: false,
-            dontMoveWithCamera: false
+            dontMoveWithCamera: false,
+            specialTimer: null,
+            attack: null
         };
         if (gameObject.type === GameObjectType.PLAYER) {
             gameObject.sprite = drawing_2.imgPlayer;
@@ -630,34 +652,29 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         }
         if (gameObject.type === GameObjectType.METEORITE) {
             gameObject.sprite = drawing_2.imgMeteorite;
-            gameObject.width = 1;
-            gameObject.height = 1;
             gameObject.angle = randomFloat(0, Math.PI * 2);
             gameObject.angleZ = -randomFloat(0.25 * Math.PI, 0.5 * Math.PI);
         }
+        if (gameObject.type === GameObjectType.LAVA_BALL) {
+            gameObject.sprite = drawing_2.imgMagmaBall;
+            gameObject.angle = randomFloat(0, Math.PI * 2);
+            gameObject.angleZ = randomFloat(0, 0.25 * Math.PI);
+        }
         if (gameObject.type === GameObjectType.BOSS) {
             gameObject.sprite = drawing_2.imgBoss;
-            gameObject.width = TILE.width * 4;
-            gameObject.height = TILE.width * 3;
-            gameObject.speedLimit = 15;
+            gameObject.width = 800 * camera.range;
+            gameObject.height = 600 * camera.range;
+            gameObject.speedLimit = 15 * camera.range;
             gameObject.rotationSpeed = 0.01;
+            gameObject.specialTimer = addTimer(100);
         }
         if (gameObject.type === GameObjectType.MANIPULATOR) {
             gameObject.firstX = gameObject.x - globalBoss.x;
             gameObject.firstY = gameObject.y - globalBoss.y;
             gameObject.sprite = drawing_2.imgMechanicalHand;
-            gameObject.width = 200;
-            gameObject.height = 200;
-            gameObject.speedLimit = globalBoss.speedLimit * 2;
-        }
-        if (gameObject.type === GameObjectType.DROP) {
-            gameObject.speedLimit = 8;
-            gameObject.width = 25;
-            gameObject.height = 35;
-            gameObject.sprite = drawing_2.imgDrop;
-            gameObject.dontMoveWithCamera = true;
-            gameObject.neededY = camera.y + camera.height / 2 - y;
-            gameObject.neededX = x - (camera.x - camera.width / 2);
+            gameObject.width = 200 * camera.range;
+            gameObject.height = 200 * camera.range;
+            gameObject.speedLimit = globalBoss.speedLimit * 2 * camera.range;
         }
         if (gameObject.type === GameObjectType.NONE) {
             gameObject.exists = false;
@@ -678,7 +695,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         meteorite.summoned = true;
         meteorite.angleZ = -Math.PI * 0.5;
     }
-    function controlPlayer(gameObject) {
+    function controlGameObject(gameObject) {
         if (controls_1.upKey.isDown) {
             gameObject.goForward = true;
         }
@@ -809,7 +826,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         ];
     }
     function angleBetweenPoints(x1, y1, x2, y2) {
-        var result = Math.atan2(y2 - y1, x2 - x1) + Math.PI;
+        var result = normalizeAngle(Math.atan2(y2 - y1, x2 - x1));
         return result;
     }
     function addParticle(x, y, color, speed, size, decrease, accel) {
@@ -819,19 +836,16 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         var randomRadius = randomInt(size - 3, size + 3);
         var _b = rotateVector(accel, 0, randomAngle), accelX = _b[0], accelY = _b[1];
         var randomSizeDecrease = randomFloat(Math.abs(decrease - 0.15), decrease + 0.15);
-        if (color === "rgb(254,0,0,1)") {
-            accelY += 0.2;
-        }
         var particle = {
             x: x,
             y: y,
             color: color,
-            radius: randomRadius,
-            speedX: speedX,
-            speedY: speedY,
-            accelX: accelX,
-            accelY: accelY,
-            sizeDecrease: randomSizeDecrease
+            radius: randomRadius * camera.range,
+            speedX: speedX * camera.range,
+            speedY: speedY * camera.range,
+            accelX: accelX * camera.range,
+            accelY: accelY * camera.range,
+            sizeDecrease: randomSizeDecrease * camera.range
         };
         particles.push(particle);
     }
@@ -844,6 +858,15 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
     function drawParticles() {
         for (var particleIndex = 0; particleIndex < particles.length; particleIndex++) {
             var particle_1 = particles[particleIndex];
+            if (particle_1.radius <= 0) {
+                removeParticle(particleIndex);
+            }
+            else {
+                drawCircle(particle_1.x, particle_1.y, particle_1.radius, particle_1.color, false, drawing_2.Layer.PARTICLES);
+                if (particle_1.color === 'red' || particle_1.color === "rgb(254,0,0,1)") {
+                    drawLight(particle_1.x, particle_1.y, particle_1.radius * 4);
+                }
+            }
             if (!pause) {
                 particle_1.radius -= particle_1.sizeDecrease;
                 particle_1.x += particle_1.speedX;
@@ -854,7 +877,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     particle_1.color === 'lightcoral' || particle_1.color === 'dimgray' ||
                     particle_1.color === 'sienna') &&
                     particle_1.radius < 15) {
-                    var particleAngle = angleBetweenPoints(globalPlayer.x, globalPlayer.y, particle_1.x, particle_1.y);
+                    var particleAngle = angleBetweenPoints(particle_1.x, particle_1.y, globalPlayer.x, globalPlayer.y);
                     var particleSpeed = rotateVector(6, 0, particleAngle);
                     particle_1.accelX = 0;
                     particle_1.accelY = 0;
@@ -864,19 +887,12 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         removeParticle(particleIndex);
                     }
                 }
-                if (particle_1.color === 'red' && particle_1.radius > 0) {
-                    drawLight(particle_1.x, particle_1.y, particle_1.radius * 4);
+                if (particle_1.color === 'red') {
                     if (globalPlayer.width / 2 + particle_1.radius >= distanceBetweenPoints(globalPlayer.x, globalPlayer.y, particle_1.x, particle_1.y) &&
                         timers[globalPlayer.unhitableTimer] <= 0) {
-                        globalPlayer.hitpoints -= 50;
+                        globalPlayer.hitpoints -= 25;
                         timers[globalPlayer.unhitableTimer] = 180;
                     }
-                }
-                if (particle_1.radius <= 0) {
-                    removeParticle(particleIndex);
-                }
-                else {
-                    drawCircle(particle_1.x, particle_1.y, particle_1.radius, particle_1.color, false, drawing_2.Layer.PARTICLES);
                 }
             }
         }
@@ -921,36 +937,57 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         var distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
         return distance;
     }
-    function moveToTile(mouseTile) {
+    function moveToTile(mouseTile, gameObject) {
         var _a = tilesToPixels(mouseTile.x, mouseTile.y), x = _a[0], y = _a[1];
-        var angle = angleBetweenPoints(x, y, globalPlayer.x, globalPlayer.y);
-        if (globalPlayer.angle > angle) {
-            while (globalPlayer.angle + Math.PI * 2 < angle || globalPlayer.angle - Math.PI * 1 >= angle) {
+        var angle = angleBetweenPoints(gameObject.x, gameObject.y, x, y);
+        if (gameObject.angle > angle) {
+            while (gameObject.angle + Math.PI * 2 < angle || gameObject.angle - Math.PI * 1 >= angle) {
                 angle += Math.PI * 2;
             }
         }
-        if (globalPlayer.angle < angle) {
-            while (globalPlayer.angle + Math.PI * 2 < angle || globalPlayer.angle - Math.PI * 1 >= angle) {
+        if (gameObject.angle < angle) {
+            while (gameObject.angle + Math.PI * 2 < angle || gameObject.angle - Math.PI * 1 >= angle) {
                 angle -= Math.PI * 2;
             }
         }
-        if (globalPlayer.angle + globalPlayer.rotationSpeed > angle && globalPlayer.angle < angle) {
-            globalPlayer.angle = angle;
+        if (gameObject.angle + gameObject.rotationSpeed > angle && gameObject.angle < angle) {
+            gameObject.angle = angle;
         }
-        else if (globalPlayer.angle - globalPlayer.rotationSpeed < angle && globalPlayer.angle > angle) {
-            globalPlayer.angle = angle;
+        else if (gameObject.angle - gameObject.rotationSpeed < angle && gameObject.angle > angle) {
+            gameObject.angle = angle;
         }
-        else if (globalPlayer.angle > angle) {
-            globalPlayer.goLeft = true;
+        else if (gameObject.angle > angle) {
+            gameObject.goLeft = true;
         }
-        else if (globalPlayer.angle < angle) {
-            globalPlayer.goRight = true;
+        else if (gameObject.angle < angle) {
+            gameObject.goRight = true;
         }
-        if (!(globalPlayer.x > x - (TILE.width / 2 + 51) &&
-            globalPlayer.x < x + (TILE.width / 2 + 51) &&
-            globalPlayer.y > y - (TILE.height / 2 + 51) &&
-            globalPlayer.y < y + (TILE.height / 2 + 51))) {
-            globalPlayer.goForward = true;
+        if (!(gameObject.x > x - (TILE.width / 2 + gameObject.width / 2) &&
+            gameObject.x < x + (TILE.width / 2 + gameObject.width / 2) &&
+            gameObject.y > y - (TILE.height / 2 + gameObject.width / 2) &&
+            gameObject.y < y + (TILE.height / 2 + gameObject.width / 2))) {
+            gameObject.goForward = true;
+        }
+    }
+    function normalizeAngle(angle) {
+        while (angle < -Math.PI) {
+            angle += Math.PI * 2;
+        }
+        while (angle > Math.PI) {
+            angle -= Math.PI * 2;
+        }
+        return angle;
+    }
+    function makeScreenShake(strength, duration) {
+        for (var shakeIndex = 0; shakeIndex < screenShakes.length; shakeIndex++) {
+            if (timers[screenShakes[shakeIndex].duration] <= 0 || screenShakes[shakeIndex].strength <= 0) {
+                screenShakes[shakeIndex] = { strength: strength, duration: addTimer(duration) };
+                break;
+            }
+            else if (shakeIndex === screenShakes.length - 1) {
+                screenShakes.push({ strength: strength, duration: addTimer(duration) });
+                break;
+            }
         }
     }
     function updateTile(tileType, tile) {
@@ -964,20 +1001,33 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             && tile.x * TILE.width < camera.x + camera.width / 2 + tile.width / 2
                             && tile.y * TILE.height > camera.y - camera.height / 2 - tile.height / 2
                             && tile.y * TILE.height < camera.y + camera.height / 2 + tile.height / 2) {
-                            if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < 200 && timers[tile.specialTimer] > 150) {
+                            var burstMaxDuration = 300;
+                            var geyserMinRecharge = 500;
+                            var geyserMaxRecharge = 1500;
+                            if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < burstMaxDuration + 50 && timers[tile.specialTimer] > burstMaxDuration) {
                                 drawSprite(tile.x * tile.width, tile.y * tile.height, drawing_2.imgAlert, 0, tile.width, tile.height, false, drawing_2.Layer.ON_TILE);
                             }
                             if (timers[tile.specialTimer] <= 0) {
-                                timers[tile.specialTimer] = randomInt(500, 2000);
+                                timers[tile.specialTimer] = randomInt(geyserMinRecharge, geyserMaxRecharge);
                             }
-                            if (timers[tile.specialTimer] <= 150 && !pause) {
+                            if (timers[tile.specialTimer] === burstMaxDuration) {
+                                timers[tile.specialTimer] = randomInt(burstMaxDuration / 10, burstMaxDuration);
+                            }
+                            if (timers[tile.specialTimer] <= burstMaxDuration && !pause) {
+                                var color = void 0;
+                                if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) < 100 * globalPlayer.speedLimit) {
+                                    color = 'red';
+                                }
+                                else {
+                                    color = "rgb(254,0,0,1)";
+                                }
                                 burstParticles({
                                     x: tile.x * TILE.width,
                                     y: tile.y * TILE.height,
-                                    color: 'red',
+                                    color: color,
                                     speed: 5,
                                     size: 40,
-                                    decrease: 0.8,
+                                    decrease: 1,
                                     accel: -0.05,
                                     count: 1
                                 });
@@ -1003,35 +1053,13 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 break;
             case TileType.LAVA:
                 {
-                    drawLight(tile.x * TILE.width, tile.y * TILE.height, 200);
+                    drawLight(tile.x * TILE.width, tile.y * TILE.height, TILE.width * 1.2);
                     sprite = drawing_2.imgAbyss;
-                    var wallLeft = tile.x * TILE.width - TILE.width / 2;
-                    var wallRight = tile.x * TILE.width + TILE.width / 2;
-                    var wallTop = tile.y * TILE.height - TILE.height / 2;
-                    var wallBottom = tile.y * TILE.height + TILE.height / 2;
-                    if (globalPlayer.x - globalPlayer.width / 4 < wallRight &&
-                        globalPlayer.x - globalPlayer.width / 4 > wallLeft &&
-                        globalPlayer.y - globalPlayer.height / 4 > wallTop &&
-                        globalPlayer.y - globalPlayer.height / 4 < wallBottom &&
-                        globalPlayer.x + globalPlayer.width / 4 < wallRight &&
-                        globalPlayer.x + globalPlayer.width / 4 > wallLeft &&
-                        globalPlayer.y - globalPlayer.height / 4 > wallTop &&
-                        globalPlayer.y - globalPlayer.height / 4 < wallBottom &&
-                        globalPlayer.x - globalPlayer.width / 4 < wallRight &&
-                        globalPlayer.x - globalPlayer.width / 4 > wallLeft &&
-                        globalPlayer.y + globalPlayer.height / 4 > wallTop &&
-                        globalPlayer.y + globalPlayer.height / 4 < wallBottom &&
-                        globalPlayer.x + globalPlayer.width / 4 < wallRight &&
-                        globalPlayer.x + globalPlayer.width / 4 > wallLeft &&
-                        globalPlayer.y + globalPlayer.height / 4 > wallTop &&
-                        globalPlayer.y + globalPlayer.height / 4 < wallBottom) {
-                        globalPlayer.exists = false;
-                    }
                 }
                 break;
             case TileType.MELTER:
                 {
-                    drawLight(tile.x * TILE.width, tile.y * TILE.height, 150);
+                    drawLight(tile.x * TILE.width, tile.y * TILE.height, TILE.width * 0.75);
                     sprite = drawing_2.imgMelter;
                     if (timers[tile.specialTimer] > 0) {
                         drawText(tile.x * TILE.width - 10, tile.y * TILE.height, 'blue', "" + Math.round(timers[tile.specialTimer] / 60), 30, drawing_2.Layer.UI);
@@ -1135,7 +1163,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     sprite = drawing_2.imgIgneous;
                     drawLight(tile.x * TILE.width, tile.y * TILE.height, tile.width * 1.2);
                     if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) < 100 && timers[globalPlayer.unhitableTimer] <= 0) {
-                        globalPlayer.hitpoints -= 0.1;
+                        globalPlayer.hitpoints -= 0.2;
                     }
                 }
                 break;
@@ -1147,7 +1175,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             case TileType.VOLCANO:
                 {
                     sprite = drawing_2.imgVolcano;
-                    drawLight(tile.x * tile.width, tile.y * tile.height, tile.width * 1.2);
+                    drawLight(tile.x * TILE.width, tile.y * TILE.height, tile.width * 0.6);
                     if (distanceBetweenPoints(camera.x, camera.y, tile.x * TILE.width, tile.y * TILE.width) < VOLCANO_RADIUS) {
                         if (timers[tile.specialTimer] === 0 && !pause) {
                             addGameObject(GameObjectType.MAGMA_BALL, tile.x * TILE.width, tile.y * TILE.height);
@@ -1166,9 +1194,18 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
                 break;
         }
-        if (globalBoss && tile.upperLayer !== TileType.NONE && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, globalBoss.x, globalBoss.y) < globalBoss.width / 2) {
+        if (globalBoss && tile.upperLayer && distanceBetweenPoints(globalBoss.x, globalBoss.y, tile.x * TILE.width, tile.y * TILE.height) <= globalBoss.height / 2 + tile.width / 2) {
             tile.upperLayer = TileType.NONE;
-            burstParticles({ x: tile.x * TILE.width, y: tile.y * TILE.height, color: 'brown', speed: 2, size: 20, count: 20, decrease: 0.1, accel: 0 });
+            burstParticles({
+                x: tile.x * TILE.width,
+                y: tile.y * TILE.height,
+                color: 'brown',
+                speed: 2,
+                size: 20,
+                count: 20,
+                decrease: 0.4,
+                accel: 0
+            });
         }
         var _a = tilesToPixels(tile.x, tile.y), spriteX = _a[0], spriteY = _a[1];
         drawSprite(spriteX, spriteY, sprite, 0, tile.width, tile.height, false, drawing_2.Layer.TILE);
@@ -1200,15 +1237,15 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             if (!gameObject.doNotDraw) {
                 drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, drawing_2.Layer.PLAYER);
             }
-            controlPlayer(gameObject);
-            drawLight(gameObject.x, gameObject.y, 250);
+            controlGameObject(gameObject);
+            drawLight(gameObject.x, gameObject.y, gameObject.width * 2.5);
             if (globalBoss &&
                 !(globalBoss.x > camera.x - camera.width / 2 &&
                     globalBoss.x < camera.x + camera.width / 2 &&
                     globalBoss.y > camera.y - camera.height / 2 &&
                     globalBoss.y < camera.y + camera.height / 2)) {
-                var angle = angleBetweenPoints(globalBoss.x, globalBoss.y, camera.x, camera.y);
-                drawSprite(camera.x, camera.y, drawing_2.imgArrow2, angle, camera.height, camera.height, false, drawing_2.Layer.UI);
+                var angle_1 = angleBetweenPoints(camera.x, camera.y, globalBoss.x, globalBoss.y);
+                drawSprite(camera.x, camera.y, drawing_2.imgArrow2, angle_1, camera.height, camera.height, false, drawing_2.Layer.UI);
             }
             for (var slotIndex = 0; slotIndex < slotCount; slotIndex++) {
                 drawRect(camera.x - slotCount * 40 / 2 + slotIndex * 50, camera.y + camera.height / 2 - 50, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
@@ -1217,11 +1254,17 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             var STRIPE_WIDTH = 200;
             var STRIPE_HEIGHT = 50;
             var width = gameObject.hitpoints / gameObject.maxHitpoints * STRIPE_WIDTH;
-            if (width <= 100 && randomFloat(0, 1) < 0.005) {
-                addGameObject(GameObjectType.DROP, randomInt(camera.x - camera.width / 2 + 50 + 25 / 2, camera.x - camera.width / 2 + 50 + width - 25 / 2), camera.y - camera.height / 2 + 50);
+            if (width <= STRIPE_WIDTH / 2 && timers[hpShakeTimer] === 0) {
+                timers[hpShakeTimer] = width / STRIPE_WIDTH * 800;
             }
-            drawLinearGradient(camera.x - camera.width / 2 + width / 2 + 50, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT, ['red', "rgb(" + (1 - width / STRIPE_WIDTH) * 255 + "," + width / STRIPE_WIDTH * 255 + ",0,1)"], [0, 1], drawing_2.Layer.UI);
-            drawSprite(camera.x - camera.width / 2 + 50 + STRIPE_WIDTH / 2, camera.y - camera.height / 2 + 50, drawing_2.imgHp, 0, STRIPE_WIDTH, STRIPE_HEIGHT, false, drawing_2.Layer.UI);
+            var shakeX = 0;
+            var shakeY = 0;
+            if (timers[hpShakeTimer] < 50 && timers[hpShakeTimer] !== 0) {
+                shakeX = randomInt(-5, 5);
+                shakeY = randomInt(-5, 5);
+            }
+            drawLinearGradient(camera.x - camera.width / 2 + width / 2 + 50 + shakeX, camera.y - camera.height / 2 + 50 + shakeY, width, STRIPE_HEIGHT, ['red', "rgb(" + (1 - width / STRIPE_WIDTH) * 255 + "," + width / STRIPE_WIDTH * 255 + ",0,1)"], [0, 1], drawing_2.Layer.UI);
+            drawSprite(camera.x - camera.width / 2 + 50 + STRIPE_WIDTH / 2 + shakeX, camera.y - camera.height / 2 + 50 + shakeY, drawing_2.imgHp, 0, STRIPE_WIDTH, STRIPE_HEIGHT, false, drawing_2.Layer.UI);
             width = timers[gameObject.energy] / gameObject.maxEnergy * STRIPE_WIDTH;
             drawLinearGradient(camera.x - camera.width / 2 + width / 2 + 300, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT, ['white', "rgb(" + (1 - width / STRIPE_WIDTH) * 255 + "," + (1 - width / STRIPE_WIDTH) * 255 + "," + (width / STRIPE_WIDTH * 255 + 255) + ",1)"], [0, 1], drawing_2.Layer.UI);
             drawSprite(camera.x - camera.width / 2 + 300 + STRIPE_WIDTH / 2, camera.y - camera.height / 2 + 50, drawing_2.imgEnergy, 0, STRIPE_WIDTH * 1.05, STRIPE_HEIGHT, false, drawing_2.Layer.UI);
@@ -1235,6 +1278,17 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             if (isInventoryFullForItem(Item.NONE)) {
                 drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, drawing_2.Layer.UI);
+            }
+            var vector1 = rotateVector(20 * camera.range, 0, gameObject.angle + Math.PI / 4);
+            var vector2 = rotateVector(20 * camera.range, 0, gameObject.angle + Math.PI * 3 / 4);
+            var vector3 = rotateVector(20 * camera.range, 0, gameObject.angle - Math.PI / 4);
+            var vector4 = rotateVector(20 * camera.range, 0, gameObject.angle - Math.PI * 3 / 4);
+            var mapTile1 = getIndexFromCoords(Math.round((gameObject.x + vector1[0]) / TILE.width), Math.round((gameObject.y + vector1[1]) / TILE.height));
+            var mapTile2 = getIndexFromCoords(Math.round((gameObject.x + vector2[0]) / TILE.width), Math.round((gameObject.y + vector2[1]) / TILE.height));
+            var mapTile3 = getIndexFromCoords(Math.round((gameObject.x + vector3[0]) / TILE.width), Math.round((gameObject.y + vector3[1]) / TILE.height));
+            var mapTile4 = getIndexFromCoords(Math.round((gameObject.x + vector4[0]) / TILE.width), Math.round((gameObject.y + vector4[1]) / TILE.height));
+            if (map[mapTile1] && map[mapTile2] && map[mapTile3] && map[mapTile4] && map[mapTile1].baseLayer === TileType.LAVA && map[mapTile2].baseLayer === TileType.LAVA && map[mapTile3].baseLayer === TileType.LAVA && map[mapTile4].baseLayer === TileType.LAVA) {
+                gameObject.exists = false;
             }
             for (var itemIndex = 0; itemIndex <= inventory.length; itemIndex++) {
                 if (inventory[itemIndex]) {
@@ -1325,6 +1379,20 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             if (controls_1.upKey.isDown || controls_1.downKey.isDown || controls_1.rightKey.isDown || controls_1.leftKey.isDown) {
                 craftMode = false;
+            }
+            if (craftMode && controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 + 130 &&
+                controls_1.mouse.worldX < camera.x - camera.width / 2 + 170 &&
+                controls_1.mouse.worldY > camera.y - camera.height / 4 + 2 &&
+                controls_1.mouse.worldY < camera.y - camera.height / 4 + 30 &&
+                recipes[firstRecipeIndex - 1]) {
+                firstRecipeIndex--;
+            }
+            if (craftMode && controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 + 130 &&
+                controls_1.mouse.worldX < camera.x - camera.width / 2 + 170 &&
+                controls_1.mouse.worldY > camera.y - camera.height / 4 + 422 &&
+                controls_1.mouse.worldY < camera.y - camera.height / 4 + 450 &&
+                recipes[firstRecipeIndex + 3]) {
+                firstRecipeIndex++;
             }
             if (controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 - 10 &&
                 controls_1.mouse.worldX < camera.x - camera.width / 2 + 25 &&
@@ -1517,7 +1585,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
                 if (mouseTile && controls_1.mouse.isDown && mouseTile.toughness) {
-                    moveToTile(mouseTile);
+                    moveToTile(mouseTile, gameObject);
                     if (gameObject.goForward === false && gameObject.goBackward === false &&
                         gameObject.goLeft === false && gameObject.goRight === false) {
                         var isThereAnItem = false;
@@ -1610,237 +1678,224 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     var width_1 = stripeWidth * (mouseTile.toughness / mouseTile.firstToughness);
                     drawRect(camera.x + width_1 / 2 - 150, camera.y + camera.height / 4, width_1, 50, 0, 'green', false, drawing_2.Layer.UI);
                 }
-                if (craftMode && controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 + 130 &&
-                    controls_1.mouse.worldX < camera.x - camera.width / 2 + 170 &&
-                    controls_1.mouse.worldY > camera.y - camera.height / 4 + 2 &&
-                    controls_1.mouse.worldY < camera.y - camera.height / 4 + 30 &&
-                    recipes[firstRecipeIndex - 1]) {
-                    firstRecipeIndex--;
-                }
-                if (craftMode && controls_1.mouse.wentDown && controls_1.mouse.worldX > camera.x - camera.width / 2 + 130 &&
-                    controls_1.mouse.worldX < camera.x - camera.width / 2 + 170 &&
-                    controls_1.mouse.worldY > camera.y - camera.height / 4 + 422 &&
-                    controls_1.mouse.worldY < camera.y - camera.height / 4 + 450 &&
-                    recipes[firstRecipeIndex + 3]) {
-                    firstRecipeIndex++;
-                }
-                if (controlledStorage) {
-                    for (var slotIndex = 0; slotIndex < STORAGE_SLOT_COUNT; slotIndex++) {
-                        var x = void 0;
-                        var y = void 0;
-                        if (slotIndex <= Math.round(STORAGE_SLOT_COUNT / 2 - 1)) {
-                            x = camera.x + camera.width / 2 - 50 * STORAGE_SLOT_COUNT / 2 - 20 + slotIndex * 50;
-                            y = camera.y;
-                        }
-                        else {
-                            x = camera.x + camera.width / 2 - 50 * STORAGE_SLOT_COUNT / 2 - 20 + slotIndex * 50 - 50 * STORAGE_SLOT_COUNT / 2;
-                            y = camera.y + 100;
-                        }
-                        drawRect(x, y, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
-                        var sprite = null;
-                        if (controlledStorage.inventory[slotIndex].item === Item.NONE) {
-                            sprite = drawing_2.imgNone;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.IRON) {
-                            sprite = drawing_2.imgIronItem;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.MELTER) {
-                            sprite = drawing_2.imgMelter;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.IRON_INGOT) {
-                            sprite = drawing_2.imgIronIngot;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.AURIT) {
-                            sprite = drawing_2.imgAuritItem;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.AURIT_INGOT) {
-                            sprite = drawing_2.imgAuritIngot;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.CRYSTAL) {
-                            sprite = drawing_2.imgCrystalItem;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.SPLITTER) {
-                            sprite = drawing_2.imgSplitter;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.TOOLKIT) {
-                            sprite = drawing_2.imgToolkit;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.SUN_BATERY) {
-                            sprite = drawing_2.imgSunBatteryItem;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.SILIKON) {
-                            sprite = drawing_2.imgSiliconItem;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.STORAGE) {
-                            sprite = drawing_2.imgStorage;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.GOLDEN_CAMERA) {
-                            sprite = drawing_2.imgGoldenCamera;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.EXTRA_SLOT) {
-                            sprite = drawing_2.imgExtraSlotItem;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.SHOCKPROOF_BODY) {
-                            sprite = drawing_2.imgShockProofBody;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS) {
-                            sprite = drawing_2.imgIgneousItem;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS_INGOT) {
-                            sprite = drawing_2.imgIgneousIngot;
-                        }
-                        if (controlledStorage.inventory[slotIndex].item === Item.METEORITE_STUFF) {
-                            sprite = drawing_2.imgMeteoriteStuff;
-                        }
-                        drawSprite(x, y, sprite, 0, 40, 40, false, drawing_2.Layer.UI);
-                        if (controlledStorage.inventory[slotIndex].count !== 0) {
-                            drawText(x, y - 50, 'green', "" + controlledStorage.inventory[slotIndex].count, 25, drawing_2.Layer.UI);
-                        }
-                        if (controls_1.mouse.wentDown &&
-                            controls_1.mouse.worldX > x - 20 &&
-                            controls_1.mouse.worldX < x + 20 &&
-                            controls_1.mouse.worldY > y - 20 &&
-                            controls_1.mouse.worldY < y + 20) {
-                            if (controlledStorage.inventory[slotIndex].item !== Item.NONE && !isInventoryFullForItem(controlledStorage.inventory[slotIndex].item)) {
-                                addItem(controlledStorage.inventory[slotIndex].item, controlledStorage.inventory[slotIndex].count);
-                                removeItemFromStorage(controlledStorage.inventory[slotIndex].item, controlledStorage.inventory[slotIndex].count, controlledStorage);
-                            }
-                        }
-                    }
-                }
-                if (!gameObject.doNotDraw && gameObject.sunBateryLvl === 1) {
-                    drawSprite(gameObject.x, gameObject.y, drawing_2.imgSunBatteryAdd, gameObject.angle, gameObject.width, gameObject.height, false, drawing_2.Layer.PLAYER);
-                }
-                var angle = angleBetweenPoints(controls_1.mouse.worldX, controls_1.mouse.worldY, gameObject.x, gameObject.y);
-                var cameraSprite = drawing_2.imgNone;
-                if (gameObject.cameraLvl === 0) {
-                    cameraSprite = drawing_2.imgCamera;
-                }
-                if (gameObject.cameraLvl === 1) {
-                    cameraSprite = drawing_2.imgGoldenCamera;
-                }
-                if (!gameObject.doNotDraw) {
-                    drawSprite(gameObject.x, gameObject.y, cameraSprite, angle, 30, 30, false, drawing_2.Layer.PLAYER);
-                }
-                var _a = rotateVector(46, 40, -gameObject.angle), wheel1X = _a[0], wheel1Y = _a[1];
-                var _b = rotateVector(9, 45, -gameObject.angle), wheel2X = _b[0], wheel2Y = _b[1];
-                var _c = rotateVector(-48, 45, -gameObject.angle), wheel3X = _c[0], wheel3Y = _c[1];
-                var _d = rotateVector(46, -40, -gameObject.angle), wheel4X = _d[0], wheel4Y = _d[1];
-                var _e = rotateVector(9, -45, -gameObject.angle), wheel5X = _e[0], wheel5Y = _e[1];
-                var _f = rotateVector(-48, -45, -gameObject.angle), wheel6X = _f[0], wheel6Y = _f[1];
-                if (gameObject.goForward) {
-                    gameObject.leftWeel++;
-                    gameObject.rightWeel++;
-                }
-                else {
-                    if (gameObject.goBackward) {
-                        gameObject.leftWeel--;
-                        gameObject.rightWeel--;
+            }
+            if (controlledStorage) {
+                for (var slotIndex = 0; slotIndex < STORAGE_SLOT_COUNT; slotIndex++) {
+                    var x = void 0;
+                    var y = void 0;
+                    if (slotIndex <= Math.round(STORAGE_SLOT_COUNT / 2 - 1)) {
+                        x = camera.x + camera.width / 2 - 50 * STORAGE_SLOT_COUNT / 2 - 20 + slotIndex * 50;
+                        y = camera.y;
                     }
                     else {
-                        if (gameObject.goLeft) {
-                            gameObject.rightWeel++;
-                            gameObject.leftWeel--;
+                        x = camera.x + camera.width / 2 - 50 * STORAGE_SLOT_COUNT / 2 - 20 + slotIndex * 50 - 50 * STORAGE_SLOT_COUNT / 2;
+                        y = camera.y + 100;
+                    }
+                    drawRect(x, y, 50, 50, 0, 'grey', true, drawing_2.Layer.UI);
+                    var sprite = null;
+                    if (controlledStorage.inventory[slotIndex].item === Item.NONE) {
+                        sprite = drawing_2.imgNone;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.IRON) {
+                        sprite = drawing_2.imgIronItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.MELTER) {
+                        sprite = drawing_2.imgMelter;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.IRON_INGOT) {
+                        sprite = drawing_2.imgIronIngot;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.AURIT) {
+                        sprite = drawing_2.imgAuritItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.AURIT_INGOT) {
+                        sprite = drawing_2.imgAuritIngot;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.CRYSTAL) {
+                        sprite = drawing_2.imgCrystalItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.SPLITTER) {
+                        sprite = drawing_2.imgSplitter;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.TOOLKIT) {
+                        sprite = drawing_2.imgToolkit;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.SUN_BATERY) {
+                        sprite = drawing_2.imgSunBatteryItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.SILIKON) {
+                        sprite = drawing_2.imgSiliconItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.STORAGE) {
+                        sprite = drawing_2.imgStorage;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.GOLDEN_CAMERA) {
+                        sprite = drawing_2.imgGoldenCamera;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.EXTRA_SLOT) {
+                        sprite = drawing_2.imgExtraSlotItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.SHOCKPROOF_BODY) {
+                        sprite = drawing_2.imgShockProofBody;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS) {
+                        sprite = drawing_2.imgIgneousItem;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.IGNEOUS_INGOT) {
+                        sprite = drawing_2.imgIgneousIngot;
+                    }
+                    if (controlledStorage.inventory[slotIndex].item === Item.METEORITE_STUFF) {
+                        sprite = drawing_2.imgMeteoriteStuff;
+                    }
+                    drawSprite(x, y, sprite, 0, 40, 40, false, drawing_2.Layer.UI);
+                    if (controlledStorage.inventory[slotIndex].count !== 0) {
+                        drawText(x, y - 50, 'green', "" + controlledStorage.inventory[slotIndex].count, 25, drawing_2.Layer.UI);
+                    }
+                    if (controls_1.mouse.wentDown &&
+                        controls_1.mouse.worldX > x - 20 &&
+                        controls_1.mouse.worldX < x + 20 &&
+                        controls_1.mouse.worldY > y - 20 &&
+                        controls_1.mouse.worldY < y + 20) {
+                        if (controlledStorage.inventory[slotIndex].item !== Item.NONE && !isInventoryFullForItem(controlledStorage.inventory[slotIndex].item)) {
+                            addItem(controlledStorage.inventory[slotIndex].item, controlledStorage.inventory[slotIndex].count);
+                            removeItemFromStorage(controlledStorage.inventory[slotIndex].item, controlledStorage.inventory[slotIndex].count, controlledStorage);
                         }
-                        if (gameObject.goRight) {
-                            gameObject.leftWeel++;
-                            gameObject.rightWeel--;
-                        }
                     }
                 }
-                if (gameObject.leftWeel > 6) {
-                    gameObject.leftWeel = 1;
+            }
+            if (!gameObject.doNotDraw && gameObject.sunBateryLvl === 1) {
+                drawSprite(gameObject.x, gameObject.y, drawing_2.imgSunBatteryAdd, gameObject.angle, gameObject.width * camera.range, gameObject.height * camera.range, false, drawing_2.Layer.PLAYER);
+            }
+            var angle = angleBetweenPoints(gameObject.x, gameObject.y, controls_1.mouse.worldX, controls_1.mouse.worldY);
+            var cameraSprite = drawing_2.imgNone;
+            if (gameObject.cameraLvl === 0) {
+                cameraSprite = drawing_2.imgCamera;
+            }
+            if (gameObject.cameraLvl === 1) {
+                cameraSprite = drawing_2.imgGoldenCamera;
+            }
+            if (!gameObject.doNotDraw) {
+                drawSprite(gameObject.x, gameObject.y, cameraSprite, angle, 30 * camera.range, 30 * camera.range, false, drawing_2.Layer.PLAYER);
+            }
+            var _a = rotateVector(46 * camera.range, 40 * camera.range, -gameObject.angle), wheel1X = _a[0], wheel1Y = _a[1];
+            var _b = rotateVector(9 * camera.range, 45 * camera.range, -gameObject.angle), wheel2X = _b[0], wheel2Y = _b[1];
+            var _c = rotateVector(-48 * camera.range, 45 * camera.range, -gameObject.angle), wheel3X = _c[0], wheel3Y = _c[1];
+            var _d = rotateVector(46 * camera.range, -40 * camera.range, -gameObject.angle), wheel4X = _d[0], wheel4Y = _d[1];
+            var _e = rotateVector(9 * camera.range, -45 * camera.range, -gameObject.angle), wheel5X = _e[0], wheel5Y = _e[1];
+            var _f = rotateVector(-48 * camera.range, -45 * camera.range, -gameObject.angle), wheel6X = _f[0], wheel6Y = _f[1];
+            if (gameObject.goForward) {
+                gameObject.leftWeel++;
+                gameObject.rightWeel++;
+            }
+            else {
+                if (gameObject.goBackward) {
+                    gameObject.leftWeel--;
+                    gameObject.rightWeel--;
                 }
-                if (gameObject.rightWeel > 6) {
-                    gameObject.rightWeel = 1;
-                }
-                if (gameObject.leftWeel < 1) {
-                    gameObject.leftWeel = 6;
-                }
-                if (gameObject.rightWeel < 1) {
-                    gameObject.rightWeel = 6;
-                }
-                if (!gameObject.doNotDraw) {
-                    if (gameObject.leftWeel === 1) {
-                        drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                else {
+                    if (gameObject.goLeft) {
+                        gameObject.rightWeel++;
+                        gameObject.leftWeel--;
                     }
-                    if (gameObject.leftWeel === 2) {
-                        drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.leftWeel === 3) {
-                        drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.leftWeel === 4) {
-                        drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.leftWeel === 5) {
-                        drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.leftWeel === 6) {
-                        drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.rightWeel === 1) {
-                        drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.rightWeel === 2) {
-                        drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.rightWeel === 3) {
-                        drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.rightWeel === 4) {
-                        drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.rightWeel === 5) {
-                        drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    }
-                    if (gameObject.rightWeel === 6) {
-                        drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                        drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                    if (gameObject.goRight) {
+                        gameObject.leftWeel++;
+                        gameObject.rightWeel--;
                     }
                 }
-                if (!pause) {
-                    moveGameObject(gameObject);
+            }
+            if (gameObject.leftWeel > 6) {
+                gameObject.leftWeel = 1;
+            }
+            if (gameObject.rightWeel > 6) {
+                gameObject.rightWeel = 1;
+            }
+            if (gameObject.leftWeel < 1) {
+                gameObject.leftWeel = 6;
+            }
+            if (gameObject.rightWeel < 1) {
+                gameObject.rightWeel = 6;
+            }
+            if (!gameObject.doNotDraw) {
+                if (gameObject.leftWeel === 1) {
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel1, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel1, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel1, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
                 }
-                if (gameObject.x + gameObject.speedX <= camera.x - camera.width / 2) {
-                    gameObject.x = camera.x - camera.width / 2;
+                if (gameObject.leftWeel === 2) {
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel2, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel2, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel2, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
                 }
-                if (gameObject.x + gameObject.speedX >= camera.x + camera.width / 2) {
-                    gameObject.x = camera.x + camera.width / 2;
+                if (gameObject.leftWeel === 3) {
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel3, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel3, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel3, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
                 }
-                if (gameObject.y + gameObject.speedY <= camera.y - camera.height / 2) {
-                    gameObject.y = camera.y - camera.height / 2;
+                if (gameObject.leftWeel === 4) {
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel4, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel4, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel4, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
                 }
-                if (gameObject.y + gameObject.speedY >= camera.y + camera.height / 2) {
-                    gameObject.y = camera.y - camera.height / 2;
+                if (gameObject.leftWeel === 5) {
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel5, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel5, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel5, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
                 }
+                if (gameObject.leftWeel === 6) {
+                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel6, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel6, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel6, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                }
+                if (gameObject.rightWeel === 1) {
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel1, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel1, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel1, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                }
+                if (gameObject.rightWeel === 2) {
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel2, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel2, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel2, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                }
+                if (gameObject.rightWeel === 3) {
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel3, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel3, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel3, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                }
+                if (gameObject.rightWeel === 4) {
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel4, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel4, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel4, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                }
+                if (gameObject.rightWeel === 5) {
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel5, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel5, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel5, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                }
+                if (gameObject.rightWeel === 6) {
+                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel6, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel6, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel6, gameObject.angle, 25 * camera.range, 12 * camera.range, false, drawing_2.Layer.PLAYER);
+                }
+            }
+            if (!pause) {
+                moveGameObject(gameObject);
+            }
+            if (gameObject.x + gameObject.speedX <= camera.x - camera.width / 2) {
+                gameObject.x = camera.x - camera.width / 2;
+            }
+            if (gameObject.x + gameObject.speedX >= camera.x + camera.width / 2) {
+                gameObject.x = camera.x + camera.width / 2;
+            }
+            if (gameObject.y + gameObject.speedY <= camera.y - camera.height / 2) {
+                gameObject.y = camera.y - camera.height / 2;
+            }
+            if (gameObject.y + gameObject.speedY >= camera.y + camera.height / 2) {
+                gameObject.y = camera.y - camera.height / 2;
             }
         }
         if (gameObject.type === GameObjectType.MAGMA_BALL) {
             drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, drawing_2.Layer.METEORITE);
+            drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
             if (!pause) {
                 gameObject.x += gameObject.speedX;
                 gameObject.y += gameObject.speedY;
@@ -1857,8 +1912,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, drawing_2.Layer.ON_TILE);
                     drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 90, 90, false, drawing_2.Layer.ON_TILE);
                 }
-                gameObject.width = 100 + height;
-                gameObject.height = 100 + height;
+                gameObject.width = (100 + height) * camera.range;
+                gameObject.height = (100 + height) * camera.range;
                 if (height <= 0) {
                     gameObject.exists = false;
                     burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.75, accel: 0 });
@@ -1885,9 +1940,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
             }
-            drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
         }
         if (gameObject.type === GameObjectType.METEORITE) {
+            drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
             drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, drawing_2.Layer.METEORITE);
             if (!pause) {
                 gameObject.x += gameObject.speedX;
@@ -1897,8 +1952,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 var speedXY = METEORITE_SPEED * Math.cos(gameObject.angleZ);
                 var speedVector = rotateVector(speedXY, 0, gameObject.angle);
                 var height = CAMERA_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
-                gameObject.width = 100 + height;
-                gameObject.height = 100 + height;
+                gameObject.width = (100 + height) * camera.range;
+                gameObject.height = (100 + height) * camera.range;
                 if (height <= 0) {
                     gameObject.exists = false;
                     burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
@@ -1911,6 +1966,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         }
                         if (map[tileIndex].baseLayer === TileType.MOUNTAIN) {
                             map[tileIndex].baseLayer = TileType.EARTH_1;
+                            map[tileIndex].toughness = 0;
+                            map[tileIndex].oreCount = 0;
                         }
                     }
                     else {
@@ -1927,91 +1984,227 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
             }
+        }
+        if (gameObject.type === GameObjectType.LAVA_BALL) {
+            drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, drawing_2.Layer.METEORITE);
             drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
+            if (!pause) {
+                gameObject.x += gameObject.speedX;
+                gameObject.y += gameObject.speedY;
+                gameObject.lifeTime++;
+                var speedZ = LAVA_BALL_SPEED * Math.sin(gameObject.angleZ);
+                var speedXY = LAVA_BALL_SPEED * Math.cos(gameObject.angleZ);
+                var speedVector = rotateVector(speedXY, 0, gameObject.angle);
+                gameObject.speedX = speedVector[0];
+                gameObject.speedY = speedVector[1];
+                var height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+                var range = LAVA_BALL_SPEED * LAVA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
+                var rangeProjections = rotateVector(range, 0, gameObject.angle);
+                if (globalPlayer.cameraLvl === 1) {
+                    drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 10, 'red', true, drawing_2.Layer.ON_TILE);
+                    drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 18, 18, false, drawing_2.Layer.ON_TILE);
+                }
+                gameObject.width = (20 + height) * camera.range;
+                gameObject.height = (20 + height) * camera.range;
+                if (height <= 0) {
+                    gameObject.exists = false;
+                    var x = Math.round(gameObject.x / TILE.width);
+                    var y = Math.round(gameObject.y / TILE.height);
+                    var tileIndex = getIndexFromCoords(x, y);
+                    if (map[tileIndex] && map[tileIndex].baseLayer !== TileType.VOLCANO && map[tileIndex].baseLayer !== TileType.NONE) {
+                        map[tileIndex].upperLayer = TileType.NONE;
+                        map[tileIndex].baseLayer = TileType.LAVA;
+                        map[tileIndex].toughness = 0;
+                        map[tileIndex].oreCount = 0;
+                    }
+                }
+            }
         }
         if (gameObject.type === GameObjectType.BOSS) {
             drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, drawing_2.Layer.BOSS);
-            if (gameObject.x > camera.x - camera.width / 2 &&
-                gameObject.x < camera.x + camera.width / 2 &&
-                gameObject.y > camera.y - camera.height / 2 &&
-                gameObject.y < camera.y + camera.height / 2) {
-                gameObject.goLeft = true;
-                gameObject.goForward = true;
+            if (!pause) {
+                if (distanceBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y) <= gameObject.height / 2 && timers[globalPlayer.unhitableTimer] === 0) {
+                    globalPlayer.hitpoints -= 50;
+                    timers[globalPlayer.unhitableTimer] = 150;
+                }
+                if (timers[gameObject.specialTimer] === 0) {
+                    gameObject.attack = randomInt(0, 2);
+                    gameObject.goForward = false;
+                    gameObject.goLeft = false;
+                    gameObject.goRight = false;
+                    if (gameObject.attack === 1) {
+                        timers[gameObject.specialTimer] = 300;
+                    }
+                    else {
+                        timers[gameObject.specialTimer] = 600;
+                    }
+                    gameObject.rotationSpeed = 0.01;
+                    gameObject.sprite = drawing_2.imgBoss;
+                }
+                if (gameObject.attack === 0) {
+                    var angle = angleBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y);
+                    var diff = normalizeAngle(gameObject.angle - angle);
+                    if (diff > gameObject.rotationSpeed && !gameObject.goForward) {
+                        gameObject.goLeft = true;
+                        gameObject.goRight = false;
+                    }
+                    else if (diff < -gameObject.rotationSpeed && !gameObject.goForward) {
+                        gameObject.goRight = true;
+                        gameObject.goLeft = false;
+                    }
+                    else {
+                        gameObject.goLeft = false;
+                        gameObject.goRight = false;
+                        gameObject.goForward = true;
+                        var vector = rotateVector(gameObject.width / 2, 0, gameObject.angle + Math.PI);
+                        burstParticles({
+                            x: gameObject.x + vector[0],
+                            y: gameObject.y - vector[1],
+                            color: 'red',
+                            speed: 3,
+                            size: 35,
+                            count: 1,
+                            decrease: 0.5,
+                            accel: 0
+                        });
+                    }
+                }
+                if (gameObject.attack === 1) {
+                    if (timers[gameObject.specialTimer] > 100) {
+                        if (timers[gameObject.specialTimer] < 300 && timers[gameObject.specialTimer] % 10 === 0) {
+                            for (var lavaIndex = 0; lavaIndex < 10; lavaIndex++) {
+                                addGameObject(GameObjectType.LAVA_BALL, gameObject.x, gameObject.y);
+                            }
+                        }
+                        gameObject.rotationSpeed += 0.0015;
+                    }
+                    if (timers[gameObject.specialTimer] < 100) {
+                        gameObject.rotationSpeed -= 0.003;
+                    }
+                    gameObject.goLeft = true;
+                }
+                if (gameObject.attack === 2) {
+                    if (timers[gameObject.specialTimer] >= 300) {
+                        if (timers[gameObject.specialTimer] % 2 === 0) {
+                            gameObject.sprite = drawing_2.imgBossReadyToAttack1;
+                        }
+                        else {
+                            gameObject.sprite = drawing_2.imgBossReadyToAttack;
+                        }
+                    }
+                    else {
+                        gameObject.rotationSpeed = 0.005;
+                        var angle = angleBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y);
+                        var diff = normalizeAngle(gameObject.angle - angle);
+                        if (diff > gameObject.rotationSpeed && !gameObject.goForward) {
+                            gameObject.goLeft = true;
+                            gameObject.goRight = false;
+                        }
+                        else if (diff < -gameObject.rotationSpeed && !gameObject.goForward) {
+                            gameObject.goRight = true;
+                            gameObject.goLeft = false;
+                        }
+                        else {
+                            gameObject.goRight = false;
+                            gameObject.goLeft = false;
+                        }
+                        var lazerLength = 1500 * camera.range;
+                        var vector = rotateVector(gameObject.width / 3 + lazerLength / 2, 1, -gameObject.angle);
+                        if (timers[gameObject.specialTimer] % 2 === 0) {
+                            gameObject.sprite = drawing_2.imgBossAttack;
+                            drawSprite(gameObject.x + vector[0], gameObject.y + vector[1], drawing_2.imgLazer, gameObject.angle, lazerLength, 286 / 796 * gameObject.height, false, drawing_2.Layer.BOSS);
+                        }
+                        else {
+                            gameObject.sprite = drawing_2.imgBossAttack1;
+                            drawSprite(gameObject.x + vector[0], gameObject.y + vector[1], drawing_2.imgLazer1, gameObject.angle, lazerLength, 286 / 796 * gameObject.height, false, drawing_2.Layer.BOSS);
+                        }
+                        var distanceFromPlayer = distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x + vector[0], gameObject.y + vector[1]);
+                        var rotatedDistanceFromPlayer = rotateVector(distanceFromPlayer, 0, angleBetweenPoints(gameObject.x + vector[0], gameObject.y + vector[1], globalPlayer.x, globalPlayer.y) - globalBoss.angle);
+                        drawing_2.ctx.save();
+                        drawing_2.ctx.translate(gameObject.x + vector[0], gameObject.y + vector[1]);
+                        if (-286 / 796 * gameObject.height / 2 < rotatedDistanceFromPlayer[1] && 286 / 796 * gameObject.height / 2 > rotatedDistanceFromPlayer[1]
+                            && -lazerLength / 2 < rotatedDistanceFromPlayer[0] && lazerLength / 2 > rotatedDistanceFromPlayer[0]) {
+                            globalPlayer.hitpoints -= 0.5;
+                        }
+                        drawing_2.ctx.restore();
+                    }
+                }
+                moveGameObject(gameObject);
             }
-            else {
-                gameObject.goLeft = false;
-                gameObject.goForward = false;
-            }
-            moveGameObject(gameObject);
         }
         if (gameObject.type === GameObjectType.MANIPULATOR) {
             drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, drawing_2.Layer.MANIPULATOR);
             gameObject.angle = globalBoss.angle;
-            var angle = angleBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y);
-            drawSprite(globalBoss.x, globalBoss.y, drawing_2.imgManipulator, angle, 270, 60, true, drawing_2.Layer.BOSS_LEG);
-            var legVector = rotateVector(250, 0, angle);
-            drawSprite(globalBoss.x - legVector[0], globalBoss.y + legVector[1], drawing_2.imgManipulator, angle, distanceBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y) - 230, 60, true, drawing_2.Layer.BOSS_LEG);
-            var legDistance = 150;
-            var firstCoordsAngle = Math.PI - angleBetweenPoints(0, 0, gameObject.firstX, gameObject.firstY);
-            var firstCoordsVector = rotateVector(500, 0, -globalBoss.angle + firstCoordsAngle);
-            if (distanceBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1]) > legDistance) {
-                var movementAngle = Math.PI - angleBetweenPoints(globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1], gameObject.x, gameObject.y);
-                gameObject.neededX = globalBoss.x + firstCoordsVector[0];
-                gameObject.neededY = globalBoss.y + firstCoordsVector[1];
-                var neededVector = rotateVector(legDistance - 5, 0, movementAngle);
-                gameObject.neededX -= neededVector[0];
-                gameObject.neededY -= neededVector[1];
-            }
-            if (gameObject.neededX && gameObject.neededY) {
-                var angle_1 = angleBetweenPoints(gameObject.neededX, gameObject.neededY, gameObject.x, gameObject.y);
-                var speed = void 0;
-                if (!globalBoss.speed) {
-                    speed = globalBoss.speedLimit;
+            var angle = angleBetweenPoints(globalBoss.x + gameObject.firstX, globalBoss.y + gameObject.firstY, globalBoss.x, globalBoss.y);
+            drawSprite(globalBoss.x, globalBoss.y, drawing_2.imgManipulator, globalBoss.angle + angle, 270 * camera.range, 60 * camera.range, true, drawing_2.Layer.BOSS_LEG);
+            var legVector = rotateVector(250 * camera.range, 0, -globalBoss.angle - angle + Math.PI);
+            angle = angleBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + legVector[0], globalBoss.y + legVector[1]);
+            drawSprite(globalBoss.x + legVector[0], globalBoss.y + legVector[1], drawing_2.imgManipulator, angle, distanceBetweenPoints(globalBoss.x + legVector[0], globalBoss.y + legVector[1], gameObject.x, gameObject.y), 60 * camera.range, true, drawing_2.Layer.BOSS_LEG);
+            if (!pause) {
+                var legDistance = 140 * camera.range;
+                var firstCoordsAngle = Math.PI - angleBetweenPoints(gameObject.firstX, gameObject.firstY, 0, 0);
+                var firstCoordsVector = rotateVector(500 * camera.range, 0, -globalBoss.angle + firstCoordsAngle);
+                if (distanceBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1]) > legDistance) {
+                    var movementAngle = Math.PI - angleBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + firstCoordsVector[0], globalBoss.y + firstCoordsVector[1]);
+                    gameObject.neededX = globalBoss.x + firstCoordsVector[0];
+                    gameObject.neededY = globalBoss.y + firstCoordsVector[1];
+                    var neededVector = rotateVector(legDistance - 5, 0, movementAngle);
+                    gameObject.neededX -= neededVector[0];
+                    gameObject.neededY -= neededVector[1];
+                    gameObject.neededX -= globalBoss.x;
+                    gameObject.neededY -= globalBoss.y;
                 }
-                else {
-                    speed = globalBoss.speed * 2;
+                if (gameObject.neededX && gameObject.neededY) {
+                    var angle_2 = angleBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + gameObject.neededX, globalBoss.y + gameObject.neededY);
+                    var speed = void 0;
+                    if (globalBoss.goLeft || globalBoss.goRight) {
+                        speed = globalBoss.rotationSpeed * globalBoss.width * 2;
+                    }
+                    else {
+                        speed = Math.abs(globalBoss.speed) * 2;
+                    }
+                    var movementVector = rotateVector(speed, 0, angle_2);
+                    if ((gameObject.x < globalBoss.x + gameObject.neededX && gameObject.x + movementVector[0] > globalBoss.x + gameObject.neededX) ||
+                        (gameObject.x > globalBoss.x + gameObject.neededX && gameObject.x + movementVector[0] < globalBoss.x + gameObject.neededX)) {
+                        gameObject.x = globalBoss.x + gameObject.neededX;
+                        gameObject.y = globalBoss.y + gameObject.neededY;
+                        gameObject.neededX = null;
+                        gameObject.neededY = null;
+                        var distance = distanceBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y);
+                        var strength = 1 / distance * camera.width;
+                        makeScreenShake(strength, 5);
+                        if (distance < gameObject.width / 2 + globalPlayer.width / 2 && timers[globalPlayer.unhitableTimer] === 0) {
+                            globalPlayer.hitpoints -= 20;
+                            timers[globalPlayer.unhitableTimer] = 150;
+                        }
+                        for (var tileIndex = 0; tileIndex < map.length; tileIndex++) {
+                            var tile = map[tileIndex];
+                            if (tile.upperLayer && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
+                                tile.upperLayer = TileType.NONE;
+                                burstParticles({
+                                    x: tile.x * TILE.width,
+                                    y: tile.y * TILE.height,
+                                    color: 'brown',
+                                    speed: 2,
+                                    size: 20,
+                                    count: 20,
+                                    decrease: 0.4,
+                                    accel: 0
+                                });
+                            }
+                        }
+                    }
+                    else {
+                        gameObject.x += movementVector[0];
+                        gameObject.y -= movementVector[1];
+                    }
                 }
-                var movementVector = rotateVector(speed, 0, angle_1);
-                if ((gameObject.x < gameObject.neededX && gameObject.x + movementVector[0] > gameObject.neededX) ||
-                    (gameObject.x > gameObject.neededX && gameObject.x + movementVector[0] < gameObject.neededX)) {
-                    gameObject.x = gameObject.neededX;
-                    gameObject.y = gameObject.neededY;
-                    gameObject.neededX = null;
-                    gameObject.neededY = null;
-                }
-                else {
-                    gameObject.x += movementVector[0];
-                    gameObject.y -= movementVector[1];
-                }
             }
-        }
-        if (gameObject.type === GameObjectType.DROP) {
-            drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, drawing_2.Layer.DROP);
-            if (gameObject.neededY > camera.height - 75) {
-                gameObject.neededY -= gameObject.speedLimit / 10;
-            }
-            else {
-                gameObject.neededY -= gameObject.speedLimit;
-            }
-            if (gameObject.neededY <= 0) {
-                gameObject.exists = false;
-                burstParticles({
-                    x: gameObject.x,
-                    y: gameObject.y,
-                    color: "rgb(254,0,0,1)",
-                    speed: gameObject.speedLimit,
-                    size: 15,
-                    count: 15,
-                    decrease: 0,
-                    accel: 0.005
-                });
-            }
-            gameObject.y = camera.y + camera.height / 2 - gameObject.neededY;
-            gameObject.x = camera.x - camera.width / 2 + gameObject.neededX;
         }
         if ((gameObject.hitpoints <= 0 || timers[gameObject.energy] <= 0) && gameObject.type === GameObjectType.PLAYER) {
             gameObject.exists = false;
         }
+        normalizeAngle(gameObject.angle);
     }
     function loop() {
         var _a;
@@ -2051,15 +2244,17 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             timers[dayTimer] = ONE_DAY;
         }
         if (timers[gameTimer] === 1) {
-            var y = void 0;
-            if (camera.y - camera.height * 1.5 > TILE.firstX - TILE.width) {
-                y = camera.y - camera.height * 1.5;
+            var y = camera.y;
+            var x = camera.x;
+            while (x > camera.x - camera.width &&
+                x < camera.x + camera.width &&
+                y > camera.x - camera.height &&
+                y < camera.y + camera.height) {
+                x = randomInt(camera.x - camera.width * 3, camera.y + camera.width * 3);
+                y = randomInt(camera.y - camera.height * 3, camera.y + camera.height * 3);
             }
-            else {
-                y = camera.y + camera.height * 1.5;
-            }
-            globalBoss = addGameObject(GameObjectType.BOSS, camera.x, y);
-            var distanceFromManipulators = 500;
+            globalBoss = addGameObject(GameObjectType.BOSS, x, y);
+            var distanceFromManipulators = 500 * camera.range;
             var hand1Angle = globalBoss.angle - 0.25 * Math.PI;
             var hand1Vector = rotateVector(distanceFromManipulators, 0, hand1Angle);
             addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand1Vector[0], globalBoss.y + hand1Vector[1]);
@@ -2074,7 +2269,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand4Vector[0], globalBoss.y + hand4Vector[1]);
         }
         drawSprite(camera.x, camera.y, drawing_2.backBuffer, 0, camera.width, camera.height, false, drawing_2.Layer.FORGROUND);
-        var color = drawing_2.backCtx.fillStyle = "rgba(0,0,0," + (1 - timers[globalPlayer.energy] / globalPlayer.maxEnergy) * 0.75 + ")";
+        var color = drawing_2.backCtx.fillStyle = "rgba(0,0,0," + (1 - timers[globalPlayer.energy] / globalPlayer.maxEnergy) * 0.25 + ")";
         drawRect(camera.x, camera.y, camera.width, camera.height, 0, color, false, drawing_2.Layer.FORGROUND);
         drawQueue.sort(function (a, b) { return b.layer - a.layer; });
         for (var itemIndex = 0; itemIndex < drawQueue.length; itemIndex++) {
@@ -2082,15 +2277,32 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             drawing_2.renderItem(item);
         }
         drawing_2.backCtx.restore();
-        {
-            if (globalPlayer.x - camera.width / 2 >= TILE.firstX - TILE.width / 2 &&
-                globalPlayer.x + camera.width / 2 <= TILE.firstX - TILE.width / 2 + TILE.width * TILE.chunkSizeX * TILE.chunkCountX) {
-                camera.x = globalPlayer.x;
+        if (timers[recentShake.duration] <= 0) {
+            recentShake = { strength: 0, duration: addTimer(0) };
+        }
+        for (var shakeIndex = 0; shakeIndex < screenShakes.length; shakeIndex++) {
+            var shake = screenShakes[shakeIndex];
+            if (shake.strength > recentShake.strength && timers[shake.duration] > 0) {
+                recentShake = shake;
             }
-            if (globalPlayer.y - camera.height / 2 >= TILE.firstY - TILE.height / 2 &&
-                globalPlayer.y + camera.height / 2 <= TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkSizeY * TILE.chunkCountY) {
-                camera.y = globalPlayer.y;
-            }
+        }
+        camera.x = globalPlayer.x;
+        camera.y = globalPlayer.y;
+        if (timers[recentShake.duration] > 0 && recentShake.strength > 0 && !pause) {
+            camera.x += randomInt(-recentShake.strength, recentShake.strength);
+            camera.y += randomInt(-recentShake.strength, recentShake.strength);
+        }
+        while (camera.x < TILE.firstX - TILE.width / 2 + camera.width / 2) {
+            camera.x++;
+        }
+        while (camera.y < TILE.firstY - TILE.height / 2 + camera.height / 2) {
+            camera.y++;
+        }
+        while (camera.x > TILE.firstX - TILE.width / 2 + TILE.chunkSizeX * TILE.chunkCountX * TILE.width - camera.width / 2) {
+            camera.x--;
+        }
+        while (camera.y > TILE.firstY - TILE.height / 2 + TILE.chunkSizeY * TILE.chunkCountY * TILE.width - camera.height / 2) {
+            camera.y--;
         }
         drawing_2.ctx.restore();
         if (!pause) {
@@ -2113,10 +2325,10 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 GameObjectType[GameObjectType["NONE"] = 0] = "NONE";
                 GameObjectType[GameObjectType["PLAYER"] = 1] = "PLAYER";
                 GameObjectType[GameObjectType["MAGMA_BALL"] = 2] = "MAGMA_BALL";
-                GameObjectType[GameObjectType["METEORITE"] = 3] = "METEORITE";
-                GameObjectType[GameObjectType["BOSS"] = 4] = "BOSS";
-                GameObjectType[GameObjectType["MANIPULATOR"] = 5] = "MANIPULATOR";
-                GameObjectType[GameObjectType["DROP"] = 6] = "DROP";
+                GameObjectType[GameObjectType["LAVA_BALL"] = 3] = "LAVA_BALL";
+                GameObjectType[GameObjectType["METEORITE"] = 4] = "METEORITE";
+                GameObjectType[GameObjectType["BOSS"] = 5] = "BOSS";
+                GameObjectType[GameObjectType["MANIPULATOR"] = 6] = "MANIPULATOR";
             })(GameObjectType || (GameObjectType = {}));
             (function (TileType) {
                 TileType[TileType["NONE"] = 0] = "NONE";
@@ -2137,9 +2349,17 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 TileType[TileType["STORAGE"] = 15] = "STORAGE";
                 TileType[TileType["IGNEOUS"] = 16] = "IGNEOUS";
             })(TileType || (TileType = {}));
+            camera = {
+                x: 0,
+                y: 0,
+                width: drawing_2.canvas.width,
+                height: drawing_2.canvas.height,
+                angle: 0,
+                range: 0.75
+            };
             TILE = {
-                width: 200,
-                height: 200,
+                width: 200 * camera.range,
+                height: 200 * camera.range,
                 firstX: 0,
                 firstY: 0,
                 chunkSizeX: 8,
@@ -2340,13 +2560,6 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             AFTERNOON_LENGTH = 6000;
             NIGHT_LENGTH = 6000;
             ONE_DAY = MORNING_LENGTH + DAY_LENGTH + AFTERNOON_LENGTH + NIGHT_LENGTH;
-            camera = {
-                x: TILE.firstX - TILE.width / 2 + drawing_2.canvas.width / 2,
-                y: TILE.firstY - TILE.height / 2 + drawing_2.canvas.height / 2,
-                width: drawing_2.canvas.width,
-                height: drawing_2.canvas.height,
-                angle: 0
-            };
             gameObjects = [];
             GameObject = (function () {
                 function GameObject() {
@@ -2445,6 +2658,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
             }
             globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
+            screenShakes = [{ strength: 0, duration: addTimer(0) }];
             craftMode = false;
             pause = false;
             firstRecipeIndex = 0;
@@ -2461,16 +2675,19 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             EVENT_LENGTH = 1800;
             timeBetweenEvents = gameLength / 4;
             eventEnd = gameLength;
-            VOLCANO_RADIUS = TILE.width * TILE.chunkSizeX * 1.5;
-            MAGMA_BALL_SPEED = 35;
-            VOLCANO_HEIGHT = 100;
-            GRAVITATION = 0.5;
+            VOLCANO_RADIUS = TILE.width * TILE.chunkSizeX * 1.5 * camera.range;
+            VOLCANO_HEIGHT = 100 * camera.range;
+            GRAVITATION = 0.5 * camera.range;
             CAMERA_HEIGHT = 1325;
-            METEORITE_SPEED = 35;
+            MAGMA_BALL_SPEED = 35 * camera.range;
+            METEORITE_SPEED = 35 * camera.range;
+            LAVA_BALL_SPEED = 15 * camera.range;
             METEOR_STUFF_COOLDOWN = 500;
             MAX_RANGE = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
             STORAGE_SLOT_COUNT = 10;
+            hpShakeTimer = addTimer(0);
             globalBoss = null;
+            recentShake = { strength: 0, duration: addTimer(0) };
             requestAnimationFrame(loop);
         }
     };

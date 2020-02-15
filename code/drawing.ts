@@ -19,7 +19,7 @@ export let canBeginGame = false;
 
 export enum Layer {
     UI,
-    DROP,
+    BOSS_EYE,
     FORGROUND,
     METEORITE,
     PARTICLES,
@@ -150,6 +150,12 @@ export let imgMechanicalHand = loadImage('../sprites/mechanicalHand.png');
 export let imgEnergy = loadImage('../sprites/energy.png');
 export let imgHp = loadImage('../sprites/hp.png');
 export let imgDrop = loadImage('../sprites/drop.png');
+export let imgBossReadyToAttack = loadImage('../sprites/bossReadyToAttack.png');
+export let imgBossReadyToAttack1 = loadImage('../sprites/bossReadyToAttack1.png');
+export let imgBossAttack = loadImage('../sprites/bossAttack.png');
+export let imgBossAttack1 = loadImage('../sprites/bossAttack1.png');
+export let imgLazer = loadImage('../sprites/lazer.png');
+export let imgLazer1 = loadImage('../sprites/lazer1.png');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {
@@ -223,7 +229,7 @@ export function renderItem(item: DrawQueueItem) {
             ctx.fillRect(x1, y1, item.width, item.height);
 
             ctx.restore();
-        }
+        } break;
 
         default: console.assert(false);
     }
