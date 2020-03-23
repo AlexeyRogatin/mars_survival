@@ -1,4 +1,4 @@
-import { canvas } from './drawing';
+import { canvas, camera } from './drawing';
 
 export let mouseX: number = 0;
 export let mouseY: number = 0;
@@ -81,8 +81,10 @@ window.onkeyup = function onkeyup(event: KeyboardEvent) {
 };
 
 window.onmousemove = function onmousemove(event: MouseEvent) {
-    mouse.x = event.clientX - canvas.clientLeft;
-    mouse.y = event.clientY - canvas.clientTop;
+    const rect = canvas.getBoundingClientRect();
+    const scale = canvas.width / camera.width;
+    mouse.x = (event.clientX - rect.left)/scale;
+    mouse.y = (event.clientY - rect.top) / scale;
 }
 
 window.onmousedown = function onmousedown(event: MouseEvent) {

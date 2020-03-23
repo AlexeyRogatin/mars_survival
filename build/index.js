@@ -352,8 +352,10 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
                 handleKeyUp(event, KeyCode.ESC, escKey);
             };
             window.onmousemove = function onmousemove(event) {
-                mouse.x = event.clientX - drawing_1.canvas.clientLeft;
-                mouse.y = event.clientY - drawing_1.canvas.clientTop;
+                var rect = drawing_1.canvas.getBoundingClientRect();
+                var scale = drawing_1.canvas.width / drawing_1.camera.width;
+                mouse.x = (event.clientX - rect.left) / scale;
+                mouse.y = (event.clientY - rect.top) / scale;
             };
             window.onmousedown = function onmousedown(event) {
                 if (!mouse.isDown) {
