@@ -1,16 +1,15 @@
 import { Key } from "./controls";
-import { screenRatio } from "./index";
+export const SCREEN_RATIO = 1980 / 980;
+
 
 export function handleResize() {
     const rect = canvas.getBoundingClientRect();
-    let width = rect.width * devicePixelRatio;
-    let height = width / screenRatio;
+    let width = rect.width;
+    let height = width / SCREEN_RATIO;
     canvas.width = width;
     canvas.height = height
     backBuffer.width = width;
     backBuffer.height = height;
-    camera.width = width;
-    camera.height = height;
 }
 
 export const canvas = document.getElementById("canvas") as HTMLCanvasElement;
@@ -27,6 +26,9 @@ export let camera = {
     angle: 0,
     range: 0.75,
 }
+
+camera.width = 1920;
+camera.height = camera.width / SCREEN_RATIO;
 
 handleResize();
 window.addEventListener('resize', handleResize);
