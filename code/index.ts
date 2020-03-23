@@ -1,4 +1,4 @@
-import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, qKey } from "./controls";
+import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, qKey, rKey, escKey } from "./controls";
 import {
     ctx, canvas, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera,
     imgEarth1, imgEarth2, imgEarth3, imgGeyser, imgMountain, imgIron1, imgIron2, imgIron3, imgIron4,
@@ -8,60 +8,8 @@ import {
     imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem,
     imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous,
     imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgBossReadyToAttack,
-    imgBossAttack, imgBossAttack1, imgBossReadyToAttack1, imgLazer, imgLazer1
+    imgBossAttack, imgBossAttack1, imgBossReadyToAttack1, imgLazer, imgLazer1, camera, handleResize
 } from "./drawing";
-
-enum GameObjectType {
-    NONE,
-    PLAYER,
-    MAGMA_BALL,
-    LAVA_BALL,
-    METEORITE,
-    BOSS,
-    MANIPULATOR,
-}
-
-enum TileType {
-    NONE,
-    EARTH_1,
-    EARTH_2,
-    EARTH_3,
-    MOUNTAIN,
-    GEYSER,
-    VOLCANO,
-    LAVA,
-    IRON,
-    AURIT,
-    CRYSTAL,
-    MELTER,
-    SPLITTER,
-    SUN_BATERY,
-    SILIKON,
-    STORAGE,
-    IGNEOUS,
-}
-
-let camera = {
-    x: 0,
-    y: 0,
-    width: canvas.width,
-    height: canvas.height,
-    angle: 0,
-    range: 0.75,
-}
-
-let TILE = {
-    width: 200 * camera.range,
-    height: 200 * camera.range,
-    firstX: 0,
-    firstY: 0,
-    chunkSizeX: 8,
-    chunkSizeY: 8,
-    chunkCountX: 20,
-    chunkCountY: 20,
-}
-
-let timers: number[] = [];
 
 class InventorySlot {
     item: Item = Item.NONE;
@@ -85,33 +33,218 @@ class Tile {
     inventory: InventorySlot[];
 }
 
-const map: Tile[] = [];
-
-function getIndexFromCoords(x: number, y: number) {
-    let result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
-    if (x > TILE.chunkCountX * TILE.chunkSizeX || y > TILE.chunkCountY * TILE.chunkSizeY || x < 0 || y < 0) {
-        result = -100;
-    }
-    return (result);
+class RecipePart {
+    item: Item;
+    count: number;
+    sprite: HTMLImageElement;
 }
 
-function getTileUnderMouse() {
-    let [x, y] = pixelsToTiles(mouse.worldX, mouse.worldY);
-    let tile = map[getIndexFromCoords(x, y)];
-    return (tile);
+class Recipe {
+    parts: RecipePart[];
+    result: Item;
+    sprite: HTMLImageElement;
+    name: string;
+    description1: string;
+    description2: string;
+    description3: string;
 }
 
-function tilesToPixels(x: number, y: number) {
-    let result = [x * TILE.width, y * TILE.height];
-    return result;
+
+class GameObject {
+    type: GameObjectType = GameObjectType.NONE;
+    x: number;
+    y: number;
+    firstX: number;
+    firstY: number;
+    neededX: number;
+    neededY: number;
+
+    width: number;
+    height: number;
+    angle: number;
+    color: string;
+
+    exists: Boolean;
+
+    speed: number;
+    speedX: number;
+    speedY: number;
+    speedLimit: number;
+    speedBackReduction: number;
+
+    friction: number;
+
+    accel: number;
+    accelConst: number;
+
+    rotationSpeed: number;
+
+    goForward: boolean;
+    goRight: boolean;
+    goLeft: boolean;
+    goBackward: boolean;
+
+    sprite: HTMLImageElement;
+
+    leftWeel: number;
+    rightWeel: number;
+
+    hitpoints: number;
+    maxHitpoints: number;
+
+    energy: number;
+    maxEnergy: number;
+
+    unhitableTimer: number;
+    doNotDraw: boolean;
+
+    sunBateryLvl: number;
+    cameraLvl: number;
+
+    stuckable: boolean;
+
+    lifeTime: number;
+
+    angleZ: number;
+
+    summoned: boolean;
+
+    dontMoveWithCamera: boolean;
+
+    specialTimer: number;
+
+    attack: number;
 }
 
-function pixelsToTiles(x: number, y: number) {
-    let result = [Math.round(x / TILE.width), Math.round(y / TILE.height)];
-    return result;
+class particle {
+    x: number;
+    y: number;
+    color: string;
+    radius: number;
+    speedX: number;
+    speedY: number;
+    accelX: number;
+    accelY: number;
+    sizeDecrease: number;
 }
 
-let chunkPrototypes = [
+class Text {
+    text: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    color: string;
+    size: number;
+    layer: Layer;
+    wasClicked: boolean;
+    exists: boolean;
+}
+
+enum GameObjectType {
+    NONE,
+    PLAYER,
+    MAGMA_BALL,
+    LAVA_BALL,
+    METEORITE,
+    BOSS,
+    MANIPULATOR,
+}
+
+enum GameState {
+    MENU,
+    GAME,
+}
+
+enum TileType {
+    NONE,
+    EARTH_1,
+    EARTH_2,
+    EARTH_3,
+    MOUNTAIN,
+    GEYSER,
+    VOLCANO,
+    LAVA,
+    IRON,
+    AURIT,
+    CRYSTAL,
+    MELTER,
+    SPLITTER,
+    SUN_BATERY,
+    SILIKON,
+    STORAGE,
+    IGNEOUS,
+}
+
+
+enum Item {
+    NONE,
+    IRON,
+    MELTER,
+    SPLITTER,
+    IRON_INGOT,
+    AURIT,
+    AURIT_INGOT,
+    CRYSTAL,
+    TOOLKIT,
+    SUN_BATERY,
+    SILIKON,
+    STORAGE,
+    GOLDEN_CAMERA,
+    EXTRA_SLOT,
+    SHOCKPROOF_BODY,
+    IGNEOUS,
+    IGNEOUS_INGOT,
+    METEORITE_STUFF,
+}
+
+enum Event {
+    NONE,
+    METEORITE_RAIN,
+}
+
+const TILE = {
+    width: 200 * camera.range,
+    height: 200 * camera.range,
+    firstX: 0,
+    firstY: 0,
+    chunkSizeX: 8,
+    chunkSizeY: 8,
+    chunkCountX: 16,
+    chunkCountY: 16,
+}
+
+const MORNING_LENGTH = 6000;
+const DAY_LENGTH = 6000;
+const AFTERNOON_LENGTH = 6000;
+const NIGHT_LENGTH = 6000;
+
+const ONE_DAY = MORNING_LENGTH + DAY_LENGTH + AFTERNOON_LENGTH + NIGHT_LENGTH;
+
+const EVENT_LENGTH = 1800;
+const VOLCANO_RADIUS = TILE.width * TILE.chunkSizeX * 1.5 * camera.range;
+const VOLCANO_HEIGHT = 100 * camera.range;
+const GRAVITATION = 0.5 * camera.range;
+const CAMERA_HEIGHT = 1325;
+const MAGMA_BALL_SPEED = 35 * camera.range;
+const METEORITE_SPEED = 35 * camera.range;
+const LAVA_BALL_SPEED = 15 * camera.range;
+
+const METEOR_STUFF_COOLDOWN = 500;
+
+const MAX_RANGE = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
+
+const STORAGE_SLOT_COUNT = 10;
+
+const STRIPE_WIDTH = 200;
+const STRIPE_HEIGHT = 50;
+
+let timers: number[] = [];
+
+let map: Tile[] = [];
+
+
+const CHUNK_PROTOTYPES = [
     [
         '  @!  ##',
         ' @!@   #',
@@ -164,44 +297,7 @@ let chunkPrototypes = [
     ],
 ]
 
-enum Item {
-    NONE,
-    IRON,
-    MELTER,
-    SPLITTER,
-    IRON_INGOT,
-    AURIT,
-    AURIT_INGOT,
-    CRYSTAL,
-    TOOLKIT,
-    SUN_BATERY,
-    SILIKON,
-    STORAGE,
-    GOLDEN_CAMERA,
-    EXTRA_SLOT,
-    SHOCKPROOF_BODY,
-    IGNEOUS,
-    IGNEOUS_INGOT,
-    METEORITE_STUFF,
-}
-
-class RecipePart {
-    item: Item;
-    count: number;
-    sprite: HTMLImageElement;
-}
-
-class Recipe {
-    parts: RecipePart[];
-    result: Item;
-    sprite: HTMLImageElement;
-    name: string;
-    description1: string;
-    description2: string;
-    description3: string;
-}
-
-let recipes: Recipe[] = [
+const RECIPES: Recipe[] = [
     {
         result: Item.MELTER,
         parts: [{ item: Item.IRON, count: 20, sprite: imgIronItem },],
@@ -286,8 +382,112 @@ let recipes: Recipe[] = [
     },
 ];
 
+const GAME_LENGTH = 10000000000;
+
 let slotCount = 5;
 let inventory: InventorySlot[] = [];
+
+let drawQueue: DrawQueueItem[] = [];
+
+let alpha = 0;
+
+let gameObjects: GameObject[] = [];
+
+let particles: particle[] = [];
+
+let globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
+
+let screenShakes: screenShake[] = [{ strength: 0, duration: addTimer(0) }];
+
+let craftMode = false;
+let pause = false;
+let firstRecipeIndex = 0;
+let mainSlot = 0;
+let controlledStorage: Tile = null;
+
+let dayTimer = addTimer(ONE_DAY);
+let gameTimer = addTimer(GAME_LENGTH);
+
+let event = Event.NONE;
+
+
+let timeBetweenEvents = GAME_LENGTH / 4;
+let eventEnd = GAME_LENGTH;
+
+let hpShakeTimer = addTimer(0);
+
+let globalBoss: GameObject = null;
+
+let recentShake: screenShake = { strength: 0, duration: addTimer(0) };
+
+let gameState = GameState.MENU;
+
+let menuTexts: Text[] = [];
+
+export let screenRatio = 1980 / 980;
+handleResize();
+
+function restate() {
+    gameObjects = [];
+    particles = [];
+    map = [];
+    timers = [];
+    menuTexts = [];
+
+    slotCount = 5;
+    for (let itemIndex = 0; itemIndex < inventory.length; itemIndex++) {
+        inventory[itemIndex] = { item: Item.NONE, count: 0, cooldown: 0 };
+    }
+
+    craftMode = false;
+    pause = false;
+    firstRecipeIndex = 0;
+    mainSlot = 0;
+    controlledStorage = null;
+
+    screenShakes = [{ strength: 0, duration: addTimer(0) }];
+
+    dayTimer = addTimer(ONE_DAY);
+    gameTimer = addTimer(GAME_LENGTH);
+
+    event = Event.NONE;
+
+    timeBetweenEvents = GAME_LENGTH / 4;
+    eventEnd = GAME_LENGTH;
+
+    hpShakeTimer = addTimer(0);
+
+    globalBoss = null;
+
+    recentShake = { strength: 0, duration: addTimer(0) };
+
+    globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
+}
+
+function getIndexFromCoords(x: number, y: number) {
+    let result = y * TILE.chunkSizeX * TILE.chunkCountX + x;
+    if (x > TILE.chunkCountX * TILE.chunkSizeX || y > TILE.chunkCountY * TILE.chunkSizeY || x < 0 || y < 0) {
+        result = -100;
+    }
+    return (result);
+}
+
+function getTileUnderMouse() {
+    let [x, y] = pixelsToTiles(mouse.worldX, mouse.worldY);
+    let tile = map[getIndexFromCoords(x, y)];
+    return (tile);
+}
+
+function tilesToPixels(x: number, y: number) {
+    let result = [x * TILE.width, y * TILE.height];
+    return result;
+}
+
+function pixelsToTiles(x: number, y: number) {
+    let result = [Math.round(x / TILE.width), Math.round(y / TILE.height)];
+    return result;
+}
+
 for (let i = 0; i < slotCount; i++) {
     inventory.push(new InventorySlot());
 }
@@ -428,8 +628,6 @@ function craftRecipe(recipe: Recipe) {
     }
 }
 
-let drawQueue: DrawQueueItem[] = [];
-
 export function drawSprite(x: number, y: number, sprite: any, angle: number, width: number = 0, height: number = 0, fromThePoint: boolean = false, layer = Layer.TILE) {
     let mainSide = width;
     if (height > width) {
@@ -490,15 +688,6 @@ export function drawLinearGradient(x: number, y: number, width: number, height: 
     }
 }
 
-let alpha = 0;
-
-const MORNING_LENGTH = 6000;
-const DAY_LENGTH = 6000;
-const AFTERNOON_LENGTH = 6000;
-const NIGHT_LENGTH = 6000;
-
-const ONE_DAY = MORNING_LENGTH + DAY_LENGTH + AFTERNOON_LENGTH + NIGHT_LENGTH;
-
 export function drawLight(x: number, y: number, radius: number) {
     alpha = 0;
 
@@ -543,74 +732,6 @@ export function drawLight(x: number, y: number, radius: number) {
     }
 }
 
-let gameObjects: GameObject[] = [];
-
-class GameObject {
-    type: GameObjectType = GameObjectType.NONE;
-    x: number;
-    y: number;
-    firstX: number;
-    firstY: number;
-    neededX: number;
-    neededY: number;
-
-    width: number;
-    height: number;
-    angle: number;
-    color: string;
-
-    exists: Boolean;
-
-    speed: number;
-    speedX: number;
-    speedY: number;
-    speedLimit: number;
-    speedBackReduction: number;
-
-    friction: number;
-
-    accel: number;
-    accelConst: number;
-
-    rotationSpeed: number;
-
-    goForward: boolean;
-    goRight: boolean;
-    goLeft: boolean;
-    goBackward: boolean;
-
-    sprite: HTMLImageElement;
-
-    leftWeel: number;
-    rightWeel: number;
-
-    hitpoints: number;
-    maxHitpoints: number;
-
-    energy: number;
-    maxEnergy: number;
-
-    unhitableTimer: number;
-    doNotDraw: boolean;
-
-    sunBateryLvl: number;
-    cameraLvl: number;
-
-    stuckable: boolean;
-
-    lifeTime: number;
-
-    angleZ: number;
-
-    summoned: boolean;
-
-    dontMoveWithCamera: boolean;
-
-    specialTimer: number;
-
-    attack: number;
-}
-
 function addGameObject(type: GameObjectType, x: number, y: number) {
     let gameObject: GameObject = {
         type: type,
@@ -634,9 +755,9 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         speedY: 0,
         speedLimit: 3 * camera.range,
         speedBackReduction: 0.5,
-        friction: 0.95 * camera.range,
+        friction: 0.95,
         accel: 0,
-        accelConst: 0.04 * camera.range,
+        accelConst: 0.04,
         rotationSpeed: 0.08,
 
         goForward: false,
@@ -901,20 +1022,6 @@ function angleBetweenPoints(x1: number, y1: number, x2: number, y2: number) {
     return result;
 }
 
-let particles: particle[] = []
-
-class particle {
-    x: number;
-    y: number;
-    color: string;
-    radius: number;
-    speedX: number;
-    speedY: number;
-    accelX: number;
-    accelY: number;
-    sizeDecrease: number;
-}
-
 function addParticle(x: number, y: number, color: string, speed: number, size: number, decrease: number, accel: number) {
     let randomAngle = randomFloat(0, Math.PI * 2);
     let randomSpeed = randomFloat(Math.abs(speed - 0.5), speed + 0.5);
@@ -955,7 +1062,7 @@ function burstParticles({ x, y, color, speed, size, count, decrease, accel }: Pa
     }
 }
 
-function drawParticles() {
+function updateParticles() {
     for (let particleIndex = 0; particleIndex < particles.length; particleIndex++) {
         let particle = particles[particleIndex];
 
@@ -997,7 +1104,7 @@ function drawParticles() {
             if (particle.color === 'red') {
                 if (globalPlayer.width / 2 + particle.radius >= distanceBetweenPoints(globalPlayer.x, globalPlayer.y, particle.x, particle.y) &&
                     timers[globalPlayer.unhitableTimer] <= 0) {
-                    globalPlayer.hitpoints -= 25;
+                    globalPlayer.hitpoints -= 2 * particle.radius;
                     timers[globalPlayer.unhitableTimer] = 180;
                 }
             }
@@ -1027,82 +1134,86 @@ function removeParticle(particleIndex: number) {
     particles.pop();
 }
 
-for (let chunkY = 0; chunkY < TILE.chunkCountY; chunkY++) {
-    for (let chunkX = 0; chunkX < TILE.chunkCountX; chunkX++) {
-        let protoIndex = randomInt(0, chunkPrototypes.length - 1);
-        let proto = chunkPrototypes[protoIndex];
-        console.assert(TILE.chunkSizeY === proto.length);
-        console.assert(TILE.chunkSizeX === proto[0].length);
+function buildMap() {
+    for (let chunkY = 0; chunkY < TILE.chunkCountY; chunkY++) {
+        for (let chunkX = 0; chunkX < TILE.chunkCountX; chunkX++) {
+            let protoIndex = randomInt(0, CHUNK_PROTOTYPES.length - 1);
+            let proto = CHUNK_PROTOTYPES[protoIndex];
+            console.assert(TILE.chunkSizeY === proto.length);
+            console.assert(TILE.chunkSizeX === proto[0].length);
 
-        for (let tileY = 0; tileY < proto.length; tileY++) {
-            let line = proto[tileY];
-            for (let tileX = 0; tileX < line.length; tileX++) {
-                let char = line[tileX];
-                let downTileType = null;
-                let upTileType = TileType.NONE;
-                let x = (chunkX * TILE.chunkSizeX + tileX);
-                let y = (chunkY * TILE.chunkSizeX + tileY);
-                let index = getIndexFromCoords(x, y);
-                map[index] = {
-                    baseLayer: downTileType, upperLayer: upTileType, x, y, specialTimer: null, toughness: null,
-                    firstToughness: null, oreCount: 5, inventory: [], width: TILE.width, height: TILE.height,
-                    collisionWidth: TILE.width, collisionHeight: TILE.height,
-                };
-                if (char === '0') {
-                    downTileType = TileType.NONE;
-                } else if (char === ' ') {
-                    let chance = randomInt(1, 8);
-                    if (chance >= 1 && chance <= 6) {
+            for (let tileY = 0; tileY < proto.length; tileY++) {
+                let line = proto[tileY];
+                for (let tileX = 0; tileX < line.length; tileX++) {
+                    let char = line[tileX];
+                    let downTileType = null;
+                    let upTileType = TileType.NONE;
+                    let x = (chunkX * TILE.chunkSizeX + tileX);
+                    let y = (chunkY * TILE.chunkSizeX + tileY);
+                    let index = getIndexFromCoords(x, y);
+                    map[index] = {
+                        baseLayer: downTileType, upperLayer: upTileType, x, y, specialTimer: null, toughness: null,
+                        firstToughness: null, oreCount: 5, inventory: [], width: TILE.width, height: TILE.height,
+                        collisionWidth: TILE.width, collisionHeight: TILE.height,
+                    };
+                    if (char === '0') {
+                        downTileType = TileType.NONE;
+                    } else if (char === ' ') {
+                        let chance = randomInt(1, 8);
+                        if (chance >= 1 && chance <= 6) {
+                            downTileType = TileType.EARTH_1;
+                        }
+                        if (chance === 7) {
+                            downTileType = TileType.EARTH_2;
+                        }
+                        if (chance === 8) {
+                            downTileType = TileType.EARTH_3;
+                        }
+                    } else if (char === '#') {
                         downTileType = TileType.EARTH_1;
+                        upTileType = TileType.MOUNTAIN;
+                    } else if (char === '@') {
+                        downTileType = TileType.GEYSER;
+                        map[index].specialTimer = addTimer(randomInt(500, 1400));
+                    } else if (char === '*') {
+                        downTileType = TileType.VOLCANO;
+                        map[index].width = TILE.width * 3;
+                        map[index].height = TILE.height * 3;
+                        map[index].collisionWidth = TILE.width * 2;
+                        map[index].collisionHeight = TILE.height * 2;
+                        map[index].specialTimer = addTimer(randomInt(50, 500));
+                    } else if (char === '!') {
+                        downTileType = TileType.LAVA;
+                    } else if (char === 'F') {
+                        downTileType = TileType.EARTH_1;
+                        upTileType = TileType.IRON;
+                        map[index].toughness = 999;
+                        map[index].firstToughness = 999;
+                    } else if (char === 'A') {
+                        downTileType = TileType.EARTH_1;
+                        upTileType = TileType.AURIT;
+                        map[index].toughness = 999;
+                        map[index].firstToughness = 999;
+                    } else if (char === 'C') {
+                        downTileType = TileType.EARTH_1;
+                        upTileType = TileType.CRYSTAL;
+                        map[index].toughness = 999;
+                        map[index].firstToughness = 999;
+                    } else if (char = 'S') {
+                        downTileType = TileType.EARTH_1;
+                        upTileType = TileType.SILIKON;
+                        map[index].toughness = 999;
+                        map[index].firstToughness = 999;
                     }
-                    if (chance === 7) {
-                        downTileType = TileType.EARTH_2;
-                    }
-                    if (chance === 8) {
-                        downTileType = TileType.EARTH_3;
-                    }
-                } else if (char === '#') {
-                    downTileType = TileType.EARTH_1;
-                    upTileType = TileType.MOUNTAIN;
-                } else if (char === '@') {
-                    downTileType = TileType.GEYSER;
-                    map[index].specialTimer = addTimer(randomInt(500, 1400));
-                } else if (char === '*') {
-                    downTileType = TileType.VOLCANO;
-                    map[index].width = TILE.width * 3;
-                    map[index].height = TILE.height * 3;
-                    map[index].collisionWidth = TILE.width * 2;
-                    map[index].collisionHeight = TILE.height * 2;
-                    map[index].specialTimer = addTimer(randomInt(50, 500));
-                } else if (char === '!') {
-                    downTileType = TileType.LAVA;
-                } else if (char === 'F') {
-                    downTileType = TileType.EARTH_1;
-                    upTileType = TileType.IRON;
-                    map[index].toughness = 999;
-                    map[index].firstToughness = 999;
-                } else if (char === 'A') {
-                    downTileType = TileType.EARTH_1;
-                    upTileType = TileType.AURIT;
-                    map[index].toughness = 999;
-                    map[index].firstToughness = 999;
-                } else if (char === 'C') {
-                    downTileType = TileType.EARTH_1;
-                    upTileType = TileType.CRYSTAL;
-                    map[index].toughness = 999;
-                    map[index].firstToughness = 999;
-                } else if (char = 'S') {
-                    downTileType = TileType.EARTH_1;
-                    upTileType = TileType.SILIKON;
-                    map[index].toughness = 999;
-                    map[index].firstToughness = 999;
+                    map[index].baseLayer = downTileType;
+                    map[index].upperLayer = upTileType;
                 }
-                map[index].baseLayer = downTileType;
-                map[index].upperLayer = upTileType;
             }
         }
     }
 }
+
+buildMap();
 
 export function screenToWorld(x: number, y: number) {
     const result = [
@@ -1124,8 +1235,6 @@ function distanceBetweenPoints(x1: number, y1: number, x2: number, y2: number) {
     let distance = Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
     return distance;
 }
-
-let globalPlayer = addGameObject(GameObjectType.PLAYER, 0, 0);
 
 function moveToTile(mouseTile: Tile, gameObject: GameObject) {
     let [x, y] = tilesToPixels(mouseTile.x, mouseTile.y);
@@ -1150,10 +1259,10 @@ function moveToTile(mouseTile: Tile, gameObject: GameObject) {
     } else if (gameObject.angle < angle) {
         gameObject.goRight = true;
     }
-    if (!(gameObject.x > x - (TILE.width / 2 + gameObject.width / 2) &&
-        gameObject.x < x + (TILE.width / 2 + gameObject.width / 2) &&
-        gameObject.y > y - (TILE.height / 2 + gameObject.width / 2) &&
-        gameObject.y < y + (TILE.height / 2 + gameObject.width / 2))
+    if (!(gameObject.x > x - (TILE.width / 2 + gameObject.width / 2) - 5 &&
+        gameObject.x < x + (TILE.width / 2 + gameObject.width / 2) + 5 &&
+        gameObject.y > y - (TILE.height / 2 + gameObject.width / 2) - 5 &&
+        gameObject.y < y + (TILE.height / 2 + gameObject.width / 2 + 5))
     ) {
         gameObject.goForward = true;
     }
@@ -1174,8 +1283,6 @@ type screenShake = {
     duration: number;
 }
 
-let screenShakes: screenShake[] = [{ strength: 0, duration: addTimer(0) }];
-
 function makeScreenShake(strength: number, duration: number) {
     for (let shakeIndex = 0; shakeIndex < screenShakes.length; shakeIndex++) {
         if (timers[screenShakes[shakeIndex].duration] <= 0 || screenShakes[shakeIndex].strength <= 0) {
@@ -1187,43 +1294,6 @@ function makeScreenShake(strength: number, duration: number) {
         }
     }
 }
-
-let craftMode = false;
-let pause = false;
-let firstRecipeIndex = 0;
-let mainSlot = 0;
-let controlledStorage: Tile = null;
-
-let dayTimer = addTimer(ONE_DAY);
-let gameLength = 2;
-let gameTimer = addTimer(gameLength);
-
-enum Event {
-    NONE,
-    METEORITE_RAIN,
-}
-
-let event = Event.NONE;
-
-const EVENT_LENGTH = 1800;
-let timeBetweenEvents = gameLength / 4;
-let eventEnd = gameLength;
-
-const VOLCANO_RADIUS = TILE.width * TILE.chunkSizeX * 1.5 * camera.range;
-const VOLCANO_HEIGHT = 100 * camera.range;
-const GRAVITATION = 0.5 * camera.range;
-const CAMERA_HEIGHT = 1325;
-const MAGMA_BALL_SPEED = 35 * camera.range;
-const METEORITE_SPEED = 35 * camera.range;
-const LAVA_BALL_SPEED = 15 * camera.range;
-
-const METEOR_STUFF_COOLDOWN = 500;
-
-const MAX_RANGE = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
-
-const STORAGE_SLOT_COUNT = 10;
-
-let hpShakeTimer = addTimer(0);
 
 function updateTile(tileType: TileType, tile: Tile) {
     let sprite = imgNone;
@@ -1431,12 +1501,6 @@ function updateTileMap() {
 }
 
 function updateGameObject(gameObject: GameObject) {
-    if (craftMode) {
-        pause = true;
-    } else {
-        pause = false;
-    }
-
     let mouseTile = getTileUnderMouse();
 
     //мерцание при ударе
@@ -1483,9 +1547,6 @@ function updateGameObject(gameObject: GameObject) {
         drawSprite(camera.x - camera.width / 2 + 10, camera.y - camera.height / 4, imgArrow, 0, 30, 50, false, Layer.UI);
 
         //жизнь
-        const STRIPE_WIDTH = 200;
-        const STRIPE_HEIGHT = 50;
-
         let width = gameObject.hitpoints / gameObject.maxHitpoints * STRIPE_WIDTH;
 
         if (width <= STRIPE_WIDTH / 2 && timers[hpShakeTimer] === 0) {
@@ -1547,6 +1608,20 @@ function updateGameObject(gameObject: GameObject) {
 
         if (isInventoryFullForItem(Item.NONE)) {
             drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, Layer.UI);
+        }
+
+        //пауза
+        if (escKey.wentDown) {
+            if (!pause) {
+                pause = true;
+            } else {
+                pause = false;
+            }
+        }
+
+        if (pause) {
+            drawText(camera.x - 90, camera.y - 50, 'green', 'Пауза', 60, Layer.UI);
+            drawText(camera.x - 250, camera.y, 'green', 'Если хотите перезагрузить, нажмите R', 30, Layer.UI);
         }
 
         //падение в лаву
@@ -1676,14 +1751,14 @@ function updateGameObject(gameObject: GameObject) {
             mouse.worldX < camera.x - camera.width / 2 + 170 &&
             mouse.worldY > camera.y - camera.height / 4 + 2 &&
             mouse.worldY < camera.y - camera.height / 4 + 30 &&
-            recipes[firstRecipeIndex - 1]) {
+            RECIPES[firstRecipeIndex - 1]) {
             firstRecipeIndex--;
         }
         if (craftMode && mouse.wentDown && mouse.worldX > camera.x - camera.width / 2 + 130 &&
             mouse.worldX < camera.x - camera.width / 2 + 170 &&
             mouse.worldY > camera.y - camera.height / 4 + 422 &&
             mouse.worldY < camera.y - camera.height / 4 + 450 &&
-            recipes[firstRecipeIndex + 3]) {
+            RECIPES[firstRecipeIndex + 3]) {
             firstRecipeIndex++;
         }
 
@@ -1703,13 +1778,13 @@ function updateGameObject(gameObject: GameObject) {
             //спрайты предметов
             for (let itemIndex = 0; itemIndex < 3; itemIndex++) {
                 drawSprite(camera.x - camera.width / 2 + 60, camera.y - camera.height / 4 + 90 + 133 * itemIndex,
-                    recipes[firstRecipeIndex + itemIndex].sprite, 0, 70, 70, false, Layer.UI);
+                    RECIPES[firstRecipeIndex + itemIndex].sprite, 0, 70, 70, false, Layer.UI);
 
                 drawText(camera.x - camera.width / 2 + 100, camera.y - camera.height / 4 + 50 + 133 * itemIndex,
-                    'black', recipes[firstRecipeIndex + itemIndex].name, 25, Layer.UI);
+                    'black', RECIPES[firstRecipeIndex + itemIndex].name, 25, Layer.UI);
 
                 //их составляющие
-                for (let partIndex = 0; partIndex < recipes[firstRecipeIndex + itemIndex].parts.length; partIndex++) {
+                for (let partIndex = 0; partIndex < RECIPES[firstRecipeIndex + itemIndex].parts.length; partIndex++) {
                     let row = 0;
                     if (partIndex > 2) {
                         row = 1;
@@ -1717,12 +1792,12 @@ function updateGameObject(gameObject: GameObject) {
                     drawSprite(
                         camera.x - camera.width / 2 + 130 + 50 * partIndex - 150 * row,
                         camera.y - camera.height / 4 + 90 + 133 * itemIndex + 50 * row,
-                        recipes[firstRecipeIndex + itemIndex].parts[partIndex].sprite, 0, 30, 30, false, Layer.UI
+                        RECIPES[firstRecipeIndex + itemIndex].parts[partIndex].sprite, 0, 30, 30, false, Layer.UI
                     );
                     drawText(
                         camera.x - camera.width / 2 + 120 + 50 * partIndex - 150 * row,
                         camera.y - camera.height / 4 + 70 + 133 * itemIndex + 50 * row,
-                        'black', `${recipes[firstRecipeIndex + itemIndex].parts[partIndex].count}`, 15, Layer.UI
+                        'black', `${RECIPES[firstRecipeIndex + itemIndex].parts[partIndex].count}`, 15, Layer.UI
                     );
                 }
 
@@ -1736,18 +1811,18 @@ function updateGameObject(gameObject: GameObject) {
                 ) {
                     drawText(
                         camera.x + camera.width / 2 - 425, camera.y - 50, 'green',
-                        recipes[firstRecipeIndex + itemIndex].description1, 25, Layer.UI
+                        RECIPES[firstRecipeIndex + itemIndex].description1, 25, Layer.UI
                     );
                     drawText(
                         camera.x + camera.width / 2 - 425, camera.y, 'green',
-                        recipes[firstRecipeIndex + itemIndex].description2, 25, Layer.UI
+                        RECIPES[firstRecipeIndex + itemIndex].description2, 25, Layer.UI
                     );
                     drawText(
                         camera.x + camera.width / 2 - 425, camera.y + 50, 'green',
-                        recipes[firstRecipeIndex + itemIndex].description3, 25, Layer.UI
+                        RECIPES[firstRecipeIndex + itemIndex].description3, 25, Layer.UI
                     );
                     if (mouse.wentDown) {
-                        craftRecipe(recipes[firstRecipeIndex + itemIndex]);
+                        craftRecipe(RECIPES[firstRecipeIndex + itemIndex]);
                     }
                 }
             }
@@ -1771,13 +1846,13 @@ function updateGameObject(gameObject: GameObject) {
                     mouseTile.specialTimer = addTimer(mouseTile.inventory[0].count * 2 * 60);
                 }
                 if (timers[mouseTile.specialTimer] <= 0) {
-                    if (mouseTile.inventory[0].item === Item.IRON) {
+                    if (mouseTile.inventory[0].item === Item.IRON && !isInventoryFullForItem(Item.IRON_INGOT)) {
                         addItem(Item.IRON_INGOT, mouseTile.inventory[0].count);
                     }
-                    if (mouseTile.inventory[0].item === Item.AURIT) {
+                    if (mouseTile.inventory[0].item === Item.AURIT && !isInventoryFullForItem(Item.AURIT_INGOT)) {
                         addItem(Item.AURIT_INGOT, mouseTile.inventory[0].count);
                     }
-                    if (mouseTile.inventory[0].item === Item.IGNEOUS) {
+                    if (mouseTile.inventory[0].item === Item.IGNEOUS && !isInventoryFullForItem(Item.IGNEOUS_INGOT)) {
                         addItem(Item.IGNEOUS_INGOT, mouseTile.inventory[0].count);
                     }
                     mouseTile.inventory[0].item = Item.NONE;
@@ -2254,20 +2329,17 @@ function updateGameObject(gameObject: GameObject) {
         }
 
         //границы мира
-        if (gameObject.x + gameObject.speedX <= camera.x - camera.width / 2) {
-            gameObject.x = camera.x - camera.width / 2;
+        if (globalPlayer.x < TILE.firstX - TILE.width / 2) {
+            globalPlayer.x = TILE.firstX - TILE.width / 2;
         }
-
-        if (gameObject.x + gameObject.speedX >= camera.x + camera.width / 2) {
-            gameObject.x = camera.x + camera.width / 2;
+        if (globalPlayer.x > TILE.firstX - TILE.width / 2 + TILE.width * TILE.chunkCountX * TILE.chunkSizeX) {
+            globalPlayer.x = TILE.firstX - TILE.width / 2 + TILE.width * TILE.chunkCountX * TILE.chunkSizeX;
         }
-
-        if (gameObject.y + gameObject.speedY <= camera.y - camera.height / 2) {
-            gameObject.y = camera.y - camera.height / 2;
+        if (globalPlayer.y < TILE.firstY - TILE.height / 2) {
+            globalPlayer.y = TILE.firstY - TILE.height / 2;
         }
-
-        if (gameObject.y + gameObject.speedY >= camera.y + camera.height / 2) {
-            gameObject.y = camera.y - camera.height / 2;
+        if (globalPlayer.y > TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkCountY * TILE.chunkSizeY) {
+            globalPlayer.y = TILE.firstY - TILE.height / 2 + TILE.height * TILE.chunkCountY * TILE.chunkSizeY;
         }
     }
 
@@ -2445,7 +2517,11 @@ function updateGameObject(gameObject: GameObject) {
             }
 
             if (timers[gameObject.specialTimer] === 0) {
-                gameObject.attack = randomInt(0, 2);
+                if (distanceBetweenPoints(globalBoss.x, globalBoss.y, globalPlayer.x, globalPlayer.y) > camera.width * 4) {
+                    gameObject.attack = 0;
+                } else {
+                    gameObject.attack = randomInt(0, 2);
+                }
                 gameObject.goForward = false;
                 gameObject.goLeft = false;
                 gameObject.goRight = false;
@@ -2634,28 +2710,64 @@ function updateGameObject(gameObject: GameObject) {
     normalizeAngle(gameObject.angle);
 }
 
-let globalBoss: GameObject = null;
+function addMenuText(x: number, y: number, width: number, height: number, text: string, color: string, size: number, layer: Layer) {
+    let clickableText: Text = {
+        text: text,
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        color: color,
+        size: size,
+        layer: layer,
+        wasClicked: false,
+        exists: true,
+    }
+    let textIndex = 0;
+    while (menuTexts[textIndex] && menuTexts[textIndex].exists === true) {
+        textIndex++;
+    }
+    menuTexts[textIndex] = clickableText;
 
-let recentShake: screenShake = { strength: 0, duration: addTimer(0) };
+    return (clickableText);
+}
 
+function updateClickableTexts() {
+    for (let textIndex = 0; textIndex < menuTexts.length; textIndex++) {
+        let text = menuTexts[textIndex];
+        if (mouse.worldX > text.x &&
+            mouse.worldX < text.x + text.width &&
+            mouse.worldY > text.y - text.height / 2 &&
+            mouse.worldY < text.y + text.height / 2 && mouse.wentDown) {
+            text.wasClicked = true;
+        }
+        drawText(text.x, text.y, text.color, text.text, text.size, text.layer);
+    }
+}
 
+function resetClicks() {
+    for (let textIndex = 0; textIndex < menuTexts.length; textIndex++) {
+        menuTexts[textIndex].wasClicked = false;
+    }
+}
 
-function loop() {
-    drawQueue = [];
+let playText = addMenuText(-camera.width / 2 + 100, -camera.height / 2 + 200, 130, 40, 'Играть', 'black', 40, Layer.UI);
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+function loopMenu() {
+    camera.x = 0;
+    camera.y = 0;
+    updateClickableTexts()
 
-    ctx.save();
+    if (playText.wasClicked) {
+        gameState = GameState.GAME;
+        restate();
+        buildMap();
+    }
 
-    ctx.rotate(-camera.angle);
-    ctx.translate(-camera.x + camera.width / 2, -camera.y + camera.height / 2);
+    resetClicks();
+}
 
-    [mouse.worldX, mouse.worldY] = screenToWorld(mouse.x, mouse.y);
-
-    backCtx.save();
-
-    backCtx.clearRect(0, 0, canvas.width, canvas.height);
-
+function loopGame() {
     backCtx.fillStyle = `rgba(0,0,0,${alpha})`;
 
     backCtx.fillRect(0, 0, canvas.width, canvas.height);
@@ -2687,7 +2799,7 @@ function loop() {
         }
     }
 
-    drawParticles();
+    updateParticles();
 
     if (timers[dayTimer] === 0) {
         timers[dayTimer] = ONE_DAY;
@@ -2729,14 +2841,6 @@ function loop() {
 
     drawRect(camera.x, camera.y, camera.width, camera.height, 0, color, false, Layer.FORGROUND);
 
-    drawQueue.sort((a, b) => b.layer - a.layer);
-    for (let itemIndex = 0; itemIndex < drawQueue.length; itemIndex++) {
-        const item = drawQueue[itemIndex];
-        renderItem(item);
-    }
-
-    backCtx.restore();
-
     if (timers[recentShake.duration] <= 0) {
         recentShake = { strength: 0, duration: addTimer(0) };
     }
@@ -2764,24 +2868,61 @@ function loop() {
     }
 
     while (camera.x < TILE.firstX - TILE.width / 2 + camera.width / 2) {
-        camera.x++;
+        camera.x = TILE.firstX - TILE.width / 2 + camera.width / 2;
     }
     while (camera.y < TILE.firstY - TILE.height / 2 + camera.height / 2) {
-        camera.y++;
+        camera.y = TILE.firstY - TILE.height / 2 + camera.height / 2;
     }
     while (camera.x > TILE.firstX - TILE.width / 2 + TILE.chunkSizeX * TILE.chunkCountX * TILE.width - camera.width / 2) {
-        camera.x--;
+        camera.x = TILE.firstX - TILE.width / 2 + TILE.chunkSizeX * TILE.chunkCountX * TILE.width - camera.width / 2;
     }
     while (camera.y > TILE.firstY - TILE.height / 2 + TILE.chunkSizeY * TILE.chunkCountY * TILE.width - camera.height / 2) {
-        camera.y--;
+        camera.y = TILE.firstY - TILE.height / 2 + TILE.chunkSizeY * TILE.chunkCountY * TILE.width - camera.height / 2;
     }
 
-    ctx.restore();
+    if (rKey.wentDown) {
+        gameState = GameState.MENU;
+
+        playText = addMenuText(-camera.width / 2 + 100, -camera.height / 2 + 200, 130, 40, 'Играть', 'black', 40, Layer.UI);
+    }
+}
+
+function loop() {
+
+    drawQueue = [];
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    backCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    backCtx.save();
+
+    [mouse.worldX, mouse.worldY] = screenToWorld(mouse.x, mouse.y);
+
+    ctx.rotate(-camera.angle);
+    ctx.translate(-camera.x + camera.width / 2, -camera.y + camera.height / 2);
+
+    if (gameState === GameState.MENU) {
+        loopMenu();
+    } else if (gameState === GameState.GAME) {
+        loopGame();
+    }
 
     if (!pause) {
         updateTimers();
     }
+
+    drawQueue.sort((a, b) => b.layer - a.layer);
+    for (let itemIndex = 0; itemIndex < drawQueue.length; itemIndex++) {
+        const item = drawQueue[itemIndex];
+        renderItem(item);
+    }
+
+    backCtx.restore();
+    ctx.restore();
+
     clearAllKeys();
+
     requestAnimationFrame(loop);
 }
 

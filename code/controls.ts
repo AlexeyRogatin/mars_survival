@@ -10,6 +10,8 @@ export enum KeyCode {
     UP = 87,
     Q = 81,
     SHIFT = 16,
+    R = 82,
+    ESC = 27,
 }
 
 export class Key {
@@ -35,6 +37,8 @@ export const rightKey = new Key();
 export let mouse = new Mouse();
 export const qKey = new Key();
 export const shiftKey = new Key();
+export const rKey = new Key();
+export const escKey = new Key();
 
 function handleKeyDown(event: KeyboardEvent, keyCode: KeyCode, key: Key) {
     if (keyCode === event.keyCode) {
@@ -61,6 +65,8 @@ window.onkeydown = function onkeydown(event: KeyboardEvent) {
     handleKeyDown(event, KeyCode.RIGHT, rightKey);
     handleKeyDown(event, KeyCode.Q, qKey);
     handleKeyDown(event, KeyCode.SHIFT, shiftKey);
+    handleKeyDown(event, KeyCode.R, rKey);
+    handleKeyDown(event, KeyCode.ESC, escKey);
 };
 
 window.onkeyup = function onkeyup(event: KeyboardEvent) {
@@ -70,6 +76,8 @@ window.onkeyup = function onkeyup(event: KeyboardEvent) {
     handleKeyUp(event, KeyCode.RIGHT, rightKey);
     handleKeyUp(event, KeyCode.Q, qKey);
     handleKeyUp(event, KeyCode.SHIFT, shiftKey);
+    handleKeyUp(event, KeyCode.R, rKey);
+    handleKeyUp(event, KeyCode.ESC, escKey);
 };
 
 window.onmousemove = function onmousemove(event: MouseEvent) {
@@ -103,6 +111,8 @@ export function clearAllKeys() {
     clearKey(rightKey);
     clearKey(qKey);
     clearKey(shiftKey);
+    clearKey(rKey);
+    clearKey(escKey);
     mouse.wentUp = false;
     mouse.wentDown = false;
 }

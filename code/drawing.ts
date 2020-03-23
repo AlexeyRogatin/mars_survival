@@ -1,20 +1,39 @@
 import { Key } from "./controls";
+import { screenRatio } from "./index";
+
+export function handleResize() {
+    const rect = canvas.getBoundingClientRect();
+    let width = rect.width * devicePixelRatio;
+    let height = width / screenRatio;
+    canvas.width = width;
+    canvas.height = height
+    backBuffer.width = width;
+    backBuffer.height = height;
+    camera.width = width;
+    camera.height = height;
+}
 
 export const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 export const ctx = canvas.getContext("2d");
-canvas.width = innerWidth;
-canvas.height = innerHeight;
-
 
 export const backBuffer = document.createElement('canvas');
 export const backCtx = backBuffer.getContext('2d');
-backBuffer.width = canvas.width;
-backBuffer.height = canvas.height;
 
+export let camera = {
+    x: 0,
+    y: 0,
+    width: innerWidth,
+    height: innerHeight,
+    angle: 0,
+    range: 0.75,
+}
 
-let resourcesLoadedCount = 0;
-let resourcesWaitingForLoadCount = 0;
-export let canBeginGame = false;
+handleResize();
+window.addEventListener('resize', handleResize);
+
+export let resourcesLoadedCount: number = 0;
+export let resourcesWaitingForLoadCount: number = 0;
+export let canBeginGame: boolean = false;
 
 
 export enum Layer {
@@ -61,6 +80,7 @@ export class DrawQueueItem {
     drawFromThePoint?: boolean = false;
 
 }
+
 
 function resourceLoaded(src: string) {
     resourcesLoadedCount++;
