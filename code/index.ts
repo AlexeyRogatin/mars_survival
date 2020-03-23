@@ -420,11 +420,10 @@ let globalBoss: GameObject = null;
 
 let recentShake: screenShake = { strength: 0, duration: addTimer(0) };
 
-let gameState = GameState.MENU;
+let gameState = GameState.GAME;
 
 let menuTexts: Text[] = [];
 
-export let screenRatio = 1980 / 980;
 handleResize();
 
 function restate() {
@@ -2768,10 +2767,6 @@ function loopMenu() {
 }
 
 function loopGame() {
-    backCtx.fillStyle = `rgba(0,0,0,${alpha})`;
-
-    backCtx.fillRect(0, 0, canvas.width, canvas.height);
-
     updateTileMap();
 
     if (timers[gameTimer] < eventEnd - timeBetweenEvents) {
@@ -2837,9 +2832,8 @@ function loopGame() {
 
     drawSprite(camera.x, camera.y, backBuffer, 0, camera.width, camera.height, false, Layer.FORGROUND);
 
-    let color = backCtx.fillStyle = `rgba(0,0,0,${(1 - timers[globalPlayer.energy] / globalPlayer.maxEnergy) * 0.25})`;
-
-    drawRect(camera.x, camera.y, camera.width, camera.height, 0, color, false, Layer.FORGROUND);
+    // let color = backCtx.fillStyle = `rgba(0,0,0,${(1 - timers[globalPlayer.energy] / globalPlayer.maxEnergy) * 0.25})`;
+    // drawRect(camera.x, camera.y, camera.width, camera.height, 0, color, false, Layer.FORGROUND);
 
     if (timers[recentShake.duration] <= 0) {
         recentShake = { strength: 0, duration: addTimer(0) };
@@ -2891,16 +2885,24 @@ function loop() {
 
     drawQueue = [];
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    backCtx.clearRect(0, 0, canvas.width, canvas.height);
-
     ctx.save();
     backCtx.save();
 
+    
     [mouse.worldX, mouse.worldY] = screenToWorld(mouse.x, mouse.y);
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    backCtx.clearRect(0, 0, canvas.width, canvas.height);
 
+    backCtx.fillStyle = `rgba(0,0,0,${alpha})`;
+    backCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const scale =  canvas.width / camera.width;
+    backCtx.scale(scale, scale);
+    ctx.scale(scale, scale);
     ctx.rotate(-camera.angle);
     ctx.translate(-camera.x + camera.width / 2, -camera.y + camera.height / 2);
+
 
     if (gameState === GameState.MENU) {
         loopMenu();
