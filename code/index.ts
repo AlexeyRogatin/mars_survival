@@ -2894,6 +2894,7 @@ function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     backCtx.clearRect(0, 0, canvas.width, canvas.height);
 
+
     backCtx.fillStyle = `rgba(0,0,0,${alpha})`;
     backCtx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -2901,8 +2902,8 @@ function loop() {
     backCtx.scale(scale, scale);
     ctx.scale(scale, scale);
     ctx.rotate(-camera.angle);
+    
     ctx.translate(-camera.x + camera.width / 2, -camera.y + camera.height / 2);
-
 
     if (gameState === GameState.MENU) {
         loopMenu();
