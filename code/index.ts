@@ -2,13 +2,14 @@ import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, qKey, rKey, esc
 import {
     ctx, canvas, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera,
     imgEarth1, imgEarth2, imgEarth3, imgGeyser, imgMountain, imgIron1, imgIron2, imgIron3, imgIron4,
-    imgIron5, Layer, DrawQueueItem, DrawQueueType, renderItem, imgIronItem, imgAbyss, imgArrow, imgCrafts, imgArrow1,
+    imgIron5, Layer, DrawQueueItem, DrawQueueType, renderItem, imgIronItem, imgLava1, imgLava2, imgArrow, imgCrafts, imgArrow1,
     imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritIngot, imgAuritItem,
     imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, backCtx, backBuffer, imgToolkit,
     imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem,
     imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous,
     imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgBossReadyToAttack,
-    imgBossAttack, imgBossAttack1, imgBossReadyToAttack1, imgLazer, imgLazer1, camera, handleResize
+    imgBossAttack, imgBossAttack1, imgBossReadyToAttack1, imgLazer, imgLazer1, camera, handleResize, imgEdge4, imgEdge3, imgEdge2_1, imgEdge2_3,
+    imgEdge2_2, imgEdge1, imgSide1,
 } from "./drawing";
 
 class InventorySlot {
@@ -17,9 +18,14 @@ class InventorySlot {
     cooldown: number = addTimer(0);
 }
 
+class TileLayer {
+    type: TileType;
+    variant: number;
+}
+
 class Tile {
-    baseLayer: TileType;
-    upperLayer: TileType;
+    baseLayer: TileLayer;
+    upperLayer: TileLayer;
     x: number;
     y: number;
     width: number;
@@ -158,9 +164,7 @@ enum GameState {
 
 enum TileType {
     NONE,
-    EARTH_1,
-    EARTH_2,
-    EARTH_3,
+    EARTH,
     MOUNTAIN,
     GEYSER,
     VOLCANO,
@@ -258,9 +262,9 @@ const CHUNK_PROTOTYPES = [
     [
         'F! @  ##',
         '       #',
-        'SC #   #',
-        'A       ',
-        ' @     #',
+        'SC # ! #',
+        'A    !  ',
+        ' @   ! #',
         '   #@@!!',
         '       #',
         ' #    ##',
@@ -294,6 +298,16 @@ const CHUNK_PROTOTYPES = [
         '     000',
         ' #   0*0',
         '@    000',
+    ],
+    [
+        ' #      ',
+        ' # !!   ',
+        '  !!!!  ',
+        ' !!!!! #',
+        '  !!! ##',
+        '  !!!! #',
+        '   !!   ',
+        '@     # ',
     ],
 ]
 
@@ -922,9 +936,9 @@ function moveGameObject(gameObject: GameObject) {
         const playerTop = gameObject.y - gameObject.height / 2;
         const playerBottom = gameObject.y + gameObject.height / 2;
 
-        if (gameObject.stuckable && (other.upperLayer === TileType.MOUNTAIN || other.baseLayer === TileType.VOLCANO ||
-            other.upperLayer === TileType.MELTER || other.upperLayer === TileType.SPLITTER ||
-            other.upperLayer === TileType.SUN_BATERY || other.upperLayer === TileType.STORAGE)) {
+        if (gameObject.stuckable && (other.upperLayer.type === TileType.MOUNTAIN || other.baseLayer.type === TileType.VOLCANO ||
+            other.upperLayer.type === TileType.MELTER || other.upperLayer.type === TileType.SPLITTER ||
+            other.upperLayer.type === TileType.SUN_BATERY || other.upperLayer.type === TileType.STORAGE)) {
 
             if (gameObject.speedX !== 0) {
                 let side: number;
@@ -1151,7 +1165,7 @@ function buildMap() {
                     let y = (chunkY * TILE.chunkSizeX + tileY);
                     let index = getIndexFromCoords(x, y);
                     map[index] = {
-                        baseLayer: downTileType, upperLayer: upTileType, x, y, specialTimer: null, toughness: null,
+                        baseLayer: { type: downTileType, variant: 1 }, upperLayer: { type: upTileType, variant: 1 }, x, y, specialTimer: null, toughness: null,
                         firstToughness: null, oreCount: 5, inventory: [], width: TILE.width, height: TILE.height,
                         collisionWidth: TILE.width, collisionHeight: TILE.height,
                     };
@@ -1160,16 +1174,17 @@ function buildMap() {
                     } else if (char === ' ') {
                         let chance = randomInt(1, 8);
                         if (chance >= 1 && chance <= 6) {
-                            downTileType = TileType.EARTH_1;
+                            map[index].baseLayer.variant = 1;
                         }
                         if (chance === 7) {
-                            downTileType = TileType.EARTH_2;
+                            map[index].baseLayer.variant = 2;
                         }
                         if (chance === 8) {
-                            downTileType = TileType.EARTH_3;
+                            map[index].baseLayer.variant = 3;
                         }
+                        downTileType = TileType.EARTH;
                     } else if (char === '#') {
-                        downTileType = TileType.EARTH_1;
+                        downTileType = TileType.EARTH;
                         upTileType = TileType.MOUNTAIN;
                     } else if (char === '@') {
                         downTileType = TileType.GEYSER;
@@ -1183,29 +1198,30 @@ function buildMap() {
                         map[index].specialTimer = addTimer(randomInt(50, 500));
                     } else if (char === '!') {
                         downTileType = TileType.LAVA;
+                        map[index].baseLayer.variant = randomInt(1, 2);
                     } else if (char === 'F') {
-                        downTileType = TileType.EARTH_1;
+                        downTileType = TileType.EARTH;
                         upTileType = TileType.IRON;
                         map[index].toughness = 999;
                         map[index].firstToughness = 999;
                     } else if (char === 'A') {
-                        downTileType = TileType.EARTH_1;
+                        downTileType = TileType.EARTH;
                         upTileType = TileType.AURIT;
                         map[index].toughness = 999;
                         map[index].firstToughness = 999;
                     } else if (char === 'C') {
-                        downTileType = TileType.EARTH_1;
+                        downTileType = TileType.EARTH;
                         upTileType = TileType.CRYSTAL;
                         map[index].toughness = 999;
                         map[index].firstToughness = 999;
                     } else if (char = 'S') {
-                        downTileType = TileType.EARTH_1;
+                        downTileType = TileType.EARTH;
                         upTileType = TileType.SILIKON;
                         map[index].toughness = 999;
                         map[index].firstToughness = 999;
                     }
-                    map[index].baseLayer = downTileType;
-                    map[index].upperLayer = upTileType;
+                    map[index].baseLayer.type = downTileType;
+                    map[index].upperLayer.type = upTileType;
                 }
             }
         }
@@ -1299,7 +1315,7 @@ function updateTile(tileType: TileType, tile: Tile) {
     switch (tileType) {
         case TileType.GEYSER: {
             sprite = imgGeyser;
-            if (tile.upperLayer === TileType.NONE) {
+            if (tile.upperLayer.type === TileType.NONE) {
                 if (
                     tile.x * TILE.width > camera.x - camera.width / 2 - tile.width / 2
                     && tile.x * TILE.width < camera.x + camera.width / 2 + tile.width / 2
@@ -1311,7 +1327,7 @@ function updateTile(tileType: TileType, tile: Tile) {
                     let geyserMaxRecharge = 1500;
 
                     if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < burstMaxDuration + 50 && timers[tile.specialTimer] > burstMaxDuration) {
-                        drawSprite(tile.x * tile.width, tile.y * tile.height, imgAlert, 0, tile.width, tile.height, false, Layer.ON_TILE);
+                        drawSprite(tile.x * tile.width, tile.y * tile.height, imgAlert, 0, tile.width, tile.height, false, Layer.UPPER_TILE);
                     }
                     if (timers[tile.specialTimer] <= 0) {
                         timers[tile.specialTimer] = randomInt(geyserMinRecharge, geyserMaxRecharge);
@@ -1340,18 +1356,176 @@ function updateTile(tileType: TileType, tile: Tile) {
                 }
             }
         } break;
-        case TileType.EARTH_1: {
-            sprite = imgEarth1
-        } break;
-        case TileType.EARTH_2: {
-            sprite = imgEarth2
-        } break;
-        case TileType.EARTH_3: {
-            sprite = imgEarth3
+        case TileType.EARTH: {
+            if (tile.baseLayer.variant === 1) {
+                sprite = imgEarth1;
+            } else if (tile.baseLayer.variant === 2) {
+                sprite = imgEarth2;
+            } else {
+                sprite = imgEarth3;
+            }
         } break;
         case TileType.LAVA: {
             drawLight(tile.x * TILE.width, tile.y * TILE.height, TILE.width * 1.2);
-            sprite = imgAbyss;
+            if (tile.baseLayer.variant === 1) {
+                sprite = imgLava1;
+            } else {
+                sprite = imgLava2;
+            }
+
+            //края лавы
+            let rightTile = {
+                x: tile.x + 1,
+                y: tile.y,
+                isLava: false,
+            }
+            let uprightTile = {
+                x: tile.x + 1,
+                y: tile.y - 1,
+                isLava: false,
+            }
+            let upTile = {
+                x: tile.x,
+                y: tile.y - 1,
+                isLava: false,
+            }
+            let upleftTile = {
+                x: tile.x - 1,
+                y: tile.y - 1,
+                isLava: false,
+            }
+            let leftTile = {
+                x: tile.x - 1,
+                y: tile.y,
+                isLava: false,
+            }
+            let downleftTile = {
+                x: tile.x - 1,
+                y: tile.y + 1,
+                isLava: false,
+            }
+            let downTile = {
+                x: tile.x,
+                y: tile.y + 1,
+                isLava: false,
+            }
+            let downrightTile = {
+                x: tile.x + 1,
+                y: tile.y + 1,
+                isLava: false,
+            }
+
+            if (map[getIndexFromCoords(upTile.x, upTile.y)] && map[getIndexFromCoords(upTile.x, upTile.y)].baseLayer.type === TileType.LAVA) {
+                upTile.isLava = true;
+            }
+            if (map[getIndexFromCoords(downTile.x, downTile.y)] && map[getIndexFromCoords(downTile.x, downTile.y)].baseLayer.type === TileType.LAVA) {
+                downTile.isLava = true;
+            }
+            if (map[getIndexFromCoords(leftTile.x, leftTile.y)] && map[getIndexFromCoords(leftTile.x, leftTile.y)].baseLayer.type === TileType.LAVA) {
+                leftTile.isLava = true;
+            }
+            if (map[getIndexFromCoords(rightTile.x, rightTile.y)] && map[getIndexFromCoords(rightTile.x, rightTile.y)].baseLayer.type === TileType.LAVA) {
+                rightTile.isLava = true;
+            }
+            if (map[getIndexFromCoords(downrightTile.x, downrightTile.y)] && map[getIndexFromCoords(downrightTile.x, downrightTile.y)].baseLayer.type === TileType.LAVA) {
+                downrightTile.isLava = true;
+            }
+            if (map[getIndexFromCoords(downleftTile.x, downleftTile.y)] && map[getIndexFromCoords(downleftTile.x, downleftTile.y)].baseLayer.type === TileType.LAVA) {
+                downleftTile.isLava = true;
+            }
+            if (map[getIndexFromCoords(upleftTile.x, upleftTile.y)] && map[getIndexFromCoords(upleftTile.x, upleftTile.y)].baseLayer.type === TileType.LAVA) {
+                upleftTile.isLava = true;
+            }
+            if (map[getIndexFromCoords(uprightTile.x, uprightTile.y)] && map[getIndexFromCoords(uprightTile.x, uprightTile.y)].baseLayer.type === TileType.LAVA) {
+                uprightTile.isLava = true;
+            }
+
+            //4 стороны
+            if (!upTile.isLava && !downTile.isLava && !leftTile.isLava && !rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge4, 0, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            //3 стороны
+            if (!upTile.isLava && !downTile.isLava && !leftTile.isLava && rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge3, 0, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (upTile.isLava && !downTile.isLava && !leftTile.isLava && !rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge3, -Math.PI / 2, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (!upTile.isLava && !downTile.isLava && leftTile.isLava && !rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge3, Math.PI, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (!upTile.isLava && downTile.isLava && !leftTile.isLava && !rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge3, Math.PI / 2, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            //2 стороны
+            if (!upTile.isLava && downTile.isLava && !leftTile.isLava && rightTile.isLava) {
+                if (downrightTile.isLava) {
+                    drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_1, 0, tile.width, tile.width, false, Layer.ON_TILE);
+                } else {
+                    drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_3, 0, tile.width, tile.width, false, Layer.ON_TILE);
+                }
+            }
+            if (!upTile.isLava && downTile.isLava && leftTile.isLava && !rightTile.isLava) {
+                if (downleftTile.isLava) {
+                    drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_1, Math.PI / 2, tile.width, tile.width, false, Layer.ON_TILE);
+                } else {
+                    drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_3, Math.PI / 2, tile.width, tile.width, false, Layer.ON_TILE);
+                }
+            }
+            if (upTile.isLava && !downTile.isLava && leftTile.isLava && !rightTile.isLava) {
+                if (upleftTile.isLava) {
+                    drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_1, Math.PI, tile.width, tile.width, false, Layer.ON_TILE);
+                } else {
+                    drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_3, Math.PI, tile.width, tile.width, false, Layer.ON_TILE);
+                }
+            }
+            if (upTile.isLava && !downTile.isLava && !leftTile.isLava && rightTile.isLava) {
+                if (uprightTile.isLava) {
+                    drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_1, Math.PI * 1.5, tile.width, tile.width, false, Layer.ON_TILE);
+                } else {
+                    drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_3, Math.PI * 1.5, tile.width, tile.width, false, Layer.ON_TILE);
+                }
+            }
+
+            if (upTile.isLava && downTile.isLava && !leftTile.isLava && !rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_2, Math.PI / 2, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (!upTile.isLava && !downTile.isLava && leftTile.isLava && rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge2_2, 0, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+
+            //1 сторона
+            if (upTile.isLava && downTile.isLava && leftTile.isLava && !rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge1, 0, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (!upTile.isLava && downTile.isLava && leftTile.isLava && rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge1, -Math.PI / 2, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (upTile.isLava && downTile.isLava && !leftTile.isLava && rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge1, Math.PI, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (upTile.isLava && !downTile.isLava && leftTile.isLava && rightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgEdge1, Math.PI / 2, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+
+            //1 бочок
+            if (rightTile.isLava && downTile.isLava &&
+                !downrightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgSide1, 0, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (leftTile.isLava && downTile.isLava &&
+                !downleftTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgSide1, Math.PI / 2, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (leftTile.isLava && upTile.isLava &&
+                !upleftTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgSide1, Math.PI, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+            if (rightTile.isLava && upTile.isLava &&
+                !uprightTile.isLava) {
+                drawSprite(tile.x * TILE.width, tile.y * TILE.height, imgSide1, -Math.PI / 2, tile.width, tile.width, false, Layer.ON_TILE);
+            }
+
         } break;
         case TileType.MELTER: {
             drawLight(tile.x * TILE.width, tile.y * TILE.height, TILE.width * 0.75);
@@ -1472,7 +1646,7 @@ function updateTile(tileType: TileType, tile: Tile) {
     }
 
     if (globalBoss && tile.upperLayer && distanceBetweenPoints(globalBoss.x, globalBoss.y, tile.x * TILE.width, tile.y * TILE.height) <= globalBoss.height / 2 + tile.width / 2) {
-        tile.upperLayer = TileType.NONE;
+        tile.upperLayer.type = TileType.NONE;
         burstParticles({
             x: tile.x * TILE.width,
             y: tile.y * TILE.height,
@@ -1493,8 +1667,8 @@ function updateTileMap() {
     for (let y = 0; y < TILE.chunkCountY * TILE.chunkSizeY; y++) {
         for (let x = 0; x < TILE.chunkCountX * TILE.chunkSizeX; x++) {
             let tile = map[getIndexFromCoords(x, y)];
-            updateTile(tile.baseLayer, tile);
-            updateTile(tile.upperLayer, tile);
+            updateTile(tile.baseLayer.type, tile);
+            updateTile(tile.upperLayer.type, tile);
         }
     }
 }
@@ -1548,7 +1722,7 @@ function updateGameObject(gameObject: GameObject) {
         //жизнь
         let width = gameObject.hitpoints / gameObject.maxHitpoints * STRIPE_WIDTH;
 
-        if (width <= STRIPE_WIDTH / 2 && timers[hpShakeTimer] === 0) {
+        if (width <= STRIPE_WIDTH / 2 && timers[hpShakeTimer] <= 0) {
             timers[hpShakeTimer] = width / STRIPE_WIDTH * 800;
         }
 
@@ -1633,7 +1807,11 @@ function updateGameObject(gameObject: GameObject) {
         let mapTile2 = getIndexFromCoords(Math.round((gameObject.x + vector2[0]) / TILE.width), Math.round((gameObject.y + vector2[1]) / TILE.height));
         let mapTile3 = getIndexFromCoords(Math.round((gameObject.x + vector3[0]) / TILE.width), Math.round((gameObject.y + vector3[1]) / TILE.height));
         let mapTile4 = getIndexFromCoords(Math.round((gameObject.x + vector4[0]) / TILE.width), Math.round((gameObject.y + vector4[1]) / TILE.height));
-        if (map[mapTile1] && map[mapTile2] && map[mapTile3] && map[mapTile4] && map[mapTile1].baseLayer === TileType.LAVA && map[mapTile2].baseLayer === TileType.LAVA && map[mapTile3].baseLayer === TileType.LAVA && map[mapTile4].baseLayer === TileType.LAVA) {
+        if (
+            map[mapTile1] && map[mapTile2] && map[mapTile3] && map[mapTile4] && map[mapTile1].baseLayer.type === TileType.LAVA &&
+            map[mapTile2].baseLayer.type === TileType.LAVA && map[mapTile3].baseLayer.type === TileType.LAVA &&
+            map[mapTile4].baseLayer.type === TileType.LAVA
+        ) {
             gameObject.exists = false;
         }
 
@@ -1829,7 +2007,7 @@ function updateGameObject(gameObject: GameObject) {
             //если нажать на плавильню
 
             if (
-                mouseTile && mouse.wentDown && mouseTile.upperLayer === TileType.MELTER &&
+                mouseTile && mouse.wentDown && mouseTile.upperLayer.type === TileType.MELTER &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
                 TILE.width + gameObject.width
             ) {
@@ -1861,7 +2039,7 @@ function updateGameObject(gameObject: GameObject) {
 
             //если нажать на расщепитель
 
-            if (mouseTile && mouse.wentDown && mouseTile.upperLayer === TileType.SPLITTER &&
+            if (mouseTile && mouse.wentDown && mouseTile.upperLayer.type === TileType.SPLITTER &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
                 <= TILE.width + gameObject.width) {
                 if (inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
@@ -1884,7 +2062,7 @@ function updateGameObject(gameObject: GameObject) {
                     > TILE.width + gameObject.width) || (mouseTile && mouseTile && mouse.wentDown && mouseTile === controlledStorage)
             ) {
                 controlledStorage = null;
-            } else if (mouseTile && mouse.wentDown && mouseTile.upperLayer === TileType.STORAGE &&
+            } else if (mouseTile && mouse.wentDown && mouseTile.upperLayer.type === TileType.STORAGE &&
                 distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
                 <= TILE.width + gameObject.width && !controlledStorage) {
                 controlledStorage = mouseTile;
@@ -1968,8 +2146,8 @@ function updateGameObject(gameObject: GameObject) {
                     gameObject.x <= mouseTile.x * TILE.width + TILE.width / 2 + gameObject.width / 2 &&
                     gameObject.y >= mouseTile.y * TILE.height - TILE.height / 2 - gameObject.height / 2 &&
                     gameObject.y <= mouseTile.y * TILE.height + TILE.height / 2 + gameObject.height / 2)) {
-                    if (inventory[mainSlot] && inventory[mainSlot].item === Item.MELTER && mouseTile.baseLayer === TileType.LAVA) {
-                        mouseTile.upperLayer = TileType.MELTER;
+                    if (inventory[mainSlot] && inventory[mainSlot].item === Item.MELTER && mouseTile.baseLayer.type === TileType.LAVA) {
+                        mouseTile.upperLayer = { type: TileType.MELTER, variant: 1 };
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         mouseTile.specialTimer = addTimer(0);
@@ -1978,25 +2156,25 @@ function updateGameObject(gameObject: GameObject) {
                     }
                     if (
                         inventory[mainSlot] && inventory[mainSlot].item === Item.SPLITTER &&
-                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)
+                        !(mouseTile.baseLayer.type === TileType.LAVA || mouseTile.baseLayer.type === TileType.MOUNTAIN || mouseTile.baseLayer.type === TileType.NONE)
                     ) {
-                        mouseTile.upperLayer = TileType.SPLITTER;
+                        mouseTile.upperLayer.type = TileType.SPLITTER;
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         removeItem(Item.SPLITTER, 1);
                     }
                     if (inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY &&
-                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
-                        mouseTile.upperLayer = TileType.SUN_BATERY;
+                        !(mouseTile.baseLayer.type === TileType.LAVA || mouseTile.baseLayer.type === TileType.MOUNTAIN || mouseTile.baseLayer.type === TileType.NONE)) {
+                        mouseTile.upperLayer.type = TileType.SUN_BATERY;
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         removeItem(Item.SUN_BATERY, 1);
                     }
                     if (
                         inventory[mainSlot] && inventory[mainSlot].item === Item.STORAGE &&
-                        !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)
+                        !(mouseTile.baseLayer.type === TileType.LAVA || mouseTile.baseLayer.type === TileType.MOUNTAIN || mouseTile.baseLayer.type === TileType.NONE)
                     ) {
-                        mouseTile.upperLayer = TileType.STORAGE;
+                        mouseTile.upperLayer.type = TileType.STORAGE;
                         mouseTile.toughness = 200;
                         mouseTile.firstToughness = 200;
                         for (let i = 0; i < STORAGE_SLOT_COUNT; i++) {
@@ -2023,49 +2201,49 @@ function updateGameObject(gameObject: GameObject) {
                         }
                     }
                     if (!isThereAnItem) {
-                        if (mouseTile.upperLayer === TileType.IRON && !isInventoryFullForItem(Item.IRON)) {
+                        if (mouseTile.upperLayer.type === TileType.IRON && !isInventoryFullForItem(Item.IRON)) {
                             mouseTile.toughness--;
                         }
-                        if (mouseTile.upperLayer === TileType.AURIT && !isInventoryFullForItem(Item.AURIT)) {
+                        if (mouseTile.upperLayer.type === TileType.AURIT && !isInventoryFullForItem(Item.AURIT)) {
                             mouseTile.toughness--;
                         }
-                        if (mouseTile.upperLayer === TileType.CRYSTAL && !isInventoryFullForItem(Item.CRYSTAL)) {
+                        if (mouseTile.upperLayer.type === TileType.CRYSTAL && !isInventoryFullForItem(Item.CRYSTAL)) {
                             mouseTile.toughness--;
                         }
-                        if (mouseTile.upperLayer === TileType.SILIKON && !isInventoryFullForItem(Item.SILIKON)) {
+                        if (mouseTile.upperLayer.type === TileType.SILIKON && !isInventoryFullForItem(Item.SILIKON)) {
                             mouseTile.toughness--;
                         }
-                        if (mouseTile.upperLayer === TileType.MELTER && !isInventoryFullForItem(Item.MELTER)) {
+                        if (mouseTile.upperLayer.type === TileType.MELTER && !isInventoryFullForItem(Item.MELTER)) {
                             mouseTile.toughness--;
                         }
-                        if (mouseTile.upperLayer === TileType.SPLITTER && !isInventoryFullForItem(Item.SPLITTER)) {
+                        if (mouseTile.upperLayer.type === TileType.SPLITTER && !isInventoryFullForItem(Item.SPLITTER)) {
                             mouseTile.toughness--;
                         }
-                        if (mouseTile.upperLayer === TileType.SUN_BATERY && !isInventoryFullForItem(Item.SUN_BATERY)) {
+                        if (mouseTile.upperLayer.type === TileType.SUN_BATERY && !isInventoryFullForItem(Item.SUN_BATERY)) {
                             mouseTile.toughness--;
                         }
-                        if (mouseTile.upperLayer === TileType.STORAGE && !isInventoryFullForItem(Item.STORAGE)) {
+                        if (mouseTile.upperLayer.type === TileType.STORAGE && !isInventoryFullForItem(Item.STORAGE)) {
                             mouseTile.toughness--;
                         }
-                        if (mouseTile.upperLayer === TileType.IGNEOUS && !isInventoryFullForItem(Item.IGNEOUS)) {
+                        if (mouseTile.upperLayer.type === TileType.IGNEOUS && !isInventoryFullForItem(Item.IGNEOUS)) {
                             mouseTile.toughness--;
                         }
                     }
                     if ((mouseTile.toughness % Math.round(mouseTile.firstToughness / mouseTile.oreCount) === 0 || mouseTile.toughness === 0)) {
                         let color = null;
-                        if (mouseTile.upperLayer === TileType.IRON) {
+                        if (mouseTile.upperLayer.type === TileType.IRON) {
                             color = 'grey';
                         }
-                        if (mouseTile.upperLayer === TileType.AURIT) {
+                        if (mouseTile.upperLayer.type === TileType.AURIT) {
                             color = 'yellow';
                         }
-                        if (mouseTile.upperLayer === TileType.CRYSTAL) {
+                        if (mouseTile.upperLayer.type === TileType.CRYSTAL) {
                             color = 'lightcoral';
                         }
-                        if (mouseTile.upperLayer === TileType.SILIKON) {
+                        if (mouseTile.upperLayer.type === TileType.SILIKON) {
                             color = 'dimgray';
                         }
-                        if (mouseTile.upperLayer === TileType.IGNEOUS) {
+                        if (mouseTile.upperLayer.type === TileType.IGNEOUS) {
                             color = 'sienna';
                         }
                         if (color !== null) {
@@ -2085,22 +2263,22 @@ function updateGameObject(gameObject: GameObject) {
                 if (mouseTile.toughness <= 0) {
                     let x = mouseTile.x;
                     let y = mouseTile.y;
-                    if (mouseTile.upperLayer === TileType.MELTER) {
+                    if (mouseTile.upperLayer.type === TileType.MELTER) {
                         addItem(Item.MELTER, 1);
                     }
-                    if (mouseTile.upperLayer === TileType.SPLITTER) {
+                    if (mouseTile.upperLayer.type === TileType.SPLITTER) {
                         addItem(Item.SPLITTER, 1);
                     }
-                    if (mouseTile.upperLayer === TileType.SUN_BATERY) {
+                    if (mouseTile.upperLayer.type === TileType.SUN_BATERY) {
                         addItem(Item.SUN_BATERY, 1);
                     }
-                    if (mouseTile.upperLayer === TileType.STORAGE) {
+                    if (mouseTile.upperLayer.type === TileType.STORAGE) {
                         addItem(Item.STORAGE, 1);
                         if (mouseTile === controlledStorage) {
                             controlledStorage = null;
                         }
                     }
-                    mouseTile.upperLayer = TileType.NONE;
+                    mouseTile.upperLayer.type = TileType.NONE;
                 }
 
                 let stripeWidth = 300;
@@ -2369,8 +2547,8 @@ function updateGameObject(gameObject: GameObject) {
             let rangeProjections = rotateVector(range, 0, gameObject.angle);
 
             if (globalPlayer.cameraLvl === 1) {
-                drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, Layer.ON_TILE);
-                drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 90, 90, false, Layer.ON_TILE);
+                drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, Layer.UPPER_TILE);
+                drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 90, 90, false, Layer.UPPER_TILE);
             }
 
             gameObject.width = (100 + height) * camera.range;
@@ -2384,15 +2562,16 @@ function updateGameObject(gameObject: GameObject) {
                 let tileIndex = getIndexFromCoords(x, y);
                 let chance = randomFloat(0, 1);
                 if (map[tileIndex]) {
-                    if (map[tileIndex].upperLayer !== TileType.NONE) {
-                        if (chance < 0.25 && map[tileIndex].upperLayer !== TileType.VOLCANO) {
-                            map[tileIndex].upperLayer = TileType.NONE;
+                    if (map[tileIndex].upperLayer.type !== TileType.NONE) {
+                        if (chance < 0.25 && map[tileIndex].upperLayer.type !== TileType.VOLCANO) {
+                            map[tileIndex].upperLayer.type = TileType.NONE;
                         }
                     } else {
-                        if (chance < 0.25 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER
-                            && map[tileIndex].baseLayer !== TileType.VOLCANO) {
-                            map[tileIndex].baseLayer = TileType.EARTH_1;
-                            map[tileIndex].upperLayer = TileType.IGNEOUS;
+                        if (chance < 0.25 && map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.GEYSER
+                            && map[tileIndex].baseLayer.type !== TileType.VOLCANO) {
+                            map[tileIndex].baseLayer.type = TileType.EARTH;
+                            map[tileIndex].baseLayer.variant = 1;
+                            map[tileIndex].upperLayer.type = TileType.IGNEOUS;
                             map[tileIndex].toughness = 500;
                             map[tileIndex].firstToughness = 500;
                             map[tileIndex].oreCount = 1;
@@ -2432,10 +2611,11 @@ function updateGameObject(gameObject: GameObject) {
                 let tileIndex = getIndexFromCoords(x, y);
                 if (gameObject.summoned) {
                     if (map[tileIndex].upperLayer) {
-                        map[tileIndex].upperLayer = TileType.NONE;
+                        map[tileIndex].upperLayer.type = TileType.NONE;
                     }
-                    if (map[tileIndex].baseLayer === TileType.MOUNTAIN) {
-                        map[tileIndex].baseLayer = TileType.EARTH_1;
+                    if (map[tileIndex].baseLayer.type === TileType.MOUNTAIN) {
+                        map[tileIndex].baseLayer.type = TileType.EARTH;
+                        map[tileIndex].baseLayer.variant = 1;
                         map[tileIndex].toughness = 0;
                         map[tileIndex].oreCount = 0;
                     }
@@ -2443,10 +2623,10 @@ function updateGameObject(gameObject: GameObject) {
                     let chance = randomFloat(0, 1);
                     if (chance < 0.25) {
                         if (
-                            map[tileIndex] && map[tileIndex].baseLayer !== TileType.LAVA && map[tileIndex].baseLayer !== TileType.MOUNTAIN &&
-                            map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.VOLCANO
+                            map[tileIndex] && map[tileIndex].baseLayer.type !== TileType.LAVA && map[tileIndex].baseLayer.type !== TileType.MOUNTAIN &&
+                            map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.VOLCANO
                         ) {
-                            map[tileIndex].upperLayer = TileType.IGNEOUS;
+                            map[tileIndex].upperLayer.type = TileType.IGNEOUS;
                             map[tileIndex].toughness = 500;
                             map[tileIndex].firstToughness = 500;
                             map[tileIndex].oreCount = 1;
@@ -2483,8 +2663,8 @@ function updateGameObject(gameObject: GameObject) {
             let rangeProjections = rotateVector(range, 0, gameObject.angle);
 
             if (globalPlayer.cameraLvl === 1) {
-                drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 10, 'red', true, Layer.ON_TILE);
-                drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 18, 18, false, Layer.ON_TILE);
+                drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 10, 'red', true, Layer.UPPER_TILE);
+                drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 18, 18, false, Layer.UPPER_TILE);
             }
 
             gameObject.width = (20 + height) * camera.range;
@@ -2495,9 +2675,9 @@ function updateGameObject(gameObject: GameObject) {
                 let x = Math.round(gameObject.x / TILE.width);
                 let y = Math.round(gameObject.y / TILE.height);
                 let tileIndex = getIndexFromCoords(x, y);
-                if (map[tileIndex] && map[tileIndex].baseLayer !== TileType.VOLCANO && map[tileIndex].baseLayer !== TileType.NONE) {
-                    map[tileIndex].upperLayer = TileType.NONE;
-                    map[tileIndex].baseLayer = TileType.LAVA;
+                if (map[tileIndex] && map[tileIndex].baseLayer.type !== TileType.VOLCANO && map[tileIndex].baseLayer.type !== TileType.NONE) {
+                    map[tileIndex].upperLayer.type = TileType.NONE;
+                    map[tileIndex].baseLayer.type = TileType.LAVA;
                     map[tileIndex].toughness = 0;
                     map[tileIndex].oreCount = 0;
                 }
@@ -2679,7 +2859,7 @@ function updateGameObject(gameObject: GameObject) {
                     for (let tileIndex = 0; tileIndex < map.length; tileIndex++) {
                         let tile = map[tileIndex];
                         if (tile.upperLayer && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
-                            tile.upperLayer = TileType.NONE;
+                            tile.upperLayer.type = TileType.NONE;
                             burstParticles({
                                 x: tile.x * TILE.width,
                                 y: tile.y * TILE.height,
@@ -2888,9 +3068,9 @@ function loop() {
     ctx.save();
     backCtx.save();
 
-    
+
     [mouse.worldX, mouse.worldY] = screenToWorld(mouse.x, mouse.y);
-    
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     backCtx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -2898,11 +3078,11 @@ function loop() {
     backCtx.fillStyle = `rgba(0,0,0,${alpha})`;
     backCtx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const scale =  canvas.width / camera.width;
+    const scale = canvas.width / camera.width;
     backCtx.scale(scale, scale);
     ctx.scale(scale, scale);
     ctx.rotate(-camera.angle);
-    
+
     ctx.translate(-camera.x + camera.width / 2, -camera.y + camera.height / 2);
 
     if (gameState === GameState.MENU) {

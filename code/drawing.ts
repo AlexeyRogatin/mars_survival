@@ -1,5 +1,5 @@
 import { Key } from "./controls";
-export const SCREEN_RATIO = 1980 / 980;
+export const SCREEN_RATIO = 1920 / 980;
 
 
 export function handleResize() {
@@ -47,8 +47,9 @@ export enum Layer {
     BOSS,
     BOSS_LEG,
     MANIPULATOR,
-    ON_TILE,
+    UPPER_TILE,
     PLAYER,
+    ON_TILE,
     TILE,
     NONE,
 }
@@ -116,7 +117,8 @@ export let imgEarth2 = loadImage('../sprites/sasha/earth2.png');
 export let imgEarth3 = loadImage('../sprites/sasha/earth3.png');
 export let imgGeyser = loadImage('../sprites/geyser.png');
 export let imgMountain = loadImage('../sprites/sasha/newMountain.png');
-export let imgAbyss = loadImage('../sprites/abyss.png');
+export let imgLava1 = loadImage('../sprites/sasha/lava1.jpg');
+export let imgLava2 = loadImage('../sprites/sasha/lava2.jpg');
 export let imgIron1 = loadImage('../sprites/iron1.png');
 export let imgIron2 = loadImage('../sprites/iron2.png');
 export let imgIron3 = loadImage('../sprites/iron3.png');
@@ -171,13 +173,19 @@ export let imgManipulator = loadImage('../sprites/manipulator.png');
 export let imgMechanicalHand = loadImage('../sprites/mechanicalHand.png');
 export let imgEnergy = loadImage('../sprites/energy.png');
 export let imgHp = loadImage('../sprites/hp.png');
-export let imgDrop = loadImage('../sprites/drop.png');
 export let imgBossReadyToAttack = loadImage('../sprites/bossReadyToAttack.png');
 export let imgBossReadyToAttack1 = loadImage('../sprites/bossReadyToAttack1.png');
 export let imgBossAttack = loadImage('../sprites/bossAttack.png');
 export let imgBossAttack1 = loadImage('../sprites/bossAttack1.png');
 export let imgLazer = loadImage('../sprites/lazer.png');
 export let imgLazer1 = loadImage('../sprites/lazer1.png');
+export let imgEdge1 = loadImage('../sprites/edge1.png');
+export let imgEdge2_1 = loadImage('../sprites/edge2_1.png');
+export let imgEdge2_2 = loadImage('../sprites/edge2_2.png');
+export let imgEdge2_3 = loadImage('../sprites/edge2_3.png');
+export let imgEdge3 = loadImage('../sprites/edge3.png');
+export let imgEdge4 = loadImage('../sprites/edge4.png');
+export let imgSide1 = loadImage('../sprites/side1.png');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {
