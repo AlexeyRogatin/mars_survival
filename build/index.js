@@ -1,6 +1,6 @@
 System.register("drawing", [], function (exports_1, context_1) {
     "use strict";
-    var SCREEN_RATIO, canvas, ctx, backBuffer, backCtx, camera, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgGeyser, imgMountain, imgAbyss, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlot, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous, imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgDrop, imgBossReadyToAttack, imgBossReadyToAttack1, imgBossAttack, imgBossAttack1, imgLazer, imgLazer1;
+    var SCREEN_RATIO, canvas, ctx, backBuffer, backCtx, camera, resourcesLoadedCount, resourcesWaitingForLoadCount, canBeginGame, Layer, DrawQueueType, DrawQueueItem, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera, imgEarth1, imgEarth2, imgEarth3, imgGeyser, imgMountain, imgLava1, imgLava2, imgIron1, imgIron2, imgIron3, imgIron4, imgIron5, imgIronItem, imgArrow, imgCrafts, imgArrow1, imgMelter, imgIronIngot, imgAurit1, imgAurit2, imgAurit3, imgAurit4, imgAurit5, imgAuritItem, imgAuritIngot, imgCrystal1, imgCrystal2, imgCrystal3, imgCrystal4, imgCrystal5, imgCrystalItem, imgSplitter, imgToolkit, imgSunBatteryAdd, imgSunBatteryItem, imgSunBattery, imgSilicon1, imgSilicon2, imgSilicon3, imgSilicon4, imgSilicon5, imgSiliconItem, imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlot, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous, imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgBossReadyToAttack, imgBossReadyToAttack1, imgBossAttack, imgBossAttack1, imgLazer, imgLazer1, imgEdge1, imgEdge2_1, imgEdge2_2, imgEdge2_3, imgEdge3, imgEdge4, imgSide1;
     var __moduleName = context_1 && context_1.id;
     function handleResize() {
         var rect = canvas.getBoundingClientRect();
@@ -107,7 +107,7 @@ System.register("drawing", [], function (exports_1, context_1) {
     return {
         setters: [],
         execute: function () {
-            exports_1("SCREEN_RATIO", SCREEN_RATIO = 1980 / 980);
+            exports_1("SCREEN_RATIO", SCREEN_RATIO = 1920 / 980);
             exports_1("canvas", canvas = document.getElementById("canvas"));
             exports_1("ctx", ctx = canvas.getContext("2d"));
             exports_1("backBuffer", backBuffer = document.createElement('canvas'));
@@ -136,10 +136,11 @@ System.register("drawing", [], function (exports_1, context_1) {
                 Layer[Layer["BOSS"] = 5] = "BOSS";
                 Layer[Layer["BOSS_LEG"] = 6] = "BOSS_LEG";
                 Layer[Layer["MANIPULATOR"] = 7] = "MANIPULATOR";
-                Layer[Layer["ON_TILE"] = 8] = "ON_TILE";
+                Layer[Layer["UPPER_TILE"] = 8] = "UPPER_TILE";
                 Layer[Layer["PLAYER"] = 9] = "PLAYER";
-                Layer[Layer["TILE"] = 10] = "TILE";
-                Layer[Layer["NONE"] = 11] = "NONE";
+                Layer[Layer["ON_TILE"] = 10] = "ON_TILE";
+                Layer[Layer["TILE"] = 11] = "TILE";
+                Layer[Layer["NONE"] = 12] = "NONE";
             })(Layer || (Layer = {}));
             exports_1("Layer", Layer);
             (function (DrawQueueType) {
@@ -185,7 +186,8 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgEarth3", imgEarth3 = loadImage('../sprites/sasha/earth3.png'));
             exports_1("imgGeyser", imgGeyser = loadImage('../sprites/geyser.png'));
             exports_1("imgMountain", imgMountain = loadImage('../sprites/sasha/newMountain.png'));
-            exports_1("imgAbyss", imgAbyss = loadImage('../sprites/abyss.png'));
+            exports_1("imgLava1", imgLava1 = loadImage('../sprites/sasha/lava1.jpg'));
+            exports_1("imgLava2", imgLava2 = loadImage('../sprites/sasha/lava2.jpg'));
             exports_1("imgIron1", imgIron1 = loadImage('../sprites/iron1.png'));
             exports_1("imgIron2", imgIron2 = loadImage('../sprites/iron2.png'));
             exports_1("imgIron3", imgIron3 = loadImage('../sprites/iron3.png'));
@@ -240,13 +242,19 @@ System.register("drawing", [], function (exports_1, context_1) {
             exports_1("imgMechanicalHand", imgMechanicalHand = loadImage('../sprites/mechanicalHand.png'));
             exports_1("imgEnergy", imgEnergy = loadImage('../sprites/energy.png'));
             exports_1("imgHp", imgHp = loadImage('../sprites/hp.png'));
-            exports_1("imgDrop", imgDrop = loadImage('../sprites/drop.png'));
             exports_1("imgBossReadyToAttack", imgBossReadyToAttack = loadImage('../sprites/bossReadyToAttack.png'));
             exports_1("imgBossReadyToAttack1", imgBossReadyToAttack1 = loadImage('../sprites/bossReadyToAttack1.png'));
             exports_1("imgBossAttack", imgBossAttack = loadImage('../sprites/bossAttack.png'));
             exports_1("imgBossAttack1", imgBossAttack1 = loadImage('../sprites/bossAttack1.png'));
             exports_1("imgLazer", imgLazer = loadImage('../sprites/lazer.png'));
             exports_1("imgLazer1", imgLazer1 = loadImage('../sprites/lazer1.png'));
+            exports_1("imgEdge1", imgEdge1 = loadImage('../sprites/edge1.png'));
+            exports_1("imgEdge2_1", imgEdge2_1 = loadImage('../sprites/edge2_1.png'));
+            exports_1("imgEdge2_2", imgEdge2_2 = loadImage('../sprites/edge2_2.png'));
+            exports_1("imgEdge2_3", imgEdge2_3 = loadImage('../sprites/edge2_3.png'));
+            exports_1("imgEdge3", imgEdge3 = loadImage('../sprites/edge3.png'));
+            exports_1("imgEdge4", imgEdge4 = loadImage('../sprites/edge4.png'));
+            exports_1("imgSide1", imgSide1 = loadImage('../sprites/side1.png'));
         }
     };
 });
@@ -374,7 +382,7 @@ System.register("controls", ["drawing"], function (exports_2, context_2) {
 });
 System.register("index", ["controls", "drawing"], function (exports_3, context_3) {
     "use strict";
-    var controls_1, drawing_2, InventorySlot, Tile, RecipePart, Recipe, GameObject, particle, Text, GameObjectType, GameState, TileType, Item, Event, TILE, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, EVENT_LENGTH, VOLCANO_RADIUS, VOLCANO_HEIGHT, GRAVITATION, CAMERA_HEIGHT, MAGMA_BALL_SPEED, METEORITE_SPEED, LAVA_BALL_SPEED, METEOR_STUFF_COOLDOWN, MAX_RANGE, STORAGE_SLOT_COUNT, STRIPE_WIDTH, STRIPE_HEIGHT, timers, map, CHUNK_PROTOTYPES, RECIPES, GAME_LENGTH, slotCount, inventory, drawQueue, alpha, gameObjects, particles, globalPlayer, screenShakes, craftMode, pause, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, gameTimer, event, timeBetweenEvents, eventEnd, hpShakeTimer, globalBoss, recentShake, gameState, menuTexts, playText;
+    var controls_1, drawing_2, InventorySlot, TileLayer, Tile, RecipePart, Recipe, GameObject, particle, Text, GameObjectType, GameState, TileType, Item, Event, TILE, MORNING_LENGTH, DAY_LENGTH, AFTERNOON_LENGTH, NIGHT_LENGTH, ONE_DAY, EVENT_LENGTH, VOLCANO_RADIUS, VOLCANO_HEIGHT, GRAVITATION, CAMERA_HEIGHT, MAGMA_BALL_SPEED, METEORITE_SPEED, LAVA_BALL_SPEED, METEOR_STUFF_COOLDOWN, MAX_RANGE, STORAGE_SLOT_COUNT, STRIPE_WIDTH, STRIPE_HEIGHT, timers, map, CHUNK_PROTOTYPES, RECIPES, GAME_LENGTH, slotCount, inventory, drawQueue, alpha, gameObjects, particles, globalPlayer, screenShakes, craftMode, pause, firstRecipeIndex, mainSlot, controlledStorage, dayTimer, gameTimer, event, timeBetweenEvents, eventEnd, hpShakeTimer, globalBoss, recentShake, gameState, menuTexts, playText;
     var __moduleName = context_3 && context_3.id;
     function restate() {
         gameObjects = [];
@@ -802,9 +810,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             var playerRight = gameObject.x + gameObject.width / 2;
             var playerTop = gameObject.y - gameObject.height / 2;
             var playerBottom = gameObject.y + gameObject.height / 2;
-            if (gameObject.stuckable && (other.upperLayer === TileType.MOUNTAIN || other.baseLayer === TileType.VOLCANO ||
-                other.upperLayer === TileType.MELTER || other.upperLayer === TileType.SPLITTER ||
-                other.upperLayer === TileType.SUN_BATERY || other.upperLayer === TileType.STORAGE)) {
+            if (gameObject.stuckable && (other.upperLayer.type === TileType.MOUNTAIN || other.baseLayer.type === TileType.VOLCANO ||
+                other.upperLayer.type === TileType.MELTER || other.upperLayer.type === TileType.SPLITTER ||
+                other.upperLayer.type === TileType.SUN_BATERY || other.upperLayer.type === TileType.STORAGE)) {
                 if (gameObject.speedX !== 0) {
                     var side = void 0;
                     var wallSide = void 0;
@@ -991,7 +999,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         var y = (chunkY * TILE.chunkSizeX + tileY);
                         var index = getIndexFromCoords(x, y);
                         map[index] = {
-                            baseLayer: downTileType, upperLayer: upTileType, x: x, y: y, specialTimer: null, toughness: null,
+                            baseLayer: { type: downTileType, variant: 1 }, upperLayer: { type: upTileType, variant: 1 }, x: x, y: y, specialTimer: null, toughness: null,
                             firstToughness: null, oreCount: 5, inventory: [], width: TILE.width, height: TILE.height,
                             collisionWidth: TILE.width, collisionHeight: TILE.height
                         };
@@ -1001,17 +1009,18 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         else if (char === ' ') {
                             var chance = randomInt(1, 8);
                             if (chance >= 1 && chance <= 6) {
-                                downTileType = TileType.EARTH_1;
+                                map[index].baseLayer.variant = 1;
                             }
                             if (chance === 7) {
-                                downTileType = TileType.EARTH_2;
+                                map[index].baseLayer.variant = 2;
                             }
                             if (chance === 8) {
-                                downTileType = TileType.EARTH_3;
+                                map[index].baseLayer.variant = 3;
                             }
+                            downTileType = TileType.EARTH;
                         }
                         else if (char === '#') {
-                            downTileType = TileType.EARTH_1;
+                            downTileType = TileType.EARTH;
                             upTileType = TileType.MOUNTAIN;
                         }
                         else if (char === '@') {
@@ -1028,33 +1037,34 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         }
                         else if (char === '!') {
                             downTileType = TileType.LAVA;
+                            map[index].baseLayer.variant = randomInt(1, 2);
                         }
                         else if (char === 'F') {
-                            downTileType = TileType.EARTH_1;
+                            downTileType = TileType.EARTH;
                             upTileType = TileType.IRON;
                             map[index].toughness = 999;
                             map[index].firstToughness = 999;
                         }
                         else if (char === 'A') {
-                            downTileType = TileType.EARTH_1;
+                            downTileType = TileType.EARTH;
                             upTileType = TileType.AURIT;
                             map[index].toughness = 999;
                             map[index].firstToughness = 999;
                         }
                         else if (char === 'C') {
-                            downTileType = TileType.EARTH_1;
+                            downTileType = TileType.EARTH;
                             upTileType = TileType.CRYSTAL;
                             map[index].toughness = 999;
                             map[index].firstToughness = 999;
                         }
                         else if (char = 'S') {
-                            downTileType = TileType.EARTH_1;
+                            downTileType = TileType.EARTH;
                             upTileType = TileType.SILIKON;
                             map[index].toughness = 999;
                             map[index].firstToughness = 999;
                         }
-                        map[index].baseLayer = downTileType;
-                        map[index].upperLayer = upTileType;
+                        map[index].baseLayer.type = downTileType;
+                        map[index].upperLayer.type = upTileType;
                     }
                 }
             }
@@ -1139,7 +1149,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             case TileType.GEYSER:
                 {
                     sprite = drawing_2.imgGeyser;
-                    if (tile.upperLayer === TileType.NONE) {
+                    if (tile.upperLayer.type === TileType.NONE) {
                         if (tile.x * TILE.width > drawing_2.camera.x - drawing_2.camera.width / 2 - tile.width / 2
                             && tile.x * TILE.width < drawing_2.camera.x + drawing_2.camera.width / 2 + tile.width / 2
                             && tile.y * TILE.height > drawing_2.camera.y - drawing_2.camera.height / 2 - tile.height / 2
@@ -1148,7 +1158,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             var geyserMinRecharge = 500;
                             var geyserMaxRecharge = 1500;
                             if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < burstMaxDuration + 50 && timers[tile.specialTimer] > burstMaxDuration) {
-                                drawSprite(tile.x * tile.width, tile.y * tile.height, drawing_2.imgAlert, 0, tile.width, tile.height, false, drawing_2.Layer.ON_TILE);
+                                drawSprite(tile.x * tile.width, tile.y * tile.height, drawing_2.imgAlert, 0, tile.width, tile.height, false, drawing_2.Layer.UPPER_TILE);
                             }
                             if (timers[tile.specialTimer] <= 0) {
                                 timers[tile.specialTimer] = randomInt(geyserMinRecharge, geyserMaxRecharge);
@@ -1179,25 +1189,173 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
                 break;
-            case TileType.EARTH_1:
+            case TileType.EARTH:
                 {
-                    sprite = drawing_2.imgEarth1;
-                }
-                break;
-            case TileType.EARTH_2:
-                {
-                    sprite = drawing_2.imgEarth2;
-                }
-                break;
-            case TileType.EARTH_3:
-                {
-                    sprite = drawing_2.imgEarth3;
+                    if (tile.baseLayer.variant === 1) {
+                        sprite = drawing_2.imgEarth1;
+                    }
+                    else if (tile.baseLayer.variant === 2) {
+                        sprite = drawing_2.imgEarth2;
+                    }
+                    else {
+                        sprite = drawing_2.imgEarth3;
+                    }
                 }
                 break;
             case TileType.LAVA:
                 {
                     drawLight(tile.x * TILE.width, tile.y * TILE.height, TILE.width * 1.2);
-                    sprite = drawing_2.imgAbyss;
+                    if (tile.baseLayer.variant === 1) {
+                        sprite = drawing_2.imgLava1;
+                    }
+                    else {
+                        sprite = drawing_2.imgLava2;
+                    }
+                    var rightTile = {
+                        x: tile.x + 1,
+                        y: tile.y,
+                        isLava: false
+                    };
+                    var uprightTile = {
+                        x: tile.x + 1,
+                        y: tile.y - 1,
+                        isLava: false
+                    };
+                    var upTile = {
+                        x: tile.x,
+                        y: tile.y - 1,
+                        isLava: false
+                    };
+                    var upleftTile = {
+                        x: tile.x - 1,
+                        y: tile.y - 1,
+                        isLava: false
+                    };
+                    var leftTile = {
+                        x: tile.x - 1,
+                        y: tile.y,
+                        isLava: false
+                    };
+                    var downleftTile = {
+                        x: tile.x - 1,
+                        y: tile.y + 1,
+                        isLava: false
+                    };
+                    var downTile = {
+                        x: tile.x,
+                        y: tile.y + 1,
+                        isLava: false
+                    };
+                    var downrightTile = {
+                        x: tile.x + 1,
+                        y: tile.y + 1,
+                        isLava: false
+                    };
+                    if (map[getIndexFromCoords(upTile.x, upTile.y)] && map[getIndexFromCoords(upTile.x, upTile.y)].baseLayer.type === TileType.LAVA) {
+                        upTile.isLava = true;
+                    }
+                    if (map[getIndexFromCoords(downTile.x, downTile.y)] && map[getIndexFromCoords(downTile.x, downTile.y)].baseLayer.type === TileType.LAVA) {
+                        downTile.isLava = true;
+                    }
+                    if (map[getIndexFromCoords(leftTile.x, leftTile.y)] && map[getIndexFromCoords(leftTile.x, leftTile.y)].baseLayer.type === TileType.LAVA) {
+                        leftTile.isLava = true;
+                    }
+                    if (map[getIndexFromCoords(rightTile.x, rightTile.y)] && map[getIndexFromCoords(rightTile.x, rightTile.y)].baseLayer.type === TileType.LAVA) {
+                        rightTile.isLava = true;
+                    }
+                    if (map[getIndexFromCoords(downrightTile.x, downrightTile.y)] && map[getIndexFromCoords(downrightTile.x, downrightTile.y)].baseLayer.type === TileType.LAVA) {
+                        downrightTile.isLava = true;
+                    }
+                    if (map[getIndexFromCoords(downleftTile.x, downleftTile.y)] && map[getIndexFromCoords(downleftTile.x, downleftTile.y)].baseLayer.type === TileType.LAVA) {
+                        downleftTile.isLava = true;
+                    }
+                    if (map[getIndexFromCoords(upleftTile.x, upleftTile.y)] && map[getIndexFromCoords(upleftTile.x, upleftTile.y)].baseLayer.type === TileType.LAVA) {
+                        upleftTile.isLava = true;
+                    }
+                    if (map[getIndexFromCoords(uprightTile.x, uprightTile.y)] && map[getIndexFromCoords(uprightTile.x, uprightTile.y)].baseLayer.type === TileType.LAVA) {
+                        uprightTile.isLava = true;
+                    }
+                    if (!upTile.isLava && !downTile.isLava && !leftTile.isLava && !rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge4, 0, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (!upTile.isLava && !downTile.isLava && !leftTile.isLava && rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge3, 0, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (upTile.isLava && !downTile.isLava && !leftTile.isLava && !rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge3, -Math.PI / 2, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (!upTile.isLava && !downTile.isLava && leftTile.isLava && !rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge3, Math.PI, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (!upTile.isLava && downTile.isLava && !leftTile.isLava && !rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge3, Math.PI / 2, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (!upTile.isLava && downTile.isLava && !leftTile.isLava && rightTile.isLava) {
+                        if (downrightTile.isLava) {
+                            drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_1, 0, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                        }
+                        else {
+                            drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_3, 0, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                        }
+                    }
+                    if (!upTile.isLava && downTile.isLava && leftTile.isLava && !rightTile.isLava) {
+                        if (downleftTile.isLava) {
+                            drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_1, Math.PI / 2, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                        }
+                        else {
+                            drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_3, Math.PI / 2, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                        }
+                    }
+                    if (upTile.isLava && !downTile.isLava && leftTile.isLava && !rightTile.isLava) {
+                        if (upleftTile.isLava) {
+                            drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_1, Math.PI, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                        }
+                        else {
+                            drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_3, Math.PI, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                        }
+                    }
+                    if (upTile.isLava && !downTile.isLava && !leftTile.isLava && rightTile.isLava) {
+                        if (uprightTile.isLava) {
+                            drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_1, Math.PI * 1.5, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                        }
+                        else {
+                            drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_3, Math.PI * 1.5, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                        }
+                    }
+                    if (upTile.isLava && downTile.isLava && !leftTile.isLava && !rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_2, Math.PI / 2, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (!upTile.isLava && !downTile.isLava && leftTile.isLava && rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge2_2, 0, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (upTile.isLava && downTile.isLava && leftTile.isLava && !rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge1, 0, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (!upTile.isLava && downTile.isLava && leftTile.isLava && rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge1, -Math.PI / 2, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (upTile.isLava && downTile.isLava && !leftTile.isLava && rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge1, Math.PI, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (upTile.isLava && !downTile.isLava && leftTile.isLava && rightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgEdge1, Math.PI / 2, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (rightTile.isLava && downTile.isLava &&
+                        !downrightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgSide1, 0, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (leftTile.isLava && downTile.isLava &&
+                        !downleftTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgSide1, Math.PI / 2, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (leftTile.isLava && upTile.isLava &&
+                        !upleftTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgSide1, Math.PI, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
+                    if (rightTile.isLava && upTile.isLava &&
+                        !uprightTile.isLava) {
+                        drawSprite(tile.x * TILE.width, tile.y * TILE.height, drawing_2.imgSide1, -Math.PI / 2, tile.width, tile.width, false, drawing_2.Layer.ON_TILE);
+                    }
                 }
                 break;
             case TileType.MELTER:
@@ -1338,7 +1496,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 break;
         }
         if (globalBoss && tile.upperLayer && distanceBetweenPoints(globalBoss.x, globalBoss.y, tile.x * TILE.width, tile.y * TILE.height) <= globalBoss.height / 2 + tile.width / 2) {
-            tile.upperLayer = TileType.NONE;
+            tile.upperLayer.type = TileType.NONE;
             burstParticles({
                 x: tile.x * TILE.width,
                 y: tile.y * TILE.height,
@@ -1357,8 +1515,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
         for (var y = 0; y < TILE.chunkCountY * TILE.chunkSizeY; y++) {
             for (var x = 0; x < TILE.chunkCountX * TILE.chunkSizeX; x++) {
                 var tile = map[getIndexFromCoords(x, y)];
-                updateTile(tile.baseLayer, tile);
-                updateTile(tile.upperLayer, tile);
+                updateTile(tile.baseLayer.type, tile);
+                updateTile(tile.upperLayer.type, tile);
             }
         }
     }
@@ -1389,7 +1547,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             }
             drawSprite(drawing_2.camera.x - drawing_2.camera.width / 2 + 10, drawing_2.camera.y - drawing_2.camera.height / 4, drawing_2.imgArrow, 0, 30, 50, false, drawing_2.Layer.UI);
             var width = gameObject.hitpoints / gameObject.maxHitpoints * STRIPE_WIDTH;
-            if (width <= STRIPE_WIDTH / 2 && timers[hpShakeTimer] === 0) {
+            if (width <= STRIPE_WIDTH / 2 && timers[hpShakeTimer] <= 0) {
                 timers[hpShakeTimer] = width / STRIPE_WIDTH * 800;
             }
             var shakeX = 0;
@@ -1434,7 +1592,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             var mapTile2 = getIndexFromCoords(Math.round((gameObject.x + vector2[0]) / TILE.width), Math.round((gameObject.y + vector2[1]) / TILE.height));
             var mapTile3 = getIndexFromCoords(Math.round((gameObject.x + vector3[0]) / TILE.width), Math.round((gameObject.y + vector3[1]) / TILE.height));
             var mapTile4 = getIndexFromCoords(Math.round((gameObject.x + vector4[0]) / TILE.width), Math.round((gameObject.y + vector4[1]) / TILE.height));
-            if (map[mapTile1] && map[mapTile2] && map[mapTile3] && map[mapTile4] && map[mapTile1].baseLayer === TileType.LAVA && map[mapTile2].baseLayer === TileType.LAVA && map[mapTile3].baseLayer === TileType.LAVA && map[mapTile4].baseLayer === TileType.LAVA) {
+            if (map[mapTile1] && map[mapTile2] && map[mapTile3] && map[mapTile4] && map[mapTile1].baseLayer.type === TileType.LAVA &&
+                map[mapTile2].baseLayer.type === TileType.LAVA && map[mapTile3].baseLayer.type === TileType.LAVA &&
+                map[mapTile4].baseLayer.type === TileType.LAVA) {
                 gameObject.exists = false;
             }
             for (var itemIndex = 0; itemIndex <= inventory.length; itemIndex++) {
@@ -1576,7 +1736,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
             }
             else {
-                if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.MELTER &&
+                if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer.type === TileType.MELTER &&
                     distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.height) <=
                         TILE.width + gameObject.width) {
                     if (mouseTile.inventory[0].item === Item.NONE && inventory[mainSlot] &&
@@ -1601,7 +1761,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         timers[mouseTile.specialTimer] = null;
                     }
                 }
-                if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.SPLITTER &&
+                if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer.type === TileType.SPLITTER &&
                     distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
                         <= TILE.width + gameObject.width) {
                     if (inventory[mainSlot] && inventory[mainSlot].item === Item.CRYSTAL) {
@@ -1620,7 +1780,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             > TILE.width + gameObject.width) || (mouseTile && mouseTile && controls_1.mouse.wentDown && mouseTile === controlledStorage)) {
                     controlledStorage = null;
                 }
-                else if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer === TileType.STORAGE &&
+                else if (mouseTile && controls_1.mouse.wentDown && mouseTile.upperLayer.type === TileType.STORAGE &&
                     distanceBetweenPoints(gameObject.x, gameObject.y, mouseTile.x * TILE.width, mouseTile.y * TILE.width)
                         <= TILE.width + gameObject.width && !controlledStorage) {
                     controlledStorage = mouseTile;
@@ -1697,8 +1857,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         gameObject.x <= mouseTile.x * TILE.width + TILE.width / 2 + gameObject.width / 2 &&
                         gameObject.y >= mouseTile.y * TILE.height - TILE.height / 2 - gameObject.height / 2 &&
                         gameObject.y <= mouseTile.y * TILE.height + TILE.height / 2 + gameObject.height / 2)) {
-                        if (inventory[mainSlot] && inventory[mainSlot].item === Item.MELTER && mouseTile.baseLayer === TileType.LAVA) {
-                            mouseTile.upperLayer = TileType.MELTER;
+                        if (inventory[mainSlot] && inventory[mainSlot].item === Item.MELTER && mouseTile.baseLayer.type === TileType.LAVA) {
+                            mouseTile.upperLayer = { type: TileType.MELTER, variant: 1 };
                             mouseTile.toughness = 200;
                             mouseTile.firstToughness = 200;
                             mouseTile.specialTimer = addTimer(0);
@@ -1706,22 +1866,22 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             removeItem(Item.MELTER, 1);
                         }
                         if (inventory[mainSlot] && inventory[mainSlot].item === Item.SPLITTER &&
-                            !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
-                            mouseTile.upperLayer = TileType.SPLITTER;
+                            !(mouseTile.baseLayer.type === TileType.LAVA || mouseTile.baseLayer.type === TileType.MOUNTAIN || mouseTile.baseLayer.type === TileType.NONE)) {
+                            mouseTile.upperLayer.type = TileType.SPLITTER;
                             mouseTile.toughness = 200;
                             mouseTile.firstToughness = 200;
                             removeItem(Item.SPLITTER, 1);
                         }
                         if (inventory[mainSlot] && inventory[mainSlot].item === Item.SUN_BATERY &&
-                            !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
-                            mouseTile.upperLayer = TileType.SUN_BATERY;
+                            !(mouseTile.baseLayer.type === TileType.LAVA || mouseTile.baseLayer.type === TileType.MOUNTAIN || mouseTile.baseLayer.type === TileType.NONE)) {
+                            mouseTile.upperLayer.type = TileType.SUN_BATERY;
                             mouseTile.toughness = 200;
                             mouseTile.firstToughness = 200;
                             removeItem(Item.SUN_BATERY, 1);
                         }
                         if (inventory[mainSlot] && inventory[mainSlot].item === Item.STORAGE &&
-                            !(mouseTile.baseLayer === TileType.LAVA || mouseTile.baseLayer === TileType.MOUNTAIN || mouseTile.baseLayer === TileType.NONE)) {
-                            mouseTile.upperLayer = TileType.STORAGE;
+                            !(mouseTile.baseLayer.type === TileType.LAVA || mouseTile.baseLayer.type === TileType.MOUNTAIN || mouseTile.baseLayer.type === TileType.NONE)) {
+                            mouseTile.upperLayer.type = TileType.STORAGE;
                             mouseTile.toughness = 200;
                             mouseTile.firstToughness = 200;
                             for (var i = 0; i < STORAGE_SLOT_COUNT; i++) {
@@ -1742,49 +1902,49 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                             }
                         }
                         if (!isThereAnItem) {
-                            if (mouseTile.upperLayer === TileType.IRON && !isInventoryFullForItem(Item.IRON)) {
+                            if (mouseTile.upperLayer.type === TileType.IRON && !isInventoryFullForItem(Item.IRON)) {
                                 mouseTile.toughness--;
                             }
-                            if (mouseTile.upperLayer === TileType.AURIT && !isInventoryFullForItem(Item.AURIT)) {
+                            if (mouseTile.upperLayer.type === TileType.AURIT && !isInventoryFullForItem(Item.AURIT)) {
                                 mouseTile.toughness--;
                             }
-                            if (mouseTile.upperLayer === TileType.CRYSTAL && !isInventoryFullForItem(Item.CRYSTAL)) {
+                            if (mouseTile.upperLayer.type === TileType.CRYSTAL && !isInventoryFullForItem(Item.CRYSTAL)) {
                                 mouseTile.toughness--;
                             }
-                            if (mouseTile.upperLayer === TileType.SILIKON && !isInventoryFullForItem(Item.SILIKON)) {
+                            if (mouseTile.upperLayer.type === TileType.SILIKON && !isInventoryFullForItem(Item.SILIKON)) {
                                 mouseTile.toughness--;
                             }
-                            if (mouseTile.upperLayer === TileType.MELTER && !isInventoryFullForItem(Item.MELTER)) {
+                            if (mouseTile.upperLayer.type === TileType.MELTER && !isInventoryFullForItem(Item.MELTER)) {
                                 mouseTile.toughness--;
                             }
-                            if (mouseTile.upperLayer === TileType.SPLITTER && !isInventoryFullForItem(Item.SPLITTER)) {
+                            if (mouseTile.upperLayer.type === TileType.SPLITTER && !isInventoryFullForItem(Item.SPLITTER)) {
                                 mouseTile.toughness--;
                             }
-                            if (mouseTile.upperLayer === TileType.SUN_BATERY && !isInventoryFullForItem(Item.SUN_BATERY)) {
+                            if (mouseTile.upperLayer.type === TileType.SUN_BATERY && !isInventoryFullForItem(Item.SUN_BATERY)) {
                                 mouseTile.toughness--;
                             }
-                            if (mouseTile.upperLayer === TileType.STORAGE && !isInventoryFullForItem(Item.STORAGE)) {
+                            if (mouseTile.upperLayer.type === TileType.STORAGE && !isInventoryFullForItem(Item.STORAGE)) {
                                 mouseTile.toughness--;
                             }
-                            if (mouseTile.upperLayer === TileType.IGNEOUS && !isInventoryFullForItem(Item.IGNEOUS)) {
+                            if (mouseTile.upperLayer.type === TileType.IGNEOUS && !isInventoryFullForItem(Item.IGNEOUS)) {
                                 mouseTile.toughness--;
                             }
                         }
                         if ((mouseTile.toughness % Math.round(mouseTile.firstToughness / mouseTile.oreCount) === 0 || mouseTile.toughness === 0)) {
                             var color = null;
-                            if (mouseTile.upperLayer === TileType.IRON) {
+                            if (mouseTile.upperLayer.type === TileType.IRON) {
                                 color = 'grey';
                             }
-                            if (mouseTile.upperLayer === TileType.AURIT) {
+                            if (mouseTile.upperLayer.type === TileType.AURIT) {
                                 color = 'yellow';
                             }
-                            if (mouseTile.upperLayer === TileType.CRYSTAL) {
+                            if (mouseTile.upperLayer.type === TileType.CRYSTAL) {
                                 color = 'lightcoral';
                             }
-                            if (mouseTile.upperLayer === TileType.SILIKON) {
+                            if (mouseTile.upperLayer.type === TileType.SILIKON) {
                                 color = 'dimgray';
                             }
-                            if (mouseTile.upperLayer === TileType.IGNEOUS) {
+                            if (mouseTile.upperLayer.type === TileType.IGNEOUS) {
                                 color = 'sienna';
                             }
                             if (color !== null) {
@@ -1804,22 +1964,22 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     if (mouseTile.toughness <= 0) {
                         var x = mouseTile.x;
                         var y = mouseTile.y;
-                        if (mouseTile.upperLayer === TileType.MELTER) {
+                        if (mouseTile.upperLayer.type === TileType.MELTER) {
                             addItem(Item.MELTER, 1);
                         }
-                        if (mouseTile.upperLayer === TileType.SPLITTER) {
+                        if (mouseTile.upperLayer.type === TileType.SPLITTER) {
                             addItem(Item.SPLITTER, 1);
                         }
-                        if (mouseTile.upperLayer === TileType.SUN_BATERY) {
+                        if (mouseTile.upperLayer.type === TileType.SUN_BATERY) {
                             addItem(Item.SUN_BATERY, 1);
                         }
-                        if (mouseTile.upperLayer === TileType.STORAGE) {
+                        if (mouseTile.upperLayer.type === TileType.STORAGE) {
                             addItem(Item.STORAGE, 1);
                             if (mouseTile === controlledStorage) {
                                 controlledStorage = null;
                             }
                         }
-                        mouseTile.upperLayer = TileType.NONE;
+                        mouseTile.upperLayer.type = TileType.NONE;
                     }
                     var stripeWidth = 300;
                     var width_1 = stripeWidth * (mouseTile.toughness / mouseTile.firstToughness);
@@ -2015,8 +2175,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 var range = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
                 var rangeProjections = rotateVector(range, 0, gameObject.angle);
                 if (globalPlayer.cameraLvl === 1) {
-                    drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, drawing_2.Layer.ON_TILE);
-                    drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 90, 90, false, drawing_2.Layer.ON_TILE);
+                    drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', true, drawing_2.Layer.UPPER_TILE);
+                    drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 90, 90, false, drawing_2.Layer.UPPER_TILE);
                 }
                 gameObject.width = (100 + height) * drawing_2.camera.range;
                 gameObject.height = (100 + height) * drawing_2.camera.range;
@@ -2028,16 +2188,17 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     var tileIndex = getIndexFromCoords(x, y);
                     var chance = randomFloat(0, 1);
                     if (map[tileIndex]) {
-                        if (map[tileIndex].upperLayer !== TileType.NONE) {
-                            if (chance < 0.25 && map[tileIndex].upperLayer !== TileType.VOLCANO) {
-                                map[tileIndex].upperLayer = TileType.NONE;
+                        if (map[tileIndex].upperLayer.type !== TileType.NONE) {
+                            if (chance < 0.25 && map[tileIndex].upperLayer.type !== TileType.VOLCANO) {
+                                map[tileIndex].upperLayer.type = TileType.NONE;
                             }
                         }
                         else {
-                            if (chance < 0.25 && map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.GEYSER
-                                && map[tileIndex].baseLayer !== TileType.VOLCANO) {
-                                map[tileIndex].baseLayer = TileType.EARTH_1;
-                                map[tileIndex].upperLayer = TileType.IGNEOUS;
+                            if (chance < 0.25 && map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.GEYSER
+                                && map[tileIndex].baseLayer.type !== TileType.VOLCANO) {
+                                map[tileIndex].baseLayer.type = TileType.EARTH;
+                                map[tileIndex].baseLayer.variant = 1;
+                                map[tileIndex].upperLayer.type = TileType.IGNEOUS;
                                 map[tileIndex].toughness = 500;
                                 map[tileIndex].firstToughness = 500;
                                 map[tileIndex].oreCount = 1;
@@ -2068,10 +2229,11 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     var tileIndex = getIndexFromCoords(x, y);
                     if (gameObject.summoned) {
                         if (map[tileIndex].upperLayer) {
-                            map[tileIndex].upperLayer = TileType.NONE;
+                            map[tileIndex].upperLayer.type = TileType.NONE;
                         }
-                        if (map[tileIndex].baseLayer === TileType.MOUNTAIN) {
-                            map[tileIndex].baseLayer = TileType.EARTH_1;
+                        if (map[tileIndex].baseLayer.type === TileType.MOUNTAIN) {
+                            map[tileIndex].baseLayer.type = TileType.EARTH;
+                            map[tileIndex].baseLayer.variant = 1;
                             map[tileIndex].toughness = 0;
                             map[tileIndex].oreCount = 0;
                         }
@@ -2079,9 +2241,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     else {
                         var chance = randomFloat(0, 1);
                         if (chance < 0.25) {
-                            if (map[tileIndex] && map[tileIndex].baseLayer !== TileType.LAVA && map[tileIndex].baseLayer !== TileType.MOUNTAIN &&
-                                map[tileIndex].baseLayer !== TileType.NONE && map[tileIndex].baseLayer !== TileType.VOLCANO) {
-                                map[tileIndex].upperLayer = TileType.IGNEOUS;
+                            if (map[tileIndex] && map[tileIndex].baseLayer.type !== TileType.LAVA && map[tileIndex].baseLayer.type !== TileType.MOUNTAIN &&
+                                map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.VOLCANO) {
+                                map[tileIndex].upperLayer.type = TileType.IGNEOUS;
                                 map[tileIndex].toughness = 500;
                                 map[tileIndex].firstToughness = 500;
                                 map[tileIndex].oreCount = 1;
@@ -2107,8 +2269,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 var range = LAVA_BALL_SPEED * LAVA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
                 var rangeProjections = rotateVector(range, 0, gameObject.angle);
                 if (globalPlayer.cameraLvl === 1) {
-                    drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 10, 'red', true, drawing_2.Layer.ON_TILE);
-                    drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 18, 18, false, drawing_2.Layer.ON_TILE);
+                    drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 10, 'red', true, drawing_2.Layer.UPPER_TILE);
+                    drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], drawing_2.imgAlert, 0, 18, 18, false, drawing_2.Layer.UPPER_TILE);
                 }
                 gameObject.width = (20 + height) * drawing_2.camera.range;
                 gameObject.height = (20 + height) * drawing_2.camera.range;
@@ -2117,9 +2279,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     var x = Math.round(gameObject.x / TILE.width);
                     var y = Math.round(gameObject.y / TILE.height);
                     var tileIndex = getIndexFromCoords(x, y);
-                    if (map[tileIndex] && map[tileIndex].baseLayer !== TileType.VOLCANO && map[tileIndex].baseLayer !== TileType.NONE) {
-                        map[tileIndex].upperLayer = TileType.NONE;
-                        map[tileIndex].baseLayer = TileType.LAVA;
+                    if (map[tileIndex] && map[tileIndex].baseLayer.type !== TileType.VOLCANO && map[tileIndex].baseLayer.type !== TileType.NONE) {
+                        map[tileIndex].upperLayer.type = TileType.NONE;
+                        map[tileIndex].baseLayer.type = TileType.LAVA;
                         map[tileIndex].toughness = 0;
                         map[tileIndex].oreCount = 0;
                     }
@@ -2291,7 +2453,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                         for (var tileIndex = 0; tileIndex < map.length; tileIndex++) {
                             var tile = map[tileIndex];
                             if (tile.upperLayer && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
-                                tile.upperLayer = TileType.NONE;
+                                tile.upperLayer.type = TileType.NONE;
                                 burstParticles({
                                     x: tile.x * TILE.width,
                                     y: tile.y * TILE.height,
@@ -2501,6 +2663,11 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 }
                 return InventorySlot;
             }());
+            TileLayer = (function () {
+                function TileLayer() {
+                }
+                return TileLayer;
+            }());
             Tile = (function () {
                 function Tile() {
                 }
@@ -2547,22 +2714,20 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             })(GameState || (GameState = {}));
             (function (TileType) {
                 TileType[TileType["NONE"] = 0] = "NONE";
-                TileType[TileType["EARTH_1"] = 1] = "EARTH_1";
-                TileType[TileType["EARTH_2"] = 2] = "EARTH_2";
-                TileType[TileType["EARTH_3"] = 3] = "EARTH_3";
-                TileType[TileType["MOUNTAIN"] = 4] = "MOUNTAIN";
-                TileType[TileType["GEYSER"] = 5] = "GEYSER";
-                TileType[TileType["VOLCANO"] = 6] = "VOLCANO";
-                TileType[TileType["LAVA"] = 7] = "LAVA";
-                TileType[TileType["IRON"] = 8] = "IRON";
-                TileType[TileType["AURIT"] = 9] = "AURIT";
-                TileType[TileType["CRYSTAL"] = 10] = "CRYSTAL";
-                TileType[TileType["MELTER"] = 11] = "MELTER";
-                TileType[TileType["SPLITTER"] = 12] = "SPLITTER";
-                TileType[TileType["SUN_BATERY"] = 13] = "SUN_BATERY";
-                TileType[TileType["SILIKON"] = 14] = "SILIKON";
-                TileType[TileType["STORAGE"] = 15] = "STORAGE";
-                TileType[TileType["IGNEOUS"] = 16] = "IGNEOUS";
+                TileType[TileType["EARTH"] = 1] = "EARTH";
+                TileType[TileType["MOUNTAIN"] = 2] = "MOUNTAIN";
+                TileType[TileType["GEYSER"] = 3] = "GEYSER";
+                TileType[TileType["VOLCANO"] = 4] = "VOLCANO";
+                TileType[TileType["LAVA"] = 5] = "LAVA";
+                TileType[TileType["IRON"] = 6] = "IRON";
+                TileType[TileType["AURIT"] = 7] = "AURIT";
+                TileType[TileType["CRYSTAL"] = 8] = "CRYSTAL";
+                TileType[TileType["MELTER"] = 9] = "MELTER";
+                TileType[TileType["SPLITTER"] = 10] = "SPLITTER";
+                TileType[TileType["SUN_BATERY"] = 11] = "SUN_BATERY";
+                TileType[TileType["SILIKON"] = 12] = "SILIKON";
+                TileType[TileType["STORAGE"] = 13] = "STORAGE";
+                TileType[TileType["IGNEOUS"] = 14] = "IGNEOUS";
             })(TileType || (TileType = {}));
             (function (Item) {
                 Item[Item["NONE"] = 0] = "NONE";
@@ -2632,9 +2797,9 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 [
                     'F! @  ##',
                     '       #',
-                    'SC #   #',
-                    'A       ',
-                    ' @     #',
+                    'SC # ! #',
+                    'A    !  ',
+                    ' @   ! #',
                     '   #@@!!',
                     '       #',
                     ' #    ##',
@@ -2668,6 +2833,16 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     '     000',
                     ' #   0*0',
                     '@    000',
+                ],
+                [
+                    ' #      ',
+                    ' # !!   ',
+                    '  !!!!  ',
+                    ' !!!!! #',
+                    '  !!! ##',
+                    '  !!!! #',
+                    '   !!   ',
+                    '@     # ',
                 ],
             ];
             RECIPES = [
