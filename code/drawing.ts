@@ -24,7 +24,6 @@ export let camera = {
     width: innerWidth,
     height: innerHeight,
     angle: 0,
-    range: 0.75,
 }
 
 camera.width = 1920;
