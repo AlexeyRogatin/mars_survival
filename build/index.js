@@ -119,7 +119,7 @@ System.register("drawing", [], function (exports_1, context_1) {
                 height: innerHeight,
                 angle: 0
             });
-            camera.width = 1920;
+            camera.width = 1000;
             camera.height = camera.width / SCREEN_RATIO;
             handleResize();
             window.addEventListener('resize', handleResize);
@@ -683,8 +683,8 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             goLeft: false,
             goRight: false,
             sprite: drawing_2.imgNone,
-            leftWeel: 1,
-            rightWeel: 1,
+            leftWeel: 0,
+            rightWeel: 0,
             hitpoints: 0,
             maxHitpoints: 0,
             energy: 0,
@@ -2098,6 +2098,15 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             var _d = rotateVector(46, -40, -gameObject.angle), wheel4X = _d[0], wheel4Y = _d[1];
             var _e = rotateVector(9, -45, -gameObject.angle), wheel5X = _e[0], wheel5Y = _e[1];
             var _f = rotateVector(-48, -45, -gameObject.angle), wheel6X = _f[0], wheel6Y = _f[1];
+            var staticWheelPositions = [
+                [46, 40],
+                [9, 45],
+                [-48, 45],
+                [46, -40],
+                [9, -45],
+                [-48, -45],
+            ];
+            var wheelPositions = staticWheelPositions.map(function (p) { return rotateVector(p[0] * drawing_2.camera.range, p[1] * drawing_2.camera.range, -gameObject.angle); });
             if (gameObject.goForward) {
                 gameObject.leftWeel++;
                 gameObject.rightWeel++;
@@ -2118,18 +2127,26 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                     }
                 }
             }
-            if (gameObject.leftWeel > 6) {
-                gameObject.leftWeel = 1;
+            if (gameObject.leftWeel > 5) {
+                gameObject.leftWeel = 0;
             }
-            if (gameObject.rightWeel > 6) {
-                gameObject.rightWeel = 1;
+            if (gameObject.rightWeel > 5) {
+                gameObject.rightWeel = 0;
             }
-            if (gameObject.leftWeel < 1) {
-                gameObject.leftWeel = 6;
+            if (gameObject.leftWeel < 0) {
+                gameObject.leftWeel = 5;
             }
-            if (gameObject.rightWeel < 1) {
-                gameObject.rightWeel = 6;
+            if (gameObject.rightWeel < 0) {
+                gameObject.rightWeel = 5;
             }
+            var wheelFrames = [
+                drawing_2.imgWheel1,
+                drawing_2.imgWheel2,
+                drawing_2.imgWheel3,
+                drawing_2.imgWheel4,
+                drawing_2.imgWheel5,
+                drawing_2.imgWheel6,
+            ];
             if (!gameObject.doNotDraw) {
                 if (gameObject.leftWeel === 1) {
                     drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);

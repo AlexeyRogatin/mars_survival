@@ -26,7 +26,7 @@ export let camera = {
     angle: 0,
 }
 
-camera.width = 1920;
+camera.width = 1000;
 camera.height = camera.width / SCREEN_RATIO;
 
 handleResize();

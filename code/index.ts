@@ -780,8 +780,8 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
 
         sprite: imgNone,
 
-        leftWeel: 1,
-        rightWeel: 1,
+        leftWeel: 0,
+        rightWeel: 0,
 
         hitpoints: 0,
         maxHitpoints: 0,
@@ -2407,13 +2407,27 @@ function updateGameObject(gameObject: GameObject) {
             drawSprite(gameObject.x, gameObject.y, cameraSprite, angle, 30, 30, false, Layer.PLAYER);
         }
 
+<<<<<<< HEAD
         let [wheel1X, wheel1Y] = rotateVector(46, 40, -gameObject.angle);
         let [wheel2X, wheel2Y] = rotateVector(9, 45, -gameObject.angle);
         let [wheel3X, wheel3Y] = rotateVector(-48, 45, -gameObject.angle);
         let [wheel4X, wheel4Y] = rotateVector(46, -40, -gameObject.angle);
         let [wheel5X, wheel5Y] = rotateVector(9, -45, -gameObject.angle);
         let [wheel6X, wheel6Y] = rotateVector(-48, -45, -gameObject.angle);
+=======
+>>>>>>> a266bcd1b0c027c0ef17bfd19efc9ce2823723c8
 
+        let staticWheelPositions = [
+            [46, 40],
+            [9, 45],
+            [-48, 45],
+            [46, -40],
+            [9, -45],
+            [-48, -45],
+        ];
+
+        let wheelPositions = staticWheelPositions.map(p => rotateVector(p[0]*camera.range, p[1]*camera.range, -gameObject.angle));
+        
         if (gameObject.goForward) {
             gameObject.leftWeel++;
             gameObject.rightWeel++;
@@ -2433,20 +2447,30 @@ function updateGameObject(gameObject: GameObject) {
             }
         }
 
-        if (gameObject.leftWeel > 6) {
-            gameObject.leftWeel = 1;
+        if (gameObject.leftWeel > 5) {
+            gameObject.leftWeel = 0;
         }
-        if (gameObject.rightWeel > 6) {
-            gameObject.rightWeel = 1;
+        if (gameObject.rightWeel > 5) {
+            gameObject.rightWeel = 0;
         }
-        if (gameObject.leftWeel < 1) {
-            gameObject.leftWeel = 6;
+        if (gameObject.leftWeel < 0) {
+            gameObject.leftWeel = 5;
         }
-        if (gameObject.rightWeel < 1) {
-            gameObject.rightWeel = 6;
+        if (gameObject.rightWeel < 0) {
+            gameObject.rightWeel = 5;
         }
 
+        const wheelFrames = [
+            imgWheel1,
+            imgWheel2,
+            imgWheel3,
+            imgWheel4,
+            imgWheel5,
+            imgWheel6,
+        ];
+
         if (!gameObject.doNotDraw) {
+<<<<<<< HEAD
             if (gameObject.leftWeel === 1) {
                 drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, imgWheel1, gameObject.angle, 25, 12, false, Layer.PLAYER);
                 drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, imgWheel1, gameObject.angle, 25, 12, false, Layer.PLAYER);
@@ -2507,6 +2531,16 @@ function updateGameObject(gameObject: GameObject) {
                 drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, imgWheel6, gameObject.angle, 25, 12, false, Layer.PLAYER);
                 drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, imgWheel6, gameObject.angle, 25, 12, false, Layer.PLAYER);
                 drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, imgWheel6, gameObject.angle, 25, 12, false, Layer.PLAYER);
+=======
+            let wheelSprite = wheelFrames[gameObject.leftWeel];
+            for (let posIndex = 0; posIndex < 3; posIndex++) {
+                drawSprite(gameObject.x + wheelPositions[posIndex][0], gameObject.y + wheelPositions[posIndex][1], wheelSprite, gameObject.angle, 25 * camera.range, 12 * camera.range, false, Layer.PLAYER);
+            }
+            
+            wheelSprite = wheelFrames[gameObject.rightWeel];
+            for (let posIndex = 3; posIndex < 6; posIndex++) {
+                drawSprite(gameObject.x + wheelPositions[posIndex][0], gameObject.y + wheelPositions[posIndex][1], wheelSprite, gameObject.angle, 25 * camera.range, 12 * camera.range, false, Layer.PLAYER);
+>>>>>>> a266bcd1b0c027c0ef17bfd19efc9ce2823723c8
             }
         }
 
