@@ -2092,12 +2092,6 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
             if (!gameObject.doNotDraw) {
                 drawSprite(gameObject.x, gameObject.y, cameraSprite, angle, 30, 30, false, drawing_2.Layer.PLAYER);
             }
-            var _a = rotateVector(46, 40, -gameObject.angle), wheel1X = _a[0], wheel1Y = _a[1];
-            var _b = rotateVector(9, 45, -gameObject.angle), wheel2X = _b[0], wheel2Y = _b[1];
-            var _c = rotateVector(-48, 45, -gameObject.angle), wheel3X = _c[0], wheel3Y = _c[1];
-            var _d = rotateVector(46, -40, -gameObject.angle), wheel4X = _d[0], wheel4Y = _d[1];
-            var _e = rotateVector(9, -45, -gameObject.angle), wheel5X = _e[0], wheel5Y = _e[1];
-            var _f = rotateVector(-48, -45, -gameObject.angle), wheel6X = _f[0], wheel6Y = _f[1];
             var staticWheelPositions = [
                 [46, 40],
                 [9, 45],
@@ -2106,7 +2100,7 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 [9, -45],
                 [-48, -45],
             ];
-            var wheelPositions = staticWheelPositions.map(function (p) { return rotateVector(p[0] * drawing_2.camera.range, p[1] * drawing_2.camera.range, -gameObject.angle); });
+            var wheelPositions = staticWheelPositions.map(function (p) { return rotateVector(p[0], p[1], -gameObject.angle); });
             if (gameObject.goForward) {
                 gameObject.leftWeel++;
                 gameObject.rightWeel++;
@@ -2148,65 +2142,13 @@ System.register("index", ["controls", "drawing"], function (exports_3, context_3
                 drawing_2.imgWheel6,
             ];
             if (!gameObject.doNotDraw) {
-                if (gameObject.leftWeel === 1) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                var wheelSprite = wheelFrames[gameObject.leftWeel];
+                for (var posIndex = 0; posIndex < 3; posIndex++) {
+                    drawSprite(gameObject.x + wheelPositions[posIndex][0], gameObject.y + wheelPositions[posIndex][1], wheelSprite, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
-                if (gameObject.leftWeel === 2) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.leftWeel === 3) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.leftWeel === 4) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.leftWeel === 5) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.leftWeel === 6) {
-                    drawSprite(gameObject.x + wheel1X, gameObject.y + wheel1Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel2X, gameObject.y + wheel2Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel3X, gameObject.y + wheel3Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.rightWeel === 1) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel1, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.rightWeel === 2) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel2, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.rightWeel === 3) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel3, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.rightWeel === 4) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel4, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.rightWeel === 5) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel5, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                }
-                if (gameObject.rightWeel === 6) {
-                    drawSprite(gameObject.x + wheel4X, gameObject.y + wheel4Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel5X, gameObject.y + wheel5Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
-                    drawSprite(gameObject.x + wheel6X, gameObject.y + wheel6Y, drawing_2.imgWheel6, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
+                wheelSprite = wheelFrames[gameObject.rightWeel];
+                for (var posIndex = 3; posIndex < 6; posIndex++) {
+                    drawSprite(gameObject.x + wheelPositions[posIndex][0], gameObject.y + wheelPositions[posIndex][1], wheelSprite, gameObject.angle, 25, 12, false, drawing_2.Layer.PLAYER);
                 }
             }
             if (!pause) {
