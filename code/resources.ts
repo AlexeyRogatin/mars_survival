@@ -26,7 +26,7 @@ export let camera = {
     angle: 0,
 }
 
-camera.width = 1000;
+camera.width = 1920;
 camera.height = camera.width / SCREEN_RATIO;
 
 handleResize();
@@ -100,6 +100,26 @@ export function loadImage(src: string) {
     img.onload = () => resourceLoaded(src);
 
     return img;
+}
+
+export function loadSound(src: string) {
+    let sound = new Audio();
+    sound.src = src;
+    resourcesWaitingForLoadCount++;
+    sound.oncanplay = () => resourceLoaded(src);
+    return sound;
+}
+
+let sounds: HTMLAudioElement[] = [];
+
+export function playSound(sound: HTMLAudioElement, volume = 1, loop = false) {
+    let newSound = new Audio(sound.src);
+    newSound.volume = volume;
+    newSound.loop = loop;
+    newSound.oncanplay = () => {
+        newSound.play();
+    };
+    return newSound;
 }
 
 export let imgPlayer = loadImage('../sprites/player_body.png');
@@ -185,6 +205,12 @@ export let imgEdge2_3 = loadImage('../sprites/edge2_3.png');
 export let imgEdge3 = loadImage('../sprites/edge3.png');
 export let imgEdge4 = loadImage('../sprites/edge4.png');
 export let imgSide1 = loadImage('../sprites/side1.png');
+export let imgMenu = loadImage('../sprites/menu.jpg');
+
+export let sndMining = loadSound('../sounds/mining.mp3');
+export let sndGeyser = loadSound('../sounds/geyser.mp3');
+export let sndVolcanoBoom = loadSound('../sounds/volcanoBoom.mp3');
+export let sndBoom = loadSound('../sounds/boom.mp3');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {

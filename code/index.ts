@@ -9,8 +9,8 @@ import {
     imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous,
     imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgBossReadyToAttack,
     imgBossAttack, imgBossAttack1, imgBossReadyToAttack1, imgLazer, imgLazer1, camera, handleResize, imgEdge4, imgEdge3, imgEdge2_1, imgEdge2_3,
-    imgEdge2_2, imgEdge1, imgSide1,
-} from "./drawing";
+    imgEdge2_2, imgEdge1, imgSide1, imgMenu, canBeginGame, playSound, sndMining, sndGeyser, sndVolcanoBoom, sndBoom,
+} from "./resources";
 
 class InventorySlot {
     item: Item = Item.NONE;
@@ -37,6 +37,7 @@ class Tile {
     firstToughness: number;
     oreCount: number;
     inventory: InventorySlot[];
+    sound: HTMLAudioElement;
 }
 
 class RecipePart {
@@ -143,7 +144,7 @@ class Text {
     color: string;
     size: number;
     layer: Layer;
-    wasClicked: boolean;
+    mouseOn: boolean;
     exists: boolean;
 }
 
@@ -242,11 +243,6 @@ const STORAGE_SLOT_COUNT = 10;
 
 const STRIPE_WIDTH = 200;
 const STRIPE_HEIGHT = 50;
-
-let timers: number[] = [];
-
-let map: Tile[] = [];
-
 
 const CHUNK_PROTOTYPES = [
     [
@@ -398,6 +394,11 @@ const RECIPES: Recipe[] = [
 
 const GAME_LENGTH = 10000000000;
 
+
+let timers: number[] = [];
+
+let map: Tile[] = [];
+
 let slotCount = 5;
 let inventory: InventorySlot[] = [];
 
@@ -434,7 +435,7 @@ let globalBoss: GameObject = null;
 
 let recentShake: screenShake = { strength: 0, duration: addTimer(0) };
 
-let gameState = GameState.GAME;
+let gameState = GameState.MENU;
 
 let menuTexts: Text[] = [];
 
@@ -766,11 +767,11 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         speed: 0,
         speedX: 0,
         speedY: 0,
-        speedLimit: 3,
+        speedLimit: 20,
         speedBackReduction: 0.5,
         friction: 0.95,
         accel: 0,
-        accelConst: 0.04,
+        accelConst: 0.1,
         rotationSpeed: 0.08,
 
         goForward: false,
@@ -1117,7 +1118,7 @@ function updateParticles() {
             if (particle.color === 'red') {
                 if (globalPlayer.width / 2 + particle.radius >= distanceBetweenPoints(globalPlayer.x, globalPlayer.y, particle.x, particle.y) &&
                     timers[globalPlayer.unhitableTimer] <= 0) {
-                    globalPlayer.hitpoints -= 2 * particle.radius;
+                    globalPlayer.hitpoints -= 25;
                     timers[globalPlayer.unhitableTimer] = 180;
                 }
             }
@@ -1167,7 +1168,7 @@ function buildMap() {
                     map[index] = {
                         baseLayer: { type: downTileType, variant: 1 }, upperLayer: { type: upTileType, variant: 1 }, x, y, specialTimer: null, toughness: null,
                         firstToughness: null, oreCount: 5, inventory: [], width: TILE.width, height: TILE.height,
-                        collisionWidth: TILE.width, collisionHeight: TILE.height,
+                        collisionWidth: TILE.width, collisionHeight: TILE.height, sound: null,
                     };
                     if (char === '0') {
                         downTileType = TileType.NONE;
@@ -1316,27 +1317,44 @@ function updateTile(tileType: TileType, tile: Tile) {
     switch (tileType) {
         case TileType.GEYSER: {
             downSprite = imgGeyser;
-            if (tile.upperLayer.type === TileType.NONE) {
+            let burstDuration = 250;
+            let geyserMinRecharge = 500;
+            let geyserMaxRecharge = 1500;
+            if (tile.upperLayer.type === TileType.NONE && !pause) {
+                if (timers[tile.specialTimer] === burstDuration) {
+                    tile.sound = playSound(sndGeyser);
+                }
+                if (tile.sound) {
+                    let maxDistance = camera.width * 0.75;
+                    let volume;
+                    if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) <= maxDistance) {
+                        volume = 1 - distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) / maxDistance;
+                    } else {
+                        volume = 0;
+                    }
+
+                    tile.sound.volume = volume * 0.5;
+
+                }
                 if (
                     tile.x * TILE.width > camera.x - camera.width / 2 - tile.width / 2
                     && tile.x * TILE.width < camera.x + camera.width / 2 + tile.width / 2
                     && tile.y * TILE.height > camera.y - camera.height / 2 - tile.height / 2
                     && tile.y * TILE.height < camera.y + camera.height / 2 + tile.height / 2
                 ) {
-                    let burstMaxDuration = 300;
-                    let geyserMinRecharge = 500;
-                    let geyserMaxRecharge = 1500;
 
-                    if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < burstMaxDuration + 50 && timers[tile.specialTimer] > burstMaxDuration) {
+
+                    if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < burstDuration + 50 && timers[tile.specialTimer] > burstDuration) {
                         drawSprite(tile.x * tile.width, tile.y * tile.height, imgAlert, 0, tile.width, tile.height, false, Layer.UPPER_TILE);
                     }
+
                     if (timers[tile.specialTimer] <= 0) {
                         timers[tile.specialTimer] = randomInt(geyserMinRecharge, geyserMaxRecharge);
                     }
-                    if (timers[tile.specialTimer] === burstMaxDuration) {
-                        timers[tile.specialTimer] = randomInt(burstMaxDuration / 10, burstMaxDuration)
+                    if (timers[tile.specialTimer] > burstDuration && particles.length > 150) {
+                        timers[tile.specialTimer]++;
                     }
-                    if (timers[tile.specialTimer] <= burstMaxDuration && !pause) {
+                    if (timers[tile.specialTimer] <= burstDuration && timers[tile.specialTimer] % 2 === 0) {
                         let color;
                         if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) < 100 * globalPlayer.speedLimit) {
                             color = 'red';
@@ -1348,11 +1366,15 @@ function updateTile(tileType: TileType, tile: Tile) {
                             y: tile.y * TILE.height,
                             color: color,
                             speed: 5,
-                            size: 40,
+                            size: 45,
                             decrease: 1,
                             accel: -0.05,
                             count: 1,
                         });
+                    }
+                } else {
+                    if (timers[tile.specialTimer] > 300) {
+                        timers[tile.specialTimer]++;
                     }
                 }
             }
@@ -1628,13 +1650,31 @@ function updateTile(tileType: TileType, tile: Tile) {
         case TileType.VOLCANO: {
             downSprite = imgVolcano;
             drawLight(tile.x * TILE.width, tile.y * TILE.height, tile.width * 0.6);
+            if (timers[tile.specialTimer] === 40) {
+                tile.sound = playSound(sndVolcanoBoom, 1);
+            }
             if (
                 distanceBetweenPoints(camera.x, camera.y, tile.x * TILE.width, tile.y * TILE.width) < VOLCANO_RADIUS
             ) {
-                if (timers[tile.specialTimer] === 0 && !pause) {
-                    addGameObject(GameObjectType.MAGMA_BALL, tile.x * TILE.width, tile.y * TILE.height);
-                    timers[tile.specialTimer] = randomInt(60, 240);
+                if (!pause) {
+                    if (timers[tile.specialTimer] === 0) {
+                        addGameObject(GameObjectType.MAGMA_BALL, tile.x * TILE.width, tile.y * TILE.height);
+                        timers[tile.specialTimer] = randomInt(60, 240);
+                    }
+                    if (tile.sound) {
+                        let maxDistance = VOLCANO_RADIUS;
+                        let volume;
+                        if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) <= maxDistance) {
+                            volume = 1 - distanceBetweenPoints(globalPlayer.x, globalPlayer.y, tile.x * TILE.width, tile.y * TILE.height) / maxDistance;
+                        } else {
+                            volume = 0;
+                        }
+
+                        tile.sound.volume = volume * 0.75;
+                    }
                 }
+            } else {
+                timers[tile.specialTimer]++;
             }
         } break;
         case TileType.STORAGE: {
@@ -1773,7 +1813,6 @@ function updateGameObject(gameObject: GameObject) {
         );
 
         //координаты
-
         drawText(
             camera.x + camera.width / 2 - 100, camera.y - camera.height / 2 + 100, 'blue',
             `x: ${Math.round((gameObject.x) / TILE.width)}`, 25, Layer.UI
@@ -2211,6 +2250,10 @@ function updateGameObject(gameObject: GameObject) {
                         }
                     }
                     if (!isThereAnItem) {
+                        if (mouseTile.toughness % 80 === 0 || mouseTile.toughness === 0) {
+                            playSound(sndMining, randomFloat(0.25, 0.8));
+                        }
+
                         if (mouseTile.upperLayer.type === TileType.IRON && !isInventoryFullForItem(Item.IRON)) {
                             mouseTile.toughness--;
                         }
@@ -2528,6 +2571,19 @@ function updateGameObject(gameObject: GameObject) {
 
             if (height <= 0) {
                 gameObject.exists = false;
+
+                let maxDistance = VOLCANO_RADIUS;
+                let volume;
+                if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) <= maxDistance) {
+                    volume = 1 - distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) / maxDistance;
+                } else {
+                    volume = 0;
+                }
+                console.log(volume);
+                let strength = volume * 15;
+                makeScreenShake(strength, 15);
+                playSound(sndBoom, volume * 0.5);
+
                 burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.75, accel: 0 });
                 let x = Math.round(gameObject.x / TILE.width);
                 let y = Math.round(gameObject.y / TILE.height);
@@ -2558,6 +2614,7 @@ function updateGameObject(gameObject: GameObject) {
         //прорисовка
         drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
         drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, Layer.METEORITE);
+
         if (!pause) {
             gameObject.x += gameObject.speedX;
             gameObject.y += gameObject.speedY;
@@ -2577,6 +2634,9 @@ function updateGameObject(gameObject: GameObject) {
 
             if (height <= 0) {
                 gameObject.exists = false;
+
+
+
                 burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
                 let x = Math.round(gameObject.x / TILE.width);
                 let y = Math.round(gameObject.y / TILE.height);
@@ -2871,7 +2931,7 @@ function addMenuText(x: number, y: number, width: number, height: number, text: 
         color: color,
         size: size,
         layer: layer,
-        wasClicked: false,
+        mouseOn: false,
         exists: true,
     }
     let textIndex = 0;
@@ -2889,8 +2949,8 @@ function updateClickableTexts() {
         if (mouse.worldX > text.x &&
             mouse.worldX < text.x + text.width &&
             mouse.worldY > text.y - text.height / 2 &&
-            mouse.worldY < text.y + text.height / 2 && mouse.wentDown) {
-            text.wasClicked = true;
+            mouse.worldY < text.y + text.height / 2) {
+            text.mouseOn = true;
         }
         drawText(text.x, text.y, text.color, text.text, text.size, text.layer);
     }
@@ -2898,21 +2958,30 @@ function updateClickableTexts() {
 
 function resetClicks() {
     for (let textIndex = 0; textIndex < menuTexts.length; textIndex++) {
-        menuTexts[textIndex].wasClicked = false;
+        menuTexts[textIndex].mouseOn = false;
     }
 }
 
-let playText = addMenuText(-camera.width / 2 + 100, -camera.height / 2 + 200, 130, 40, 'Играть', 'black', 40, Layer.UI);
+let playText = addMenuText(-camera.width / 2 + 100, -camera.height / 2 + 400, 130, 60, 'играть', 'White', 40, Layer.UI);
 
 function loopMenu() {
     camera.x = 0;
     camera.y = 0;
+
+    drawSprite(camera.x, camera.y, imgMenu, 0, camera.width, camera.height, false, Layer.TILE);
+    drawText(camera.x - camera.width / 2 + 5, camera.y - camera.height / 2 + 200, 'white', 'MEGA MARS 2D-3D SUPER EPIC SOMEWHAT SURVIVAL', 71, Layer.ON_TILE);
+
     updateClickableTexts()
 
-    if (playText.wasClicked) {
-        gameState = GameState.GAME;
-        restate();
-        buildMap();
+    if (playText.mouseOn && canBeginGame) {
+        playText.text = 'ИГРАТЬ';
+        if (mouse.wentDown) {
+            gameState = GameState.GAME;
+            restate();
+            buildMap();
+        }
+    } else {
+        playText.text = 'играть';
     }
 
     resetClicks();
@@ -3029,7 +3098,7 @@ function loopGame() {
     if (rKey.wentDown) {
         gameState = GameState.MENU;
 
-        playText = addMenuText(-camera.width / 2 + 100, -camera.height / 2 + 200, 130, 40, 'Играть', 'black', 40, Layer.UI);
+        playText = addMenuText(-camera.width / 2 + 100, -camera.height / 2 + 400, 130, 60, 'играть', 'White', 40, Layer.UI);
     }
 }
 
