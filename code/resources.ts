@@ -77,10 +77,10 @@ export class DrawQueueItem {
     radius?: number = 0;
     text?: string = '';
     textSize?: number = 60;
-    outlineOnly?: boolean = false;
+    outlineOnly?: number = 0;
     fromThePoint?: boolean = false;
     drawFromThePoint?: boolean = false;
-
+    textAlign?: CanvasTextAlign;
 }
 
 
@@ -206,6 +206,8 @@ export let imgEdge3 = loadImage('../sprites/edge3.png');
 export let imgEdge4 = loadImage('../sprites/edge4.png');
 export let imgSide1 = loadImage('../sprites/side1.png');
 export let imgMenu = loadImage('../sprites/menu.jpg');
+export let imgTime = loadImage('../sprites/timeAndCoords.png');
+export let imgDesk = loadImage('../sprites/desk.png');
 
 export let sndMining = loadSound('../sounds/mining.mp3');
 export let sndGeyser = loadSound('../sounds/geyser.mp3');
@@ -235,8 +237,9 @@ export function renderItem(item: DrawQueueItem) {
             ctx.translate(item.x, item.y);
             ctx.rotate(-item.angle);
 
-            if (item.outlineOnly) {
+            if (item.outlineOnly > 0) {
                 ctx.strokeStyle = item.color[0];
+                ctx.lineWidth = item.outlineOnly;
                 ctx.strokeRect(-item.width / 2, -item.height / 2, item.width, item.height);
             } else {
                 ctx.fillStyle = item.color[0];
@@ -249,8 +252,9 @@ export function renderItem(item: DrawQueueItem) {
             ctx.beginPath();
             ctx.arc(item.x, item.y, item.radius, 0, Math.PI * 2);
 
-            if (item.outlineOnly) {
+            if (item.outlineOnly > 0) {
                 ctx.strokeStyle = item.color[0];
+                ctx.lineWidth = item.outlineOnly;
                 ctx.stroke();
             } else {
                 ctx.fillStyle = item.color[0];
@@ -263,7 +267,7 @@ export function renderItem(item: DrawQueueItem) {
             ctx.fillStyle = item.color[0];
             ctx.font = `${item.textSize}px Arial`;
             ctx.textBaseline = 'middle';
-            // ctx.textAlign = 'left';
+            ctx.textAlign = item.textAlign;
             ctx.fillText(item.text, item.x, item.y);
             ctx.restore();
         } break;
