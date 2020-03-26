@@ -700,24 +700,17 @@ export function drawLinearGradient(x: number, y: number, width: number, height: 
     }
 }
 
+const MORNING_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH + DAY_LENGTH + MORNING_LENGTH;
+const DAY_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH + DAY_LENGTH;
+const AFTERNOON_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH;
+const NIGHT_TIME = NIGHT_LENGTH;
+
 export function drawLight(x: number, y: number, radius: number) {
     alpha = 0;
-
-    const MORNING_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH + DAY_LENGTH + MORNING_LENGTH;
-    const DAY_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH + DAY_LENGTH;
-    const AFTERNOON_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH;
-    const NIGHT_TIME = NIGHT_LENGTH;
-
 
     if (timers[dayTimer] <= MORNING_TIME && timers[dayTimer] > DAY_TIME) {
         alpha = 1 - (MORNING_TIME - timers[dayTimer]) / (MORNING_TIME - DAY_TIME);
     } else if (timers[dayTimer] <= DAY_TIME && timers[dayTimer] > AFTERNOON_TIME) {
-        if (globalPlayer.sunBateryLvl) {
-            timers[globalPlayer.energy] += 0.005;
-            if (timers[globalPlayer.energy] > globalPlayer.maxEnergy) {
-                timers[globalPlayer.energy] = globalPlayer.maxEnergy;
-            }
-        }
         alpha = 0;
     } else if (timers[dayTimer] <= AFTERNOON_TIME && timers[dayTimer] > NIGHT_TIME) {
         alpha = (AFTERNOON_TIME - timers[dayTimer]) / (AFTERNOON_TIME - NIGHT_TIME);
@@ -1843,6 +1836,8 @@ function updateGameObject(gameObject: GameObject) {
             drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, 'left', Layer.UI);
         }
 
+        addItem(Item.SUN_BATERY, 1);
+
         //падение в лаву
 
         let vector1 = rotateVector(20, 0, gameObject.angle + Math.PI / 4);
@@ -1859,6 +1854,19 @@ function updateGameObject(gameObject: GameObject) {
             map[mapTile4].baseLayer.type === TileType.LAVA
         ) {
             gameObject.exists = false;
+        }
+
+        //солнечная батарея
+        if (globalPlayer.sunBateryLvl) {
+            if (timers[dayTimer] <= DAY_TIME && timers[dayTimer] > AFTERNOON_TIME) {
+                timers[globalPlayer.energy] += 2;
+            }
+            if ((timers[dayTimer] <= MORNING_TIME && timers[dayTimer] > DAY_TIME) || (timers[dayTimer] <= AFTERNOON_TIME && timers[dayTimer] > NIGHT_TIME)) {
+                timers[globalPlayer.energy] += 0.66;
+            }
+            if (timers[globalPlayer.energy] > globalPlayer.maxEnergy) {
+                timers[globalPlayer.energy] = globalPlayer.maxEnergy;
+            }
         }
 
         let canUseItems = true;
@@ -1932,6 +1940,7 @@ function updateGameObject(gameObject: GameObject) {
                     sprite = imgMeteoriteStuff;
                 }
 
+                drawRect(slotX, y, SLOT_WIDTH, SLOT_WIDTH, 0, `rgb(00,33,66,1)`, 0, Layer.UI)
                 drawRect(slotX, y, SLOT_WIDTH, SLOT_WIDTH, 0, 'black', 5, Layer.UI);
                 drawRect(slotX, y, SLOT_WIDTH, SLOT_WIDTH, 0, 'grey', 2, Layer.UI);
 
