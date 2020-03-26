@@ -392,7 +392,7 @@ const RECIPES: Recipe[] = [
     },
 ];
 
-const GAME_LENGTH = 2;
+const GAME_LENGTH = ONE_DAY;
 
 
 let timers: number[] = [];
