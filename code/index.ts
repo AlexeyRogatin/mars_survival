@@ -1,4 +1,4 @@
-import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, qKey, rKey, escKey } from "./controls";
+import { clearAllKeys, upKey, leftKey, rightKey, downKey, mouse, qKey, rKey, escKey, key1, key2, key3, key4, key5, key6 } from "./controls";
 import {
     ctx, canvas, imgPlayer, imgNone, imgWheel1, imgWheel2, imgWheel3, imgWheel4, imgWheel5, imgWheel6, imgCamera,
     imgEarth1, imgEarth2, imgEarth3, imgGeyser, imgMountain, imgIron1, imgIron2, imgIron3, imgIron4,
@@ -1836,8 +1836,6 @@ function updateGameObject(gameObject: GameObject) {
             drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, 'left', Layer.UI);
         }
 
-        addItem(Item.SUN_BATERY, 1);
-
         //падение в лаву
 
         let vector1 = rotateVector(20, 0, gameObject.angle + Math.PI / 4);
@@ -1967,6 +1965,12 @@ function updateGameObject(gameObject: GameObject) {
                             removeItem(inventory[mainSlot].item, inventory[mainSlot].count);
                         }
                     }
+                }
+
+                let keys = [key1, key2, key3, key4, key5, key6];
+
+                if (keys[itemIndex].wentDown) {
+                    mainSlot = itemIndex;
                 }
 
                 //перезарядка
@@ -2611,9 +2615,7 @@ function updateGameObject(gameObject: GameObject) {
                 } else {
                     if (chance < 0.25 && map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.GEYSER
                         && map[tileIndex].baseLayer.type !== TileType.VOLCANO) {
-                        map[tileIndex].baseLayer.type = TileType.EARTH;
-                        map[tileIndex].baseLayer.variant = 1;
-                        map[tileIndex].upperLayer.type = TileType.LAVA;
+                        map[tileIndex].baseLayer.type = TileType.LAVA;
                         map[tileIndex].toughness = 0;
                         map[tileIndex].firstToughness = 0;
                         map[tileIndex].upperLayer.variant = randomInt(1, 2);

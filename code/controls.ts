@@ -12,6 +12,12 @@ export enum KeyCode {
     SHIFT = 16,
     R = 82,
     ESC = 27,
+    KEY_1 = 49,
+    KEY_2 = 50,
+    KEY_3 = 51,
+    KEY_4 = 52,
+    KEY_5 = 53,
+    KEY_6 = 54,
 }
 
 export class Key {
@@ -39,6 +45,12 @@ export const qKey = new Key();
 export const shiftKey = new Key();
 export const rKey = new Key();
 export const escKey = new Key();
+export const key1 = new Key();
+export const key2 = new Key();
+export const key3 = new Key();
+export const key4 = new Key();
+export const key5 = new Key();
+export const key6 = new Key();
 
 function handleKeyDown(event: KeyboardEvent, keyCode: KeyCode, key: Key) {
     if (keyCode === event.keyCode) {
@@ -67,6 +79,12 @@ window.onkeydown = function onkeydown(event: KeyboardEvent) {
     handleKeyDown(event, KeyCode.SHIFT, shiftKey);
     handleKeyDown(event, KeyCode.R, rKey);
     handleKeyDown(event, KeyCode.ESC, escKey);
+    handleKeyDown(event, KeyCode.KEY_1, key1);
+    handleKeyDown(event, KeyCode.KEY_2, key2);
+    handleKeyDown(event, KeyCode.KEY_3, key3);
+    handleKeyDown(event, KeyCode.KEY_4, key4);
+    handleKeyDown(event, KeyCode.KEY_5, key5);
+    handleKeyDown(event, KeyCode.KEY_6, key6);
 };
 
 window.onkeyup = function onkeyup(event: KeyboardEvent) {
@@ -78,6 +96,12 @@ window.onkeyup = function onkeyup(event: KeyboardEvent) {
     handleKeyUp(event, KeyCode.SHIFT, shiftKey);
     handleKeyUp(event, KeyCode.R, rKey);
     handleKeyUp(event, KeyCode.ESC, escKey);
+    handleKeyUp(event, KeyCode.KEY_1, key1);
+    handleKeyUp(event, KeyCode.KEY_2, key2);
+    handleKeyUp(event, KeyCode.KEY_3, key3);
+    handleKeyUp(event, KeyCode.KEY_4, key4);
+    handleKeyUp(event, KeyCode.KEY_5, key5);
+    handleKeyUp(event, KeyCode.KEY_6, key6);
 };
 
 window.onmousemove = function onmousemove(event: MouseEvent) {
@@ -115,6 +139,12 @@ export function clearAllKeys() {
     clearKey(shiftKey);
     clearKey(rKey);
     clearKey(escKey);
+    clearKey(key1);
+    clearKey(key2);
+    clearKey(key3);
+    clearKey(key4);
+    clearKey(key5);
+    clearKey(key6);
     mouse.wentUp = false;
     mouse.wentDown = false;
 }
