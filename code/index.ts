@@ -9,7 +9,7 @@ import {
     imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous,
     imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgBossReadyToAttack,
     imgBossAttack, imgBossAttack1, imgBossReadyToAttack1, imgLazer, imgLazer1, camera, handleResize, imgEdge4, imgEdge3, imgEdge2_1, imgEdge2_3,
-    imgEdge2_2, imgEdge1, imgSide1, imgMenu, canBeginGame, playSound, sndMining, sndGeyser, sndVolcanoBoom, sndBoom, imgTime, imgDesk,
+    imgEdge2_2, imgEdge1, imgSide1, imgMenu, canBeginGame, playSound, sndMining, sndGeyser, sndVolcanoBoom, sndBoom, imgTime, imgDesk, sndParadox, sndDysonSphere,
 } from "./resources";
 
 class InventorySlot {
@@ -392,7 +392,7 @@ const RECIPES: Recipe[] = [
     },
 ];
 
-const GAME_LENGTH = ONE_DAY * 3;
+const GAME_LENGTH = 2;
 
 
 let timers: number[] = [];
@@ -2983,6 +2983,10 @@ function resetClicks() {
 let playText = addMenuText(-camera.width / 2 + 165, -camera.height / 2 + 400, 130, 60, 'играть', 'White', 40, Layer.UI);
 let controlsText = addMenuText(-camera.width / 2 + 215, -camera.height / 2 + 450, 130, 60, 'управление', 'White', 40, Layer.UI);
 
+let instructions = false;
+
+let musik: HTMLAudioElement = null;
+
 function loopMenu() {
     camera.x = 0;
     camera.y = 0;
@@ -2998,10 +3002,24 @@ function loopMenu() {
             gameState = GameState.GAME;
             restate();
             buildMap();
+            musik = playSound(sndParadox, 0.85, true);
         }
     } else {
         playText.text = 'играть';
     }
+
+    if (controlsText.mouseOn && canBeginGame) {
+        controlsText.text = 'УПРАВЛЕНИЕ';
+        if (mouse.wentDown) {
+            instructions = !instructions;
+        }
+    } else {
+        controlsText.text = 'управление';
+    }
+
+    // if (instructions) {
+    //     drawText(camera.x+camera.width/4,camera.y+camera.height/4,'black','Q-выбросить вещь', )
+    // }
 
     // if (controlsText.mouseOn && canBeginGame) {
     //     controlsText.text = 'УПРАВЛЕНИЕ';
@@ -3069,6 +3087,9 @@ function loopGame() {
         }
         globalBoss = addGameObject(GameObjectType.BOSS, x, y);
 
+        musik.volume = 0;
+
+        musik = playSound(sndDysonSphere, 0.85, true);
 
         let distanceFromManipulators = 500;
         let hand1Angle = globalBoss.angle - 0.25 * Math.PI;
@@ -3131,6 +3152,10 @@ function loopGame() {
 
     if (rKey.wentDown) {
         gameState = GameState.MENU;
+
+        musik.volume = 0;
+
+        musik = null;
 
         playText = addMenuText(-camera.width / 2 + 165, -camera.height / 2 + 400, 130, 60, 'играть', 'White', 40, Layer.UI);
         controlsText = addMenuText(-camera.width / 2 + 215, -camera.height / 2 + 450, 130, 60, 'управление', 'White', 40, Layer.UI);

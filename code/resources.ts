@@ -213,6 +213,8 @@ export let sndMining = loadSound('../sounds/mining.mp3');
 export let sndGeyser = loadSound('../sounds/geyser.mp3');
 export let sndVolcanoBoom = loadSound('../sounds/volcanoBoom.mp3');
 export let sndBoom = loadSound('../sounds/boom.mp3');
+export let sndParadox = loadSound('../sounds/Petos Paradox.mp3');
+export let sndDysonSphere = loadSound('../sounds/Dyson Sphere.mp3');
 
 export function renderItem(item: DrawQueueItem) {
     switch (item.type) {
