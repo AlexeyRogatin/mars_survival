@@ -725,6 +725,15 @@ export function drawLight(x: number, y: number, radius: number) {
         alpha = 1;
     }
 
+    const DECREASE_TIME = 360;
+    const RADIUS_DECREASE = 30;
+
+    if (timers[dayTimer] % DECREASE_TIME < DECREASE_TIME / 2) {
+        radius = radius + (timers[dayTimer] % DECREASE_TIME) / DECREASE_TIME * RADIUS_DECREASE;
+    } else {
+        radius = radius + (DECREASE_TIME / 2 - timers[dayTimer] % (DECREASE_TIME / 2)) / DECREASE_TIME * RADIUS_DECREASE;
+    }
+
     if (x > camera.x - camera.width * 0.5 - radius &&
         x < camera.x + camera.width * 0.5 + radius &&
         y > camera.y - camera.height * 0.5 - radius &&
@@ -1682,6 +1691,8 @@ function updateTile(tileType: TileType, tile: Tile) {
 
     if (globalBoss && tile.upperLayer.type !== TileType.NONE && distanceBetweenPoints(globalBoss.x, globalBoss.y, tile.x * TILE.width, tile.y * TILE.height) <= globalBoss.height / 2 + tile.width / 2) {
         tile.upperLayer.type = TileType.NONE;
+        tile.toughness = 0;
+        tile.firstToughness = 0;
         burstParticles({
             x: tile.x * TILE.width,
             y: tile.y * TILE.height,
@@ -1704,11 +1715,15 @@ function updateTile(tileType: TileType, tile: Tile) {
 }
 
 function updateTileMap() {
-    for (let y = 0; y < TILE.chunkCountY * TILE.chunkSizeY; y++) {
-        for (let x = 0; x < TILE.chunkCountX * TILE.chunkSizeX; x++) {
+    let firstTile = { x: Math.round((camera.x - VOLCANO_RADIUS) / TILE.width), y: Math.round((camera.y - VOLCANO_RADIUS) / TILE.width) };
+    let lastTile = { x: Math.round((camera.x + VOLCANO_RADIUS) / TILE.width), y: Math.round((camera.y + VOLCANO_RADIUS) / TILE.width) };
+    for (let y = firstTile.y; y < lastTile.y; y++) {
+        for (let x = firstTile.x; x < lastTile.x; x++) {
             let tile = map[getIndexFromCoords(x, y)];
-            updateTile(tile.baseLayer.type, tile);
-            updateTile(tile.upperLayer.type, tile);
+            if (tile) {
+                updateTile(tile.baseLayer.type, tile);
+                updateTile(tile.upperLayer.type, tile);
+            }
         }
     }
 }
@@ -2589,10 +2604,10 @@ function updateGameObject(gameObject: GameObject) {
                         && map[tileIndex].baseLayer.type !== TileType.VOLCANO) {
                         map[tileIndex].baseLayer.type = TileType.EARTH;
                         map[tileIndex].baseLayer.variant = 1;
-                        map[tileIndex].upperLayer.type = TileType.IGNEOUS;
-                        map[tileIndex].toughness = 500;
-                        map[tileIndex].firstToughness = 500;
-                        map[tileIndex].oreCount = 1;
+                        map[tileIndex].upperLayer.type = TileType.LAVA;
+                        map[tileIndex].toughness = 0;
+                        map[tileIndex].firstToughness = 0;
+                        map[tileIndex].upperLayer.variant = randomInt(1, 2);
                     }
                 }
             }
@@ -2883,6 +2898,8 @@ function updateGameObject(gameObject: GameObject) {
                     let tile = map[tileIndex];
                     if (tile.upperLayer.type !== TileType.NONE && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
                         tile.upperLayer.type = TileType.NONE;
+                        tile.toughness = 0;
+                        tile.firstToughness = 0;
                         burstParticles({
                             x: tile.x * TILE.width,
                             y: tile.y * TILE.height,
@@ -2953,6 +2970,7 @@ function resetClicks() {
 }
 
 let playText = addMenuText(-camera.width / 2 + 165, -camera.height / 2 + 400, 130, 60, 'играть', 'White', 40, Layer.UI);
+let controlsText = addMenuText(-camera.width / 2 + 215, -camera.height / 2 + 450, 130, 60, 'управление', 'White', 40, Layer.UI);
 
 function loopMenu() {
     camera.x = 0;
@@ -2973,6 +2991,15 @@ function loopMenu() {
     } else {
         playText.text = 'играть';
     }
+
+    // if (controlsText.mouseOn && canBeginGame) {
+    //     controlsText.text = 'УПРАВЛЕНИЕ';
+    //     if (mouse.wentDown) {
+
+    //     }
+    // } else {
+    //     controlsText.text = 'управление';
+    // }
 
     resetClicks();
 }
@@ -3095,6 +3122,7 @@ function loopGame() {
         gameState = GameState.MENU;
 
         playText = addMenuText(-camera.width / 2 + 165, -camera.height / 2 + 400, 130, 60, 'играть', 'White', 40, Layer.UI);
+        controlsText = addMenuText(-camera.width / 2 + 215, -camera.height / 2 + 450, 130, 60, 'управление', 'White', 40, Layer.UI);
     }
 }
 
