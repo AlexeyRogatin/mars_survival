@@ -1680,7 +1680,7 @@ function updateTile(tileType: TileType, tile: Tile) {
         } break;
     }
 
-    if (globalBoss && tile.upperLayer && distanceBetweenPoints(globalBoss.x, globalBoss.y, tile.x * TILE.width, tile.y * TILE.height) <= globalBoss.height / 2 + tile.width / 2) {
+    if (globalBoss && tile.upperLayer.type !== TileType.NONE && distanceBetweenPoints(globalBoss.x, globalBoss.y, tile.x * TILE.width, tile.y * TILE.height) <= globalBoss.height / 2 + tile.width / 2) {
         tile.upperLayer.type = TileType.NONE;
         burstParticles({
             x: tile.x * TILE.width,
@@ -1756,7 +1756,7 @@ function updateGameObject(gameObject: GameObject) {
         if (!craftMode) {
             buttonAngle = 0;
         }
-        drawSprite(camera.x - camera.width / 2 + 10, camera.y - camera.height / 4, imgArrow, buttonAngle, 30, 50, false, Layer.UI);
+        drawSprite(camera.x - camera.width / 2 + 45 / 2, camera.y - camera.height / 4, imgArrow, buttonAngle, 45, 75, false, Layer.UI);
 
         //жизнь
         let width = gameObject.hitpoints / gameObject.maxHitpoints * STRIPE_WIDTH;
@@ -2046,34 +2046,11 @@ function updateGameObject(gameObject: GameObject) {
             }
         }
 
-        //меняем крафты
-
-        if (craftMode && mouse.worldX > camera.x - camera.width / 2 + 130 &&
-            mouse.worldX < camera.x - camera.width / 2 + 170 &&
-            mouse.worldY > camera.y - camera.height / 4 + 2 &&
-            mouse.worldY < camera.y - camera.height / 4 + 30 &&
-            RECIPES[firstRecipeIndex - 1]) {
-            canUseItems = false;
-            if (mouse.wentDown) {
-                firstRecipeIndex--;
-            }
-        }
-        if (craftMode && mouse.worldX > camera.x - camera.width / 2 + 130 &&
-            mouse.worldX < camera.x - camera.width / 2 + 170 &&
-            mouse.worldY > camera.y - camera.height / 4 + 422 &&
-            mouse.worldY < camera.y - camera.height / 4 + 450 &&
-            RECIPES[firstRecipeIndex + 3]) {
-            canUseItems = false;
-            if (mouse.wentDown) {
-                firstRecipeIndex++;
-            }
-        }
-
         //время крафта
-        if (mouse.worldX > camera.x - camera.width / 2 - 10 &&
-            mouse.worldX < camera.x - camera.width / 2 + 25 &&
-            mouse.worldY > camera.y - camera.height / 4 - 25 &&
-            mouse.worldY < camera.y - camera.height / 4 + 25
+        if (mouse.worldX > camera.x - camera.width / 2 &&
+            mouse.worldX < camera.x - camera.width / 2 + 45 &&
+            mouse.worldY > camera.y - camera.height / 4 - 37.5 &&
+            mouse.worldY < camera.y - camera.height / 4 + 37.5
         ) {
             canUseItems = false;
             if (mouse.wentDown) {
@@ -2081,14 +2058,35 @@ function updateGameObject(gameObject: GameObject) {
             }
         }
         if (craftMode) {
+            //меняем крафты
+            if (mouse.worldX > camera.x - camera.width / 2 + 130 &&
+                mouse.worldX < camera.x - camera.width / 2 + 170 &&
+                mouse.worldY > camera.y - camera.height / 4 + 9 &&
+                mouse.worldY < camera.y - camera.height / 4 + 39 &&
+                RECIPES[firstRecipeIndex - 1]) {
+                canUseItems = false;
+                if (mouse.wentDown) {
+                    firstRecipeIndex--;
+                }
+            }
+            if (mouse.worldX > camera.x - camera.width / 2 + 130 &&
+                mouse.worldX < camera.x - camera.width / 2 + 170 &&
+                mouse.worldY > camera.y - camera.height / 4 + 438 &&
+                mouse.worldY < camera.y - camera.height / 4 + 466 &&
+                RECIPES[firstRecipeIndex + 3]) {
+                canUseItems = false;
+                if (mouse.wentDown) {
+                    firstRecipeIndex++;
+                }
+            }
             //табличка
-            drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 200 + 25, imgCrafts, 0, 450, 533, false, Layer.UI);
+            drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 200 + 39, imgCrafts, 0, 450, 533, false, Layer.UI);
             //спрайты предметов
             for (let itemIndex = 0; itemIndex < 3; itemIndex++) {
-                drawSprite(camera.x - camera.width / 2 + 60, camera.y - camera.height / 4 + 92 + 133 * itemIndex,
+                drawSprite(camera.x - camera.width / 2 + 60, camera.y - camera.height / 4 + 110 + 133 * itemIndex,
                     RECIPES[firstRecipeIndex + itemIndex].sprite, 0, 70, 70, false, Layer.UI);
 
-                drawText(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 47 + 133 * itemIndex,
+                drawText(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 63 + 133 * itemIndex,
                     'white', RECIPES[firstRecipeIndex + itemIndex].name, 25, 'center', Layer.UI);
 
                 //их составляющие
@@ -2099,12 +2097,12 @@ function updateGameObject(gameObject: GameObject) {
                     }
                     drawSprite(
                         camera.x - camera.width / 2 + 130 + 50 * partIndex - 150 * row,
-                        camera.y - camera.height / 4 + 92 + 133 * itemIndex + 50 * row,
+                        camera.y - camera.height / 4 + 106 + 133 * itemIndex + 50 * row,
                         RECIPES[firstRecipeIndex + itemIndex].parts[partIndex].sprite, 0, 30, 30, false, Layer.UI
                     );
                     drawText(
                         camera.x - camera.width / 2 + 133 + 50 * partIndex - 150 * row,
-                        camera.y - camera.height / 4 + 72 + 133 * itemIndex + 50 * row,
+                        camera.y - camera.height / 4 + 86 + 133 * itemIndex + 50 * row,
                         'white', `${RECIPES[firstRecipeIndex + itemIndex].parts[partIndex].count}`, 15, 'center', Layer.UI
                     );
                 }
@@ -2114,12 +2112,12 @@ function updateGameObject(gameObject: GameObject) {
                 if (
                     mouse.worldX >= camera.x - camera.width / 2 &&
                     mouse.worldX <= camera.x - camera.width / 2 + 300 &&
-                    mouse.worldY >= camera.y - camera.height / 4 + 25 + 133 * itemIndex &&
-                    mouse.worldY <= camera.y - camera.height / 4 + 133 + 25 + 133 * itemIndex
+                    mouse.worldY >= camera.y - camera.height / 4 + 39 + 133 * itemIndex &&
+                    mouse.worldY <= camera.y - camera.height / 4 + 133 + 39 + 133 * itemIndex
                 ) {
-                    drawRect((camera.x * 2 - camera.width + 300) / 2, camera.y - camera.height / 4 + 91.5 + 133 * itemIndex, 300, 133, 0, 'green', 5, Layer.UI);
+                    drawRect((camera.x * 2 - camera.width + 300) / 2, camera.y - camera.height / 4 + 105.5 + 133 * itemIndex, 300, 133, 0, 'green', 5, Layer.UI);
                     canUseItems = false;
-                    drawSprite(camera.x + camera.width / 2 - 250, camera.y, imgDesk, 0, 500, 250, false, Layer.UI);
+                    drawSprite(camera.x + camera.width / 2 - 250, camera.y, imgDesk, 0, 500, 200, false, Layer.UI);
                     drawText(
                         camera.x + camera.width / 2 - 475, camera.y - 60, 'white',
                         RECIPES[firstRecipeIndex + itemIndex].description1, 28, 'left', Layer.UI
@@ -2137,8 +2135,8 @@ function updateGameObject(gameObject: GameObject) {
                     }
                 }
                 //стрелочки
-                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 15, imgArrow1, 0, 40, 26, false, Layer.UI);
-                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 435, imgArrow1, 1 * Math.PI, 40, 26, false, Layer.UI);
+                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 25, imgArrow1, 0, 40, 26, false, Layer.UI);
+                drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 453, imgArrow1, 1 * Math.PI, 40, 26, false, Layer.UI);
             }
         }
 
@@ -2248,7 +2246,7 @@ function updateGameObject(gameObject: GameObject) {
                         }
                     } else if (inventory[mainSlot].item === Item.SHOCKPROOF_BODY) {
                         if (gameObject.sprite !== imgShockProofBody) {
-                            gameObject.hitpoints = 150;
+                            gameObject.hitpoints = gameObject.hitpoints / gameObject.maxHitpoints * 150;
                             gameObject.maxHitpoints = 150;
                             gameObject.sprite = imgShockProofBody;
                             removeItem(Item.SHOCKPROOF_BODY, 1);
@@ -2883,7 +2881,7 @@ function updateGameObject(gameObject: GameObject) {
                 }
                 for (let tileIndex = 0; tileIndex < map.length; tileIndex++) {
                     let tile = map[tileIndex];
-                    if (tile.upperLayer && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
+                    if (tile.upperLayer.type !== TileType.NONE && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
                         tile.upperLayer.type = TileType.NONE;
                         burstParticles({
                             x: tile.x * TILE.width,
@@ -2981,6 +2979,12 @@ function loopMenu() {
 
 function loopGame() {
     updateTileMap();
+
+    //посмертная табличка
+
+    if (globalPlayer.exists === false) {
+        drawText(camera.x, camera.y, 'white', 'Не время сдаваться, вы справитесь. Нажмите на R для меню', 45, 'center', Layer.UI);
+    }
 
     if (timers[gameTimer] < eventEnd - timeBetweenEvents) {
         event = Event.METEORITE_RAIN;
