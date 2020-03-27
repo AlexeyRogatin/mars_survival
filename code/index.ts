@@ -9,7 +9,7 @@ import {
     imgVolcano, imgMagmaBall, imgStorage, imgGoldenCamera, imgExtraSlotItem, imgAlert, imgShockProofBody, imgMeteorite, imgIgneous,
     imgIgneousItem, imgIgneousIngot, imgMeteoriteStuff, imgBoss, imgArrow2, imgManipulator, imgMechanicalHand, imgEnergy, imgHp, imgBossReadyToAttack,
     imgBossAttack, imgBossAttack1, imgBossReadyToAttack1, imgLazer, imgLazer1, camera, handleResize, imgEdge4, imgEdge3, imgEdge2_1, imgEdge2_3,
-    imgEdge2_2, imgEdge1, imgSide1, imgMenu, canBeginGame, playSound, sndMining, sndGeyser, sndVolcanoBoom, sndBoom, imgTime, imgDesk, sndParadox, sndDysonSphere,
+    imgEdge2_2, imgEdge1, imgSide1, imgMenu, canBeginGame, playSound, sndMining, sndGeyser, sndVolcanoBoom, sndBoom, imgTime, imgDesk, sndParadox, sndDysonSphere, imgBossHp, imgKnowledgeOfBallistics, imgShakingDetector,
 } from "./resources";
 
 class InventorySlot {
@@ -104,7 +104,9 @@ class GameObject {
     doNotDraw: boolean;
 
     sunBateryLvl: number;
-    cameraLvl: number;
+    luckyCamera: boolean;
+    knowledgeOfBallistics: boolean;
+    shakingDetector: boolean;
 
     stuckable: boolean;
 
@@ -179,7 +181,6 @@ enum TileType {
     IGNEOUS,
 }
 
-
 enum Item {
     NONE,
     IRON,
@@ -194,6 +195,8 @@ enum Item {
     SILIKON,
     STORAGE,
     GOLDEN_CAMERA,
+    KNOWLEDGE_OF_BALLISTICS,
+    SHAKING_DETECTOR,
     EXTRA_SLOT,
     SHOCKPROOF_BODY,
     IGNEOUS,
@@ -233,7 +236,7 @@ const MAGMA_BALL_SPEED = 35;
 const METEORITE_SPEED = 35;
 const LAVA_BALL_SPEED = 15;
 
-const METEOR_STUFF_COOLDOWN = 500;
+const METEOR_STUFF_COOLDOWN = 250;
 
 const MAX_RANGE = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED / GRAVITATION;
 
@@ -350,10 +353,24 @@ const RECIPES: Recipe[] = [
     },
     {
         result: Item.GOLDEN_CAMERA,
-        parts: [{ item: Item.AURIT_INGOT, count: 40, sprite: imgAuritIngot }],
+        parts: [{ item: Item.AURIT_INGOT, count: 15, sprite: imgAuritIngot }],
         sprite: imgGoldenCamera,
         name: 'Зоркая камера',
-        description: 'Действительно ауритовая вещь! Позволяет видеть опасности, если вы такие слепые',
+        description: 'Действительно ауритовая вещь! Позволяет видеть врагов издалека. Выводит на экран жизни врагов и их местонахождение',
+    },
+    {
+        result: Item.KNOWLEDGE_OF_BALLISTICS,
+        parts: [{ item: Item.SILIKON, count: 60, sprite: imgSiliconItem }],
+        sprite: imgKnowledgeOfBallistics,
+        name: 'Знание баллистики',
+        description: 'С помощью силикона получилось починить книгу. Катапульты так похожи на вулканы...',
+    },
+    {
+        result: Item.SHAKING_DETECTOR,
+        parts: [{ item: Item.IRON, count: 30, sprite: imgIronIngot }],
+        sprite: imgShakingDetector,
+        name: 'Детектор тряски',
+        description: 'Настроен различать самые мелкие колебания, даже колебания от гейзеров.',
     },
     {
         result: Item.SHOCKPROOF_BODY,
@@ -372,8 +389,7 @@ const RECIPES: Recipe[] = [
     },
 ];
 
-const GAME_LENGTH = ONE_DAY;
-
+const GAME_LENGTH = ONE_DAY * 3;
 
 let timers: number[] = [];
 
@@ -674,8 +690,11 @@ export function drawText(x: number, y: number, width: number, intervalsBettweenL
             while (wordNumber < words.length) {
                 textNumber++;
                 let textSample: string = '';
-                while (ctx.measureText(textSample).width + ctx.measureText(words[wordNumber]).width < width && words[wordNumber]) {
+                while (ctx.measureText(textSample).width + ctx.measureText(words[wordNumber]).width < width && words[wordNumber] && words[wordNumber] !== '/') {
                     textSample += words[wordNumber] + ' ';
+                    wordNumber++;
+                }
+                if (words[wordNumber] === '/') {
                     wordNumber++;
                 }
                 console.log(textSample);
@@ -790,7 +809,9 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         doNotDraw: false,
 
         sunBateryLvl: 0,
-        cameraLvl: 0,
+        luckyCamera: false,
+        shakingDetector: false,
+        knowledgeOfBallistics: false,
 
         stuckable: false,
 
@@ -838,8 +859,11 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         gameObject.sprite = imgBoss;
         gameObject.width = 800;
         gameObject.height = 600;
-        gameObject.speedLimit = 15;
-        gameObject.rotationSpeed = 0.01;
+        gameObject.speedLimit = 10;
+        gameObject.rotationSpeed = 0.2;
+        gameObject.accelConst = 0.1;
+        gameObject.hitpoints = 5000;
+        gameObject.maxHitpoints = 5000;
         gameObject.specialTimer = addTimer(100);
     }
 
@@ -1338,7 +1362,7 @@ function updateTile(tileType: TileType, tile: Tile) {
                 ) {
 
 
-                    if (globalPlayer.cameraLvl === 1 && timers[tile.specialTimer] < burstDuration + 50 && timers[tile.specialTimer] > burstDuration) {
+                    if (globalPlayer.shakingDetector && timers[tile.specialTimer] < burstDuration + 50 && timers[tile.specialTimer] > burstDuration) {
                         drawSprite(tile.x * tile.width, tile.y * tile.height, imgAlert, 0, tile.width, tile.height, false, Layer.UPPER_TILE);
                     }
 
@@ -1743,7 +1767,7 @@ function updateGameObject(gameObject: GameObject) {
         //стрелка на босса
 
         if (
-            globalBoss &&
+            globalBoss && gameObject.luckyCamera &&
             !(
                 globalBoss.x > camera.x - camera.width / 2 &&
                 globalBoss.x < camera.x + camera.width / 2 &&
@@ -2250,9 +2274,19 @@ function updateGameObject(gameObject: GameObject) {
                         }
                     }
                     else if (inventory[mainSlot].item === Item.GOLDEN_CAMERA) {
-                        if (gameObject.cameraLvl === 0) {
-                            gameObject.cameraLvl = 1;
+                        if (!gameObject.luckyCamera) {
+                            gameObject.luckyCamera = true;
                             removeItem(Item.GOLDEN_CAMERA, 1);
+                        }
+                    } else if (inventory[mainSlot].item === Item.SHAKING_DETECTOR) {
+                        if (!gameObject.shakingDetector) {
+                            gameObject.shakingDetector = true;
+                            removeItem(Item.SHAKING_DETECTOR, 1);
+                        }
+                    } else if (inventory[mainSlot].item === Item.KNOWLEDGE_OF_BALLISTICS) {
+                        if (!gameObject.knowledgeOfBallistics) {
+                            gameObject.knowledgeOfBallistics = true;
+                            removeItem(Item.KNOWLEDGE_OF_BALLISTICS, 1);
                         }
                     } else if (inventory[mainSlot].item === Item.EXTRA_SLOT) {
                         if (slotCount === 5) {
@@ -2449,10 +2483,10 @@ function updateGameObject(gameObject: GameObject) {
 
         let cameraSprite = imgNone;
 
-        if (gameObject.cameraLvl === 0) {
+        if (!gameObject.luckyCamera) {
             cameraSprite = imgCamera;
         }
-        if (gameObject.cameraLvl === 1) {
+        if (gameObject.luckyCamera) {
             cameraSprite = imgGoldenCamera;
         }
 
@@ -2568,7 +2602,7 @@ function updateGameObject(gameObject: GameObject) {
 
         let rangeProjections = rotateVector(range, 0, gameObject.angle);
 
-        if (globalPlayer.cameraLvl === 1) {
+        if (globalPlayer.knowledgeOfBallistics) {
             drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 50, 'red', 3, Layer.UPPER_TILE);
             drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 90, 90, false, Layer.UPPER_TILE);
         }
@@ -2625,10 +2659,6 @@ function updateGameObject(gameObject: GameObject) {
 
         let speedZ = METEORITE_SPEED * Math.sin(gameObject.angleZ);
 
-        let speedXY = METEORITE_SPEED * Math.cos(gameObject.angleZ);
-
-        let speedVector = rotateVector(speedXY, 0, gameObject.angle);
-
         let height = CAMERA_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
 
         gameObject.width = (100 + height);
@@ -2648,11 +2678,13 @@ function updateGameObject(gameObject: GameObject) {
             makeScreenShake(strength, 15);
             playSound(sndBoom, volume * 0.5);
 
-            burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
             let x = Math.round(gameObject.x / TILE.width);
             let y = Math.round(gameObject.y / TILE.height);
             let tileIndex = getIndexFromCoords(x, y);
             if (gameObject.summoned) {
+                if (globalBoss && distanceBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y) <= globalBoss.height / 2 + gameObject.width / 2) {
+                    globalBoss.hitpoints -= 100;
+                }
                 if (map[tileIndex].upperLayer) {
                     map[tileIndex].upperLayer.type = TileType.NONE;
                 }
@@ -2663,6 +2695,7 @@ function updateGameObject(gameObject: GameObject) {
                     map[tileIndex].oreCount = 0;
                 }
             } else {
+                burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
                 let chance = randomFloat(0, 1);
                 if (chance < 0.25) {
                     if (
@@ -2703,7 +2736,7 @@ function updateGameObject(gameObject: GameObject) {
 
         let rangeProjections = rotateVector(range, 0, gameObject.angle);
 
-        if (globalPlayer.cameraLvl === 1) {
+        if (globalPlayer.knowledgeOfBallistics) {
             drawCircle(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], 10, 'red', 3, Layer.UPPER_TILE);
             drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 18, 18, false, Layer.UPPER_TILE);
         }
@@ -2729,21 +2762,41 @@ function updateGameObject(gameObject: GameObject) {
         //прорисовка
         drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, Layer.BOSS);
 
-        if (distanceBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y) <= gameObject.height / 2 && timers[globalPlayer.unhitableTimer] === 0) {
-            globalPlayer.hitpoints -= 50;
+        if (distanceBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y) <= gameObject.height / 2 + globalPlayer.width / 2 && timers[globalPlayer.unhitableTimer] === 0) {
+            globalPlayer.hitpoints -= 25;
             timers[globalPlayer.unhitableTimer] = 150;
+            if (gameObject.attack === 0) {
+                timers[gameObject.specialTimer] = 40;
+            }
+        }
+
+        if (globalBoss && globalPlayer.luckyCamera) {
+            const STRIPE_WIDTH = 900;
+            const STRIPE_HEIGHT = 50;
+            let width = gameObject.hitpoints / gameObject.maxHitpoints * STRIPE_WIDTH;
+
+            drawLinearGradient(
+                camera.x, camera.y - camera.height / 2 + 50, width, STRIPE_HEIGHT,
+                ['red', `rgb(${(1 - width / STRIPE_WIDTH) * 255},0,0,1)`], [0, 1], Layer.UI
+            );
+
+            drawSprite(camera.x, camera.y - camera.height / 2 + 50, imgBossHp, 0, STRIPE_WIDTH, STRIPE_HEIGHT, false, Layer.UI);
         }
 
         if (timers[gameObject.specialTimer] === 0) {
-            if (distanceBetweenPoints(globalBoss.x, globalBoss.y, globalPlayer.x, globalPlayer.y) > camera.width * 4) {
+            if (distanceBetweenPoints(globalBoss.x, globalBoss.y, globalPlayer.x, globalPlayer.y) > camera.width * 1.5) {
+                gameObject.angle = angleBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y);
                 gameObject.attack = 0;
             } else {
-                gameObject.attack = randomInt(0, 2);
+                gameObject.attack = randomInt(0, 3);
+                if (distanceBetweenPoints(globalBoss.x, globalBoss.y, globalPlayer.x, globalPlayer.y) >= 600 && gameObject.attack === 1) {
+                    gameObject.attack = randomInt(2, 3);
+                }
             }
             gameObject.goForward = false;
             gameObject.goLeft = false;
             gameObject.goRight = false;
-            if (gameObject.attack === 1) {
+            if (gameObject.attack === 1 || gameObject.attack === 2) {
                 timers[gameObject.specialTimer] = 300;
             } else {
                 timers[gameObject.specialTimer] = 600;
@@ -2751,6 +2804,8 @@ function updateGameObject(gameObject: GameObject) {
             gameObject.rotationSpeed = 0.01;
             gameObject.sprite = imgBoss;
         }
+
+        //сближения
 
         if (gameObject.attack === 0) {
             let angle = angleBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y);
@@ -2778,12 +2833,17 @@ function updateGameObject(gameObject: GameObject) {
                     accel: 0,
                 })
             }
+
+            if (gameObject.goForward) {
+                gameObject.rotationSpeed = 0.0005;
+            }
         }
 
+        //близкой дистанции
         if (gameObject.attack === 1) {
             if (timers[gameObject.specialTimer] > 100) {
-                if (timers[gameObject.specialTimer] < 300 && timers[gameObject.specialTimer] % 10 === 0) {
-                    for (let lavaIndex = 0; lavaIndex < 10; lavaIndex++) {
+                if (timers[gameObject.specialTimer] < 300) {
+                    for (let i = 0; i < 5; i++) {
                         addGameObject(GameObjectType.LAVA_BALL, gameObject.x, gameObject.y);
                     }
                 }
@@ -2795,15 +2855,29 @@ function updateGameObject(gameObject: GameObject) {
             gameObject.goLeft = true;
         }
 
+        //дальней дистанции
         if (gameObject.attack === 2) {
-            if (timers[gameObject.specialTimer] >= 300) {
+            if (timers[gameObject.specialTimer] > 100) {
+                if (timers[gameObject.specialTimer] < 300 && timers[gameObject.specialTimer] % 10 === 0) {
+                    addGameObject(GameObjectType.MAGMA_BALL, gameObject.x, gameObject.y);
+                }
+                gameObject.rotationSpeed += 0.0015;
+            }
+            if (timers[gameObject.specialTimer] < 100) {
+                gameObject.rotationSpeed -= 0.003;
+            }
+            gameObject.goLeft = true;
+        }
+
+        if (gameObject.attack === 3) {
+            if (timers[gameObject.specialTimer] >= 500) {
                 if (timers[gameObject.specialTimer] % 2 === 0) {
                     gameObject.sprite = imgBossReadyToAttack1;
                 } else {
                     gameObject.sprite = imgBossReadyToAttack;
                 }
             } else {
-                gameObject.rotationSpeed = 0.005;
+                gameObject.rotationSpeed = 0.003;
                 let angle = angleBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y);
                 const diff = normalizeAngle(gameObject.angle - angle);
 
@@ -2818,7 +2892,7 @@ function updateGameObject(gameObject: GameObject) {
                     gameObject.goLeft = false;
                 }
 
-                let lazerLength = 1500;
+                let lazerLength = camera.width * 1.5;
                 let vector = rotateVector(gameObject.width / 3 + lazerLength / 2, 1, -gameObject.angle);
                 if (timers[gameObject.specialTimer] % 2 === 0) {
                     gameObject.sprite = imgBossAttack;
@@ -2833,7 +2907,7 @@ function updateGameObject(gameObject: GameObject) {
                 ctx.translate(gameObject.x + vector[0], gameObject.y + vector[1]);
                 if (-286 / 796 * gameObject.height / 2 < rotatedDistanceFromPlayer[1] && 286 / 796 * gameObject.height / 2 > rotatedDistanceFromPlayer[1]
                     && -lazerLength / 2 < rotatedDistanceFromPlayer[0] && lazerLength / 2 > rotatedDistanceFromPlayer[0]) {
-                    globalPlayer.hitpoints -= 0.5;
+                    globalPlayer.hitpoints -= 0.1;
                 }
                 ctx.restore();
             }
@@ -2843,6 +2917,9 @@ function updateGameObject(gameObject: GameObject) {
     }
 
     if (gameObject.type === GameObjectType.MANIPULATOR) {
+        if (!globalBoss.exists) {
+            gameObject.exists = false;
+        }
         //прорисовка
         drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle, gameObject.width, gameObject.height, false, Layer.MANIPULATOR);
         gameObject.angle = globalBoss.angle;
@@ -2874,11 +2951,7 @@ function updateGameObject(gameObject: GameObject) {
         if (gameObject.neededX && gameObject.neededY) {
             let angle = angleBetweenPoints(gameObject.x, gameObject.y, globalBoss.x + gameObject.neededX, globalBoss.y + gameObject.neededY);
             let speed;
-            if (globalBoss.goLeft || globalBoss.goRight) {
-                speed = globalBoss.rotationSpeed * globalBoss.width * 2;
-            } else {
-                speed = Math.abs(globalBoss.speed) * 2;
-            }
+            speed = Math.abs(globalBoss.speed) * 2 + globalBoss.rotationSpeed * globalBoss.width * 2;
             let movementVector = rotateVector(speed, 0, angle);
             if ((gameObject.x < globalBoss.x + gameObject.neededX && gameObject.x + movementVector[0] > globalBoss.x + gameObject.neededX) ||
                 (gameObject.x > globalBoss.x + gameObject.neededX && gameObject.x + movementVector[0] < globalBoss.x + gameObject.neededX)) {
@@ -2920,7 +2993,23 @@ function updateGameObject(gameObject: GameObject) {
     }
 
     //смерть
-    if ((gameObject.hitpoints <= 0 || timers[gameObject.energy] <= 0) && gameObject.type === GameObjectType.PLAYER) {
+    if ((gameObject.hitpoints <= 0) && (gameObject.type === GameObjectType.PLAYER || gameObject.type === GameObjectType.BOSS)) {
+        gameObject.exists = false;
+        if (gameObject.type === GameObjectType.BOSS) {
+            burstParticles({
+                x: gameObject.x,
+                y: gameObject.y,
+                color: 'red',
+                speed: 7,
+                size: 40,
+                count: 100,
+                decrease: 0.2,
+                accel: -0.01
+            })
+        }
+    }
+
+    if (timers[gameObject.energy] <= 0 && gameObject.type === GameObjectType.PLAYER) {
         gameObject.exists = false;
     }
 
@@ -3008,7 +3097,7 @@ function loopMenu() {
     if (instructions) {
         drawText(
             camera.x, camera.y, 150, 80, 'White',
-            '1)Перемещаться на WASD 2)Q-выбросить вещь 3)R-рестарт 4)Собирать вещи, нажимая на клетки поля мышкой Всё, всех люблю, ня, пока',
+            '1)Перемещаться на WASD / 2)Q-выбросить вещь / 3)R-рестарт / 4)Собирать вещи, нажимая на клетки поля мышкой / Всё, всех люблю, ня, пока',
             60, 'left', Layer.UI
         );
     }
@@ -3029,10 +3118,15 @@ function loopGame() {
     updateTileMap();
 
     //посмертная табличка
+    //победа
 
-    if (globalPlayer.exists === false) {
+    if (globalBoss && globalBoss.exists === false) {
+        drawText(camera.x, camera.y, 0, 0, 'white', 'Вы - выигрывающий) Спасибо, что поиграли в демо версию, ждите новых обновлений', 45, 'center', Layer.UI);
+    } else if (globalPlayer.exists === false) {
         drawText(camera.x, camera.y, 0, 0, 'white', 'Не время сдаваться, вы справитесь. Нажмите на R для меню', 45, 'center', Layer.UI);
     }
+
+
 
     if (timers[gameTimer] < eventEnd - timeBetweenEvents) {
         event = Event.METEORITE_RAIN;
@@ -3066,36 +3160,37 @@ function loopGame() {
     }
 
     if (timers[gameTimer] === 1) {
-        let y = camera.y;
-        let x = camera.x;
-        while (
-            x > camera.x - camera.width &&
-            x < camera.x + camera.width &&
-            y > camera.x - camera.height &&
-            y < camera.y + camera.height
-        ) {
-            x = randomInt(camera.x - camera.width * 3, camera.y + camera.width * 3);
-            y = randomInt(camera.y - camera.height * 3, camera.y + camera.height * 3);
+        if (!globalBoss) {
+            let y = camera.y;
+            let x = camera.x;
+            while (
+                distanceBetweenPoints(globalPlayer.x, globalPlayer.y, x, y) <= camera.width * 1.5 ||
+                x < - TILE.width / 2 || x > -TILE.width / 2 + TILE.width * TILE.chunkCountX * TILE.chunkSizeX ||
+                y < -TILE.height / 2 || y > - TILE.height / 2 + TILE.height * TILE.chunkCountY * TILE.chunkSizeY
+            ) {
+                x = randomInt(globalPlayer.x - camera.width * 3, globalPlayer.y + camera.width * 3);
+                y = randomInt(globalPlayer.y - camera.height * 3, globalPlayer.y + camera.height * 3);
+            }
+            globalBoss = addGameObject(GameObjectType.BOSS, x, y);
+
+            musik.volume = 0;
+
+            musik = playSound(sndDysonSphere, 0.85, true);
+
+            let distanceFromManipulators = 500;
+            let hand1Angle = globalBoss.angle - 0.25 * Math.PI;
+            let hand1Vector = rotateVector(distanceFromManipulators, 0, hand1Angle);
+            addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand1Vector[0], globalBoss.y + hand1Vector[1]);
+            let hand2Angle = globalBoss.angle + 0.25 * Math.PI;
+            let hand2Vector = rotateVector(distanceFromManipulators, 0, hand2Angle);
+            addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand2Vector[0], globalBoss.y + hand2Vector[1]);
+            let hand3Angle = globalBoss.angle - 0.75 * Math.PI;
+            let hand3Vector = rotateVector(distanceFromManipulators, 0, hand3Angle);
+            addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand3Vector[0], globalBoss.y + hand3Vector[1]);
+            let hand4Angle = globalBoss.angle + 0.75 * Math.PI;
+            let hand4Vector = rotateVector(distanceFromManipulators, 0, hand4Angle);
+            addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand4Vector[0], globalBoss.y + hand4Vector[1]);
         }
-        globalBoss = addGameObject(GameObjectType.BOSS, x, y);
-
-        musik.volume = 0;
-
-        musik = playSound(sndDysonSphere, 0.85, true);
-
-        let distanceFromManipulators = 500;
-        let hand1Angle = globalBoss.angle - 0.25 * Math.PI;
-        let hand1Vector = rotateVector(distanceFromManipulators, 0, hand1Angle);
-        addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand1Vector[0], globalBoss.y + hand1Vector[1]);
-        let hand2Angle = globalBoss.angle + 0.25 * Math.PI;
-        let hand2Vector = rotateVector(distanceFromManipulators, 0, hand2Angle);
-        addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand2Vector[0], globalBoss.y + hand2Vector[1]);
-        let hand3Angle = globalBoss.angle - 0.75 * Math.PI;
-        let hand3Vector = rotateVector(distanceFromManipulators, 0, hand3Angle);
-        addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand3Vector[0], globalBoss.y + hand3Vector[1]);
-        let hand4Angle = globalBoss.angle + 0.75 * Math.PI;
-        let hand4Vector = rotateVector(distanceFromManipulators, 0, hand4Angle);
-        addGameObject(GameObjectType.MANIPULATOR, globalBoss.x + hand4Vector[0], globalBoss.y + hand4Vector[1]);
     }
 
     drawSprite(camera.x, camera.y, backBuffer, 0, camera.width, camera.height, false, Layer.FORGROUND);

@@ -208,6 +208,9 @@ export let imgSide1 = loadImage('../sprites/side1.png');
 export let imgMenu = loadImage('../sprites/menu.jpg');
 export let imgTime = loadImage('../sprites/timeAndCoords.png');
 export let imgDesk = loadImage('../sprites/desk.png');
+export let imgBossHp = loadImage('../sprites/bossHp.png');
+export let imgKnowledgeOfBallistics = loadImage('../sprites/knowledgeOfBallistics.png');
+export let imgShakingDetector = loadImage('../sprites/shakingDetector.png');
 
 export let sndMining = loadSound('../sounds/mining.mp3');
 export let sndGeyser = loadSound('../sounds/geyser.mp3');
