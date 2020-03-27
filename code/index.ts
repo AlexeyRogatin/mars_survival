@@ -51,9 +51,7 @@ class Recipe {
     result: Item;
     sprite: HTMLImageElement;
     name: string;
-    description1: string;
-    description2: string;
-    description3: string;
+    description: string;
 }
 
 
@@ -313,63 +311,49 @@ const RECIPES: Recipe[] = [
         parts: [{ item: Item.IRON, count: 20, sprite: imgIronItem },],
         sprite: imgMelter,
         name: 'Плавильня',
-        description1: 'Бегать с железом - это одно,',
-        description2: 'а с железными слитками - другое.',
-        description3: 'Можно поставить только на лаву',
+        description: 'Бегать с железом - это одно, а с железными слитками - другое. Можно поставить только на лаву',
     },
     {
         result: Item.SPLITTER,
         parts: [{ item: Item.IRON_INGOT, count: 5, sprite: imgIronIngot }, { item: Item.CRYSTAL, count: 10, sprite: imgCrystalItem }],
         sprite: imgSplitter,
         name: 'Расщепитель',
-        description1: 'Если сломать кристалл пополам,',
-        description2: 'много энергии не выделится.',
-        description3: 'Нужно что-то посерьёзнее',
+        description: 'Если сломать кристалл пополам, много энергии не выделится. Нужно что-то посерьёзнее',
     },
     {
         result: Item.STORAGE,
         parts: [{ item: Item.IRON_INGOT, count: 20, sprite: imgIronIngot }],
         sprite: imgStorage,
         name: 'Хранилище',
-        description1: 'Это сундук из Майнкрафта,',
-        description2: 'ни больше, ни меньше.',
-        description3: 'Хватит вопросов!',
+        description: 'Это сундук из Майнкрафта, ни больше, ни меньше. Хватит вопросов!',
     },
     {
         result: Item.TOOLKIT,
         parts: [{ item: Item.IRON_INGOT, count: 5, sprite: imgIronIngot }],
         sprite: imgToolkit,
         name: 'Ремнабор',
-        description1: 'Все травмы можно залатать,',
-        description2: 'если они не душевные.',
-        description3: 'Восполняет жизни (расходник)',
+        description: 'Все травмы можно залатать, если они не душевные. Восполняет жизни (расходник)',
     },
     {
         result: Item.EXTRA_SLOT,
         parts: [{ item: Item.IRON_INGOT, count: 40, sprite: imgIronIngot }],
         sprite: imgExtraSlotItem,
         name: 'Допслот',
-        description1: 'Как же замечательно иметь ещё',
-        description2: 'чуть-чуть места под рукой! Сюда',
-        description3: 'можно положить немного счастья.',
+        description: 'Как же замечательно иметь ещё чуть-чуть места под рукой! Сюда можно положить немного счастья.',
     },
     {
         result: Item.SUN_BATERY,
         parts: [{ item: Item.SILIKON, count: 15, sprite: imgSiliconItem }, { item: Item.CRYSTAL, count: 30, sprite: imgCrystalItem }],
         sprite: imgSunBatteryItem,
         name: 'Сол панель ур.1',
-        description1: 'Без батарей, как без рук!',
-        description2: 'Позволяет получать энергию днём;',
-        description3: 'уменьшает запас энергии в 2 раза...',
+        description: 'Без батарей, как без рук! Позволяет получать энергию днём; уменьшает запас энергии в 2 раза...',
     },
     {
         result: Item.GOLDEN_CAMERA,
         parts: [{ item: Item.AURIT_INGOT, count: 40, sprite: imgAuritIngot }],
         sprite: imgGoldenCamera,
         name: 'Зоркая камера',
-        description1: 'Действительно ауритовая вещь!',
-        description2: 'Позволяет видеть опасности,',
-        description3: 'если хорошо приглядеться.',
+        description: 'Действительно ауритовая вещь! Позволяет видеть опасности, если вы такие слепые',
     },
     {
         result: Item.SHOCKPROOF_BODY,
@@ -377,18 +361,14 @@ const RECIPES: Recipe[] = [
         { item: Item.AURIT_INGOT, count: 30, sprite: imgAuritIngot }],
         sprite: imgShockProofBody,
         name: 'Крепкое тело',
-        description1: 'Красивый ауритовый корпус говорит',
-        description2: 'о непрочности, но слой силикона',
-        description3: 'говорит обратное. Больше жизней',
+        description: 'Красивый ауритовый корпус говорит о непрочности, но слой силикона говорит обратное. Больше жизней',
     },
     {
         result: Item.METEORITE_STUFF,
         parts: [{ item: Item.IGNEOUS_INGOT, count: 20, sprite: imgIgneousIngot }],
         sprite: imgMeteoriteStuff,
         name: 'Метеопосох',
-        description1: 'Эта вещь может вызвать метеорит,',
-        description2: 'который упадёт на выбранную ',
-        description3: 'область. Хороший взрыв',
+        description: 'Эта вещь может вызвать метеорит, который упадёт на выбранную область. Хорошо бабахнуло',
     },
 ];
 
@@ -682,12 +662,28 @@ export function drawCircle(x: number, y: number, radius: number, color: string, 
     }
 }
 
-export function drawText(x: number, y: number, color: string, text: string, textSize: number, textAlign: CanvasTextAlign, layer = Layer.UI) {
+export function drawText(x: number, y: number, width: number, intervalsBettweenLines: number, color: string, text: string, textSize: number, textAlign: CanvasTextAlign, layer = Layer.UI) {
     if (x > camera.x - camera.width * 0.5 - textSize / 2 &&
         x < camera.x + camera.width * 0.5 + textSize / 2 &&
         y > camera.y - camera.height * 0.5 - textSize / 2 &&
         y < camera.y + camera.height * 0.5 + textSize / 2) {
-        drawQueue.push({ x, y, color: [color], text, layer, type: DrawQueueType.TEXT, textSize, textAlign });
+        if (width > 0 && ctx.measureText(text).width > width) {
+            let textNumber = -1;
+            let words = text.split(' ');
+            let wordNumber = 0;
+            while (wordNumber < words.length) {
+                textNumber++;
+                let textSample: string = '';
+                while (ctx.measureText(textSample).width + ctx.measureText(words[wordNumber]).width < width && words[wordNumber]) {
+                    textSample += words[wordNumber] + ' ';
+                    wordNumber++;
+                }
+                console.log(textSample);
+                drawQueue.push({ x, y: y + textNumber * intervalsBettweenLines, color: [color], text: textSample, layer, type: DrawQueueType.TEXT, textSize, textAlign });
+            }
+        } else {
+            drawQueue.push({ x, y, color: [color], text, layer, type: DrawQueueType.TEXT, textSize, textAlign });
+        }
     }
 }
 
@@ -1552,7 +1548,7 @@ function updateTile(tileType: TileType, tile: Tile) {
             drawLight(tile.x * TILE.width, tile.y * TILE.height, TILE.width * 0.75);
             upSprite = imgMelter;
             if (timers[tile.specialTimer] > 0) {
-                drawText(tile.x * TILE.width - 10, tile.y * TILE.height, 'blue', `${Math.round(timers[tile.specialTimer] / 60)}`, 30, 'left', Layer.UI);
+                drawText(tile.x * TILE.width - 10, tile.y * TILE.height, 0, 0, 'blue', `${Math.round(timers[tile.specialTimer] / 60)}`, 30, 'left', Layer.UI);
             }
             if (!mouse.isDown) {
                 tile.toughness = tile.firstToughness;
@@ -1811,18 +1807,18 @@ function updateGameObject(gameObject: GameObject) {
         let minute = hour / 60;
 
         drawText(
-            camera.x + camera.width / 2 - 151, camera.y - camera.height / 2 + 82, 'white',
+            camera.x + camera.width / 2 - 151, camera.y - camera.height / 2 + 82, 0, 0, 'white',
             `${Math.floor((ONE_DAY - timers[dayTimer]) / hour)} : ${Math.floor((ONE_DAY - timers[dayTimer]) / minute) % 60}`, 35, 'left', Layer.UI
         );
 
         //координаты
         drawText(
-            camera.x + camera.width / 2 - 68, camera.y - camera.height / 2 + 155, 'white',
+            camera.x + camera.width / 2 - 68, camera.y - camera.height / 2 + 155, 0, 0, 'white',
             `${Math.round((gameObject.x) / TILE.width)}`, 35, 'center', Layer.UI
         );
 
         drawText(
-            camera.x + camera.width / 2 - 68, camera.y - camera.height / 2 + 203, 'white',
+            camera.x + camera.width / 2 - 68, camera.y - camera.height / 2 + 203, 0, 0, 'white',
             `${Math.round((gameObject.y) / TILE.height)}`, 35, 'center', Layer.UI
         );
 
@@ -1833,7 +1829,7 @@ function updateGameObject(gameObject: GameObject) {
         }
 
         if (isInventoryFullForItem(Item.NONE)) {
-            drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, 'left', Layer.UI);
+            drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 0, 0, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, 'left', Layer.UI);
         }
 
         //падение в лаву
@@ -1948,7 +1944,7 @@ function updateGameObject(gameObject: GameObject) {
 
                 drawSprite(slotX, y, sprite, 0, SLOT_WIDTH - 10, SLOT_WIDTH - 10, false, Layer.UI);
                 if (inventory[itemIndex].count > 1) {
-                    drawText(slotX, y - SLOT_WIDTH / 2 - 12, 'green', `${inventory[itemIndex].count}`, 25, 'center', Layer.UI);
+                    drawText(slotX, y - SLOT_WIDTH / 2 - 12, 0, 0, 'green', `${inventory[itemIndex].count}`, 25, 'center', Layer.UI);
                 }
 
                 if (
@@ -2056,7 +2052,7 @@ function updateGameObject(gameObject: GameObject) {
                 }
                 drawSprite(x, y, sprite, 0, SLOT_WIDTH, SLOT_WIDTH, false, Layer.UI);
                 if (controlledStorage.inventory[slotIndex].count !== 0) {
-                    drawText(x, y - SLOT_WIDTH, 'green', `${controlledStorage.inventory[slotIndex].count}`, 25, 'center', Layer.UI);
+                    drawText(x, y - SLOT_WIDTH, 0, 0, 'green', `${controlledStorage.inventory[slotIndex].count}`, 25, 'center', Layer.UI);
                 }
 
                 if (
@@ -2114,7 +2110,7 @@ function updateGameObject(gameObject: GameObject) {
                 drawSprite(camera.x - camera.width / 2 + 60, camera.y - camera.height / 4 + 110 + 133 * itemIndex,
                     RECIPES[firstRecipeIndex + itemIndex].sprite, 0, 70, 70, false, Layer.UI);
 
-                drawText(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 63 + 133 * itemIndex,
+                drawText(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 63 + 133 * itemIndex, 0, 0,
                     'white', RECIPES[firstRecipeIndex + itemIndex].name, 25, 'center', Layer.UI);
 
                 //их составляющие
@@ -2130,7 +2126,7 @@ function updateGameObject(gameObject: GameObject) {
                     );
                     drawText(
                         camera.x - camera.width / 2 + 133 + 50 * partIndex - 150 * row,
-                        camera.y - camera.height / 4 + 86 + 133 * itemIndex + 50 * row,
+                        camera.y - camera.height / 4 + 86 + 133 * itemIndex + 50 * row, 0, 0,
                         'white', `${RECIPES[firstRecipeIndex + itemIndex].parts[partIndex].count}`, 15, 'center', Layer.UI
                     );
                 }
@@ -2145,18 +2141,10 @@ function updateGameObject(gameObject: GameObject) {
                 ) {
                     drawRect((camera.x * 2 - camera.width + 300) / 2, camera.y - camera.height / 4 + 105.5 + 133 * itemIndex, 300, 133, 0, 'green', 5, Layer.UI);
                     canUseItems = false;
-                    drawSprite(camera.x + camera.width / 2 - 250, camera.y, imgDesk, 0, 500, 200, false, Layer.UI);
+                    drawSprite(camera.x + camera.width / 2 - 250, camera.y, imgDesk, 0, 500, 220, false, Layer.UI);
                     drawText(
-                        camera.x + camera.width / 2 - 475, camera.y - 60, 'white',
-                        RECIPES[firstRecipeIndex + itemIndex].description1, 28, 'left', Layer.UI
-                    );
-                    drawText(
-                        camera.x + camera.width / 2 - 475, camera.y, 'white',
-                        RECIPES[firstRecipeIndex + itemIndex].description2, 28, 'left', Layer.UI
-                    );
-                    drawText(
-                        camera.x + camera.width / 2 - 475, camera.y + 60, 'white',
-                        RECIPES[firstRecipeIndex + itemIndex].description3, 28, 'left', Layer.UI
+                        camera.x + camera.width / 2 - 475, camera.y - 75, 160, 50, 'white',
+                        RECIPES[firstRecipeIndex + itemIndex].description, 28, 'left', Layer.UI
                     );
                     if (mouse.wentDown) {
                         craftRecipe(RECIPES[firstRecipeIndex + itemIndex]);
@@ -2970,7 +2958,7 @@ function updateClickableTexts() {
             mouse.worldY < text.y + text.height / 2) {
             text.mouseOn = true;
         }
-        drawText(text.x, text.y, text.color, text.text, text.size, 'center', text.layer);
+        drawText(text.x, text.y, 0, 0, text.color, text.text, text.size, 'center', text.layer);
     }
 }
 
@@ -2992,7 +2980,7 @@ function loopMenu() {
     camera.y = 0;
 
     drawSprite(camera.x, camera.y, imgMenu, 0, camera.width, camera.height, false, Layer.TILE);
-    drawText(camera.x, camera.y - camera.height / 2 + 200, 'white', 'MEGA MARS 2D-3D SUPER EPIC SOMEWHAT SURVIVAL', 71, 'center', Layer.ON_TILE);
+    drawText(camera.x, camera.y - camera.height / 2 + 200, 0, 0, 'white', 'MEGA MARS 2D-3D SUPER EPIC SOMEWHAT SURVIVAL', 71, 'center', Layer.ON_TILE);
 
     updateClickableTexts()
 
@@ -3017,18 +3005,22 @@ function loopMenu() {
         controlsText.text = 'управление';
     }
 
-    // if (instructions) {
-    //     drawText(camera.x+camera.width/4,camera.y+camera.height/4,'black','Q-выбросить вещь', )
-    // }
+    if (instructions) {
+        drawText(
+            camera.x, camera.y, 150, 80, 'White',
+            '1)Перемещаться на WASD 2)Q-выбросить вещь 3)R-рестарт 4)Собирать вещи, нажимая на клетки поля мышкой Всё, всех люблю, ня, пока',
+            60, 'left', Layer.UI
+        );
+    }
 
-    // if (controlsText.mouseOn && canBeginGame) {
-    //     controlsText.text = 'УПРАВЛЕНИЕ';
-    //     if (mouse.wentDown) {
+    if (controlsText.mouseOn && canBeginGame) {
+        controlsText.text = 'УПРАВЛЕНИЕ';
+        if (mouse.wentDown) {
 
-    //     }
-    // } else {
-    //     controlsText.text = 'управление';
-    // }
+        }
+    } else {
+        controlsText.text = 'управление';
+    }
 
     resetClicks();
 }
@@ -3039,7 +3031,7 @@ function loopGame() {
     //посмертная табличка
 
     if (globalPlayer.exists === false) {
-        drawText(camera.x, camera.y, 'white', 'Не время сдаваться, вы справитесь. Нажмите на R для меню', 45, 'center', Layer.UI);
+        drawText(camera.x, camera.y, 0, 0, 'white', 'Не время сдаваться, вы справитесь. Нажмите на R для меню', 45, 'center', Layer.UI);
     }
 
     if (timers[gameTimer] < eventEnd - timeBetweenEvents) {
