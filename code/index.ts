@@ -1957,6 +1957,12 @@ function updateGameObject(gameObject: GameObject) {
                 if (inventory[itemIndex].item === Item.METEORITE_STUFF) {
                     sprite = imgMeteoriteStuff;
                 }
+                if (inventory[itemIndex].item === Item.SHAKING_DETECTOR) {
+                    sprite = imgShakingDetector;
+                }
+                if (inventory[itemIndex].item === Item.KNOWLEDGE_OF_BALLISTICS) {
+                    sprite = imgKnowledgeOfBallistics;
+                }
 
                 drawRect(slotX, y, SLOT_WIDTH, SLOT_WIDTH, 0, `rgb(00,33,66,1)`, 0, Layer.UI)
                 drawRect(slotX, y, SLOT_WIDTH, SLOT_WIDTH, 0, 'black', 5, Layer.UI);
@@ -2073,6 +2079,12 @@ function updateGameObject(gameObject: GameObject) {
                 }
                 if (controlledStorage.inventory[slotIndex].item === Item.METEORITE_STUFF) {
                     sprite = imgMeteoriteStuff;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.SHAKING_DETECTOR) {
+                    sprite = imgShakingDetector;
+                }
+                if (controlledStorage.inventory[slotIndex].item === Item.KNOWLEDGE_OF_BALLISTICS) {
+                    sprite = imgKnowledgeOfBallistics;
                 }
                 drawSprite(x, y, sprite, 0, SLOT_WIDTH, SLOT_WIDTH, false, Layer.UI);
                 if (controlledStorage.inventory[slotIndex].count !== 0) {
@@ -2633,14 +2645,14 @@ function updateGameObject(gameObject: GameObject) {
                 if (map[tileIndex].upperLayer.type !== TileType.NONE) {
                     if (chance < 0.25 && map[tileIndex].upperLayer.type !== TileType.VOLCANO) {
                         map[tileIndex].upperLayer.type = TileType.NONE;
+                        map[tileIndex].toughness = 0;
+                        map[tileIndex].firstToughness = 0;
                     }
                 } else {
                     if (chance < 0.25 && map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.GEYSER
                         && map[tileIndex].baseLayer.type !== TileType.VOLCANO) {
                         map[tileIndex].baseLayer.type = TileType.LAVA;
-                        map[tileIndex].toughness = 0;
-                        map[tileIndex].firstToughness = 0;
-                        map[tileIndex].upperLayer.variant = randomInt(1, 2);
+                        map[tileIndex].baseLayer.variant = randomInt(1, 2);
                     }
                 }
             }
@@ -2687,12 +2699,12 @@ function updateGameObject(gameObject: GameObject) {
                 }
                 if (map[tileIndex].upperLayer) {
                     map[tileIndex].upperLayer.type = TileType.NONE;
+                    map[tileIndex].toughness = 0;
+                    map[tileIndex].oreCount = 0;
                 }
                 if (map[tileIndex].baseLayer.type === TileType.MOUNTAIN) {
                     map[tileIndex].baseLayer.type = TileType.EARTH;
                     map[tileIndex].baseLayer.variant = 1;
-                    map[tileIndex].toughness = 0;
-                    map[tileIndex].oreCount = 0;
                 }
             } else {
                 burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
