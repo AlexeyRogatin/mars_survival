@@ -220,10 +220,10 @@ const TILE = {
     chunkCountY: 16,
 }
 
-const MORNING_LENGTH = 4000;
-const DAY_LENGTH = 4000;
-const AFTERNOON_LENGTH = 4000;
-const NIGHT_LENGTH = 4000;
+const MORNING_LENGTH = 0;
+const DAY_LENGTH = 0;
+const AFTERNOON_LENGTH = 0;
+const NIGHT_LENGTH = 4000 * 4;
 
 const ONE_DAY = MORNING_LENGTH + DAY_LENGTH + AFTERNOON_LENGTH + NIGHT_LENGTH;
 
@@ -345,10 +345,10 @@ const RECIPES: Recipe[] = [
     },
     {
         result: Item.SUN_BATERY,
-        parts: [{ item: Item.SILIKON, count: 15, sprite: imgSiliconItem }, { item: Item.CRYSTAL, count: 30, sprite: imgCrystalItem }],
+        parts: [{ item: Item.SILIKON, count: 45, sprite: imgSiliconItem }, { item: Item.CRYSTAL, count: 45, sprite: imgCrystalItem }],
         sprite: imgSunBatteryItem,
         name: 'Сол панель ур.1',
-        description: 'Без батарей, как без рук! Позволяет получать энергию днём; уменьшает запас энергии в 2 раза...',
+        description: 'Без батарей, как без рук! Позволяет получать энергию днём; уменьшает запас энергии в 4 раза...Можно убрать',
     },
     {
         result: Item.GOLDEN_CAMERA,
@@ -1571,8 +1571,14 @@ function updateTile(tileType: TileType, tile: Tile) {
         case TileType.MELTER: {
             drawLight(tile.x * TILE.width, tile.y * TILE.height, TILE.width * 0.75);
             upSprite = imgMelter;
+            if (tile.inventory[1].count > 0) {
+                drawText(tile.x * TILE.width + 30, tile.y * TILE.height, 0, 0, 'blue', `${tile.inventory[1].count}`, 30, 'center', Layer.UI);
+                if (timers[tile.specialTimer] > 0) {
+                    drawText(tile.x * TILE.width, tile.y * TILE.height, 0, 0, 'blue', `→`, 30, 'center', Layer.UI);
+                }
+            }
             if (timers[tile.specialTimer] > 0) {
-                drawText(tile.x * TILE.width - 10, tile.y * TILE.height, 0, 0, 'blue', `${Math.ceil(timers[tile.specialTimer] / 60)}`, 30, 'left', Layer.UI);
+                drawText(tile.x * TILE.width - 30, tile.y * TILE.height, 0, 0, 'blue', `${Math.ceil(timers[tile.specialTimer] / 60)}`, 30, 'center', Layer.UI);
             }
             if (tile.specialTimer && timers[tile.specialTimer] % 120 === 0) {
                 tile.inventory[1].count++;
@@ -1590,8 +1596,6 @@ function updateTile(tileType: TileType, tile: Tile) {
                     tile.specialTimer = null;
                 }
             }
-
-            console.log(tile.inventory[0].item, tile.inventory[0].count, tile.inventory[1].item, tile.inventory[1].count)
 
             if (tile.inventory[0].count <= 0) {
                 tile.inventory[0].item = Item.NONE;
@@ -1732,6 +1736,9 @@ function updateTile(tileType: TileType, tile: Tile) {
         tile.upperLayer.type = TileType.NONE;
         tile.toughness = 0;
         tile.firstToughness = 0;
+        if (tile.sound) {
+            tile.sound.volume = 0;
+        }
         burstParticles({
             x: tile.x * TILE.width,
             y: tile.y * TILE.height,
@@ -1900,13 +1907,15 @@ function updateGameObject(gameObject: GameObject) {
             gameObject.exists = false;
         }
 
+        addItem(Item.SUN_BATERY, 1);
+
         //солнечная батарея
         if (globalPlayer.sunBateryLvl) {
             if (timers[dayTimer] <= DAY_TIME && timers[dayTimer] > AFTERNOON_TIME) {
-                timers[globalPlayer.energy] += 2;
+                timers[globalPlayer.energy] += 1.17;
             }
             if ((timers[dayTimer] <= MORNING_TIME && timers[dayTimer] > DAY_TIME) || (timers[dayTimer] <= AFTERNOON_TIME && timers[dayTimer] > NIGHT_TIME)) {
-                timers[globalPlayer.energy] += 0.66;
+                timers[globalPlayer.energy] += 1.34;
             }
             if (timers[globalPlayer.energy] > globalPlayer.maxEnergy) {
                 timers[globalPlayer.energy] = globalPlayer.maxEnergy;
@@ -2244,8 +2253,10 @@ function updateGameObject(gameObject: GameObject) {
                     mouseTile.specialTimer = addTimer(mouseTile.inventory[0].count * 2 * 60);
                 }
                 if (mouseTile.inventory[1].count > 0) {
-                    addItem(mouseTile.inventory[1].item, mouseTile.inventory[1].count);
-                    mouseTile.inventory[1].count = 0;
+                    if (!isInventoryFullForItem(mouseTile.inventory[1].item)) {
+                        addItem(mouseTile.inventory[1].item, mouseTile.inventory[1].count);
+                        mouseTile.inventory[1].count = 0;
+                    }
                 }
             }
 
@@ -2421,7 +2432,7 @@ function updateGameObject(gameObject: GameObject) {
                     }
                     if (!isThereAnItem) {
                         if (mouseTile.toughness % 80 === 0 || mouseTile.toughness === 0) {
-                            playSound(sndMining, randomFloat(0.25, 0.8));
+                            playSound(sndMining, 0.5);
                         }
 
                         if (mouseTile.upperLayer.type === TileType.IRON && !isInventoryFullForItem(Item.IRON)) {
@@ -2677,6 +2688,9 @@ function updateGameObject(gameObject: GameObject) {
                             map[tileIndex].upperLayer.type = TileType.NONE;
                             map[tileIndex].toughness = 0;
                             map[tileIndex].firstToughness = 0;
+                            if (map[tileIndex].sound) {
+                                map[tileIndex].sound.volume = 0;
+                            }
                         }
                     } else {
                         if (chance < 0.25 && map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.GEYSER
@@ -2731,6 +2745,9 @@ function updateGameObject(gameObject: GameObject) {
                         map[tileIndex].upperLayer.type = TileType.NONE;
                         map[tileIndex].toughness = 0;
                         map[tileIndex].oreCount = 0;
+                        if (map[tileIndex].sound) {
+                            map[tileIndex].sound.volume = 0;
+                        }
                     }
                     if (map[tileIndex].baseLayer.type === TileType.MOUNTAIN) {
                         map[tileIndex].baseLayer.type = TileType.EARTH;
@@ -2803,6 +2820,9 @@ function updateGameObject(gameObject: GameObject) {
                     map[tileIndex].baseLayer.type = TileType.LAVA;
                     map[tileIndex].toughness = 0;
                     map[tileIndex].oreCount = 0;
+                    if (map[tileIndex].sound) {
+                        map[tileIndex].sound.volume = 0;
+                    }
                 }
             }
         }
@@ -3022,6 +3042,9 @@ function updateGameObject(gameObject: GameObject) {
                         tile.upperLayer.type = TileType.NONE;
                         tile.toughness = 0;
                         tile.firstToughness = 0;
+                        if (tile.sound) {
+                            tile.sound.volume = 0;
+                        }
                         burstParticles({
                             x: tile.x * TILE.width,
                             y: tile.y * TILE.height,
