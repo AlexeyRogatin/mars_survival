@@ -2023,7 +2023,7 @@ function updateGameObject(gameObject: GameObject) {
                     x = camera.x + camera.width / 2 - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2 - SLOT_WIDTH / 2 + slotIndex * (LINE_WIDTH + SLOT_WIDTH);
                     y = camera.y;
                 } else {
-                    x = camera.x + camera.width / 2 - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2 - SLOT_WIDTH / 2 + slotIndex * (LINE_WIDTH + SLOT_WIDTH) - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2;
+                    x = camera.x + camera.width / 2 - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2 - SLOT_WIDTH / 2 + slotIndex * (LINE_WIDTH + SLOT_WIDTH) - (SLOT_WIDTH + LINE_WIDTH) * STORAGE_SLOT_COUNT / 2;
                     y = camera.y + 100;
                 }
                 let sprite = null;
