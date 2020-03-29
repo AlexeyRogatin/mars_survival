@@ -139,11 +139,11 @@ class Text {
     text: string;
     x: number;
     y: number;
+    z: number;
     width: number;
     height: number;
     color: string;
     size: number;
-    layer: Layer;
     mouseOn: boolean;
     exists: boolean;
 }
@@ -220,16 +220,15 @@ const TILE = {
     chunkCountY: 16,
 }
 
-const MORNING_LENGTH = 6000;
-const DAY_LENGTH = 6000;
-const AFTERNOON_LENGTH = 6000;
-const NIGHT_LENGTH = 6000;
+const MORNING_LENGTH = 4000;
+const DAY_LENGTH = 4000;
+const AFTERNOON_LENGTH = 4000;
+const NIGHT_LENGTH = 4000;
 
 const ONE_DAY = MORNING_LENGTH + DAY_LENGTH + AFTERNOON_LENGTH + NIGHT_LENGTH;
 
 const EVENT_LENGTH = 1800;
 const VOLCANO_RADIUS = TILE.width * TILE.chunkSizeX * 1.5;
-const VOLCANO_HEIGHT = 100;
 const GRAVITATION = 0.5;
 const CAMERA_HEIGHT = 1325;
 const MAGMA_BALL_SPEED = 35;
@@ -636,7 +635,7 @@ function craftRecipe(recipe: Recipe) {
     }
 }
 
-export function drawSprite(x: number, y: number, sprite: any, angle: number, width: number = 0, height: number = 0, fromThePoint: boolean = false, layer = Layer.TILE) {
+export function drawSprite(x: number, y: number, sprite: any, angle: number, width: number = 0, height: number = 0, fromThePoint: boolean = false, z: number = Layer.TILE) {
     let mainSide = width;
     if (height > width) {
         mainSide = height;
@@ -646,39 +645,39 @@ export function drawSprite(x: number, y: number, sprite: any, angle: number, wid
             x < camera.x + camera.width * 0.5 + mainSide / 2 &&
             y > camera.y - camera.height * 0.5 - mainSide / 2 &&
             y < camera.y + camera.height * 0.5 + mainSide / 2) {
-            drawQueue.push({ x, y, sprite, angle, width, height, fromThePoint, layer, type: DrawQueueType.IMAGE });
+            drawQueue.push({ x, y, sprite, angle, width, height, fromThePoint, z, type: DrawQueueType.IMAGE });
         }
     } else {
         if (x > camera.x - camera.width * 0.5 - mainSide * 4 &&
             x < camera.x + camera.width * 0.5 + mainSide * 4 &&
             y > camera.y - camera.height * 0.5 - mainSide * 4 &&
             y < camera.y + camera.height * 0.5 + mainSide * 4) {
-            drawQueue.push({ x, y, sprite, angle, width, height, fromThePoint, layer, type: DrawQueueType.IMAGE });
+            drawQueue.push({ x, y, sprite, angle, width, height, fromThePoint, z, type: DrawQueueType.IMAGE });
         }
     }
 }
 
 export function drawRect(
-    x: number, y: number, width: number, height: number, angle: number, color: string, outlineOnly: number, layer = Layer.TILE
+    x: number, y: number, width: number, height: number, angle: number, color: string, outlineOnly: number, z = Layer.TILE
 ) {
     if (x > camera.x - camera.width * 0.5 - width / 2 &&
         x < camera.x + camera.width * 0.5 + width / 2 &&
         y > camera.y - camera.height * 0.5 - height / 2 &&
         y < camera.y + camera.height * 0.5 + height / 2) {
-        drawQueue.push({ x, y, width, height, color: [color], angle, layer, outlineOnly, type: DrawQueueType.RECT });
+        drawQueue.push({ x, y, width, height, color: [color], angle, z, outlineOnly, type: DrawQueueType.RECT });
     }
 }
 
-export function drawCircle(x: number, y: number, radius: number, color: string, outlineOnly: number, layer = Layer.TILE) {
+export function drawCircle(x: number, y: number, radius: number, color: string, outlineOnly: number, z = Layer.TILE) {
     if (x > camera.x - camera.width * 0.5 - radius &&
         x < camera.x + camera.width * 0.5 + radius &&
         y > camera.y - camera.height * 0.5 - radius &&
         y < camera.y + camera.height * 0.5 + radius) {
-        drawQueue.push({ x, y, radius, color: [color], layer, outlineOnly, type: DrawQueueType.CIRCLE });
+        drawQueue.push({ x, y, radius, color: [color], z, outlineOnly, type: DrawQueueType.CIRCLE });
     }
 }
 
-export function drawText(x: number, y: number, width: number, intervalsBettweenLines: number, color: string, text: string, textSize: number, textAlign: CanvasTextAlign, layer = Layer.UI) {
+export function drawText(x: number, y: number, width: number, intervalsBettweenLines: number, color: string, text: string, textSize: number, textAlign: CanvasTextAlign, z = Layer.UI) {
     if (x > camera.x - camera.width * 0.5 - textSize / 2 &&
         x < camera.x + camera.width * 0.5 + textSize / 2 &&
         y > camera.y - camera.height * 0.5 - textSize / 2 &&
@@ -698,20 +697,20 @@ export function drawText(x: number, y: number, width: number, intervalsBettweenL
                     wordNumber++;
                 }
                 console.log(textSample);
-                drawQueue.push({ x, y: y + textNumber * intervalsBettweenLines, color: [color], text: textSample, layer, type: DrawQueueType.TEXT, textSize, textAlign });
+                drawQueue.push({ x, y: y + textNumber * intervalsBettweenLines, color: [color], text: textSample, z, type: DrawQueueType.TEXT, textSize, textAlign });
             }
         } else {
-            drawQueue.push({ x, y, color: [color], text, layer, type: DrawQueueType.TEXT, textSize, textAlign });
+            drawQueue.push({ x, y, color: [color], text, z, type: DrawQueueType.TEXT, textSize, textAlign });
         }
     }
 }
 
-export function drawLinearGradient(x: number, y: number, width: number, height: number, color: string[], stop: number[], layer: Layer) {
+export function drawLinearGradient(x: number, y: number, width: number, height: number, color: string[], stop: number[], z: number) {
     if (x > camera.x - camera.width * 0.5 - width / 2 &&
         x < camera.x + camera.width * 0.5 + width / 2 &&
         y > camera.y - camera.height * 0.5 - height / 2 &&
         y < camera.y + camera.height * 0.5 + height / 2) {
-        drawQueue.push({ x, y, width, height, color, stop, layer, type: DrawQueueType.LINEAR_GRADIENT });
+        drawQueue.push({ x, y, width, height, color, stop, z, type: DrawQueueType.LINEAR_GRADIENT });
     }
 }
 
@@ -847,6 +846,8 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         gameObject.sprite = imgMeteorite;
         gameObject.angle = randomFloat(0, Math.PI * 2);
         gameObject.angleZ = -randomFloat(0.25 * Math.PI, 0.5 * Math.PI);
+        gameObject.width = 100 + CAMERA_HEIGHT;
+        gameObject.height = 100 + CAMERA_HEIGHT;
     }
 
     if (gameObject.type === GameObjectType.LAVA_BALL) {
@@ -2016,15 +2017,15 @@ function updateGameObject(gameObject: GameObject) {
             for (let slotIndex = 0; slotIndex < STORAGE_SLOT_COUNT; slotIndex++) {
                 let x;
                 let y;
-                let SLOT_WIDTH = 60;
+                const SLOT_WIDTH = 60;
+                const LINE_WIDTH = 5;
                 if (slotIndex <= Math.round(STORAGE_SLOT_COUNT / 2 - 1)) {
-                    x = camera.x + camera.width / 2 - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2 - SLOT_WIDTH / 2 + slotIndex * SLOT_WIDTH;
+                    x = camera.x + camera.width / 2 - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2 - SLOT_WIDTH / 2 + slotIndex * (LINE_WIDTH + SLOT_WIDTH);
                     y = camera.y;
                 } else {
-                    x = camera.x + camera.width / 2 - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2 - SLOT_WIDTH / 2 + slotIndex * SLOT_WIDTH - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2;
+                    x = camera.x + camera.width / 2 - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2 - SLOT_WIDTH / 2 + slotIndex * (LINE_WIDTH + SLOT_WIDTH) - SLOT_WIDTH * STORAGE_SLOT_COUNT / 2;
                     y = camera.y + 100;
                 }
-                drawRect(x, y, SLOT_WIDTH, SLOT_WIDTH, 0, 'grey', 5, Layer.UI);
                 let sprite = null;
                 if (controlledStorage.inventory[slotIndex].item === Item.NONE) {
                     sprite = imgNone;
@@ -2086,7 +2087,12 @@ function updateGameObject(gameObject: GameObject) {
                 if (controlledStorage.inventory[slotIndex].item === Item.KNOWLEDGE_OF_BALLISTICS) {
                     sprite = imgKnowledgeOfBallistics;
                 }
-                drawSprite(x, y, sprite, 0, SLOT_WIDTH, SLOT_WIDTH, false, Layer.UI);
+
+                drawRect(x, y, SLOT_WIDTH, SLOT_WIDTH, 0, `rgb(00,33,66,1)`, 0, Layer.UI)
+                drawRect(x, y, SLOT_WIDTH, SLOT_WIDTH, 0, 'black', 5, Layer.UI);
+                drawRect(x, y, SLOT_WIDTH, SLOT_WIDTH, 0, 'grey', 2, Layer.UI);
+
+                drawSprite(x, y, sprite, 0, SLOT_WIDTH - 10, SLOT_WIDTH - 10, false, Layer.UI);
                 if (controlledStorage.inventory[slotIndex].count !== 0) {
                     drawText(x, y - SLOT_WIDTH, 0, 0, 'green', `${controlledStorage.inventory[slotIndex].count}`, 25, 'center', Layer.UI);
                 }
@@ -2105,6 +2111,8 @@ function updateGameObject(gameObject: GameObject) {
                 }
             }
         }
+
+        addItem(Item.STORAGE, 1);
 
         //время крафта
         if (mouse.worldX > camera.x - camera.width / 2 &&
@@ -2591,14 +2599,6 @@ function updateGameObject(gameObject: GameObject) {
 
 
     if (gameObject.type === GameObjectType.MAGMA_BALL) {
-        //прорисовка
-        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, Layer.METEORITE);
-        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
-        gameObject.x += gameObject.speedX;
-        gameObject.y += gameObject.speedY;
-
-        gameObject.lifeTime++;
-
         let speedZ = MAGMA_BALL_SPEED * Math.sin(gameObject.angleZ)
 
         let speedXY = MAGMA_BALL_SPEED * Math.cos(gameObject.angleZ);
@@ -2608,8 +2608,18 @@ function updateGameObject(gameObject: GameObject) {
         gameObject.speedX = speedVector[0];
         gameObject.speedY = speedVector[1];
 
-        let height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+        gameObject.x += gameObject.speedX;
+        gameObject.y += gameObject.speedY;
 
+        gameObject.lifeTime++;
+
+        let height = Layer.UPPER_TILE + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+
+        //прорисовка
+        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, height);
+        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
+
+        //знание баллистики
         let range = MAGMA_BALL_SPEED * MAGMA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
 
         let rangeProjections = rotateVector(range, 0, gameObject.angle);
@@ -2619,40 +2629,44 @@ function updateGameObject(gameObject: GameObject) {
             drawSprite(gameObject.firstX + rangeProjections[0], gameObject.firstY + rangeProjections[1], imgAlert, 0, 90, 90, false, Layer.UPPER_TILE);
         }
 
+        //размер
         gameObject.width = (100 + height);
         gameObject.height = (100 + height);
 
-        if (height <= 0) {
-            gameObject.exists = false;
-
-            let maxDistance = VOLCANO_RADIUS;
-            let volume;
-            if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) <= maxDistance) {
-                volume = 1 - distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) / maxDistance;
-            } else {
-                volume = 0;
-            }
-            let strength = volume * 15;
-            makeScreenShake(strength, 15);
-            playSound(sndBoom, volume * 0.5);
-
-            burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.75, accel: 0 });
+        //взрыв
+        if (height < Layer.UPPER_TILE) {
             let x = Math.round(gameObject.x / TILE.width);
             let y = Math.round(gameObject.y / TILE.height);
             let tileIndex = getIndexFromCoords(x, y);
-            let chance = randomFloat(0, 1);
-            if (map[tileIndex]) {
-                if (map[tileIndex].upperLayer.type !== TileType.NONE) {
-                    if (chance < 0.25 && map[tileIndex].upperLayer.type !== TileType.VOLCANO) {
-                        map[tileIndex].upperLayer.type = TileType.NONE;
-                        map[tileIndex].toughness = 0;
-                        map[tileIndex].firstToughness = 0;
-                    }
+            if (map[tileIndex] && map[tileIndex].upperLayer || height <= 0) {
+                gameObject.exists = false;
+
+                let maxDistance = VOLCANO_RADIUS;
+                let volume;
+                if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) <= maxDistance) {
+                    volume = 1 - distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) / maxDistance;
                 } else {
-                    if (chance < 0.25 && map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.GEYSER
-                        && map[tileIndex].baseLayer.type !== TileType.VOLCANO) {
-                        map[tileIndex].baseLayer.type = TileType.LAVA;
-                        map[tileIndex].baseLayer.variant = randomInt(1, 2);
+                    volume = 0;
+                }
+                let strength = volume * 15;
+                makeScreenShake(strength, 15);
+                playSound(sndBoom, volume * 0.5);
+
+                burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 45, count: 15, decrease: 0.75, accel: 0 });
+                let chance = randomFloat(0, 1);
+                if (map[tileIndex]) {
+                    if (map[tileIndex].upperLayer.type !== TileType.NONE) {
+                        if (chance < 0.25 && map[tileIndex].upperLayer.type !== TileType.VOLCANO) {
+                            map[tileIndex].upperLayer.type = TileType.NONE;
+                            map[tileIndex].toughness = 0;
+                            map[tileIndex].firstToughness = 0;
+                        }
+                    } else {
+                        if (chance < 0.25 && map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.GEYSER
+                            && map[tileIndex].baseLayer.type !== TileType.VOLCANO) {
+                            map[tileIndex].baseLayer.type = TileType.LAVA;
+                            map[tileIndex].baseLayer.variant = randomInt(1, 2);
+                        }
                     }
                 }
             }
@@ -2660,64 +2674,64 @@ function updateGameObject(gameObject: GameObject) {
     }
 
     if (gameObject.type === GameObjectType.METEORITE) {
-        //прорисовка
-        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
-        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, Layer.METEORITE);
-
-        gameObject.x += gameObject.speedX;
-        gameObject.y += gameObject.speedY;
-
-        gameObject.lifeTime++;
 
         let speedZ = METEORITE_SPEED * Math.sin(gameObject.angleZ);
 
+        gameObject.lifeTime++;
+
         let height = CAMERA_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+
+        //прорисовка
+        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
+        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, height);
 
         gameObject.width = (100 + height);
         gameObject.height = (100 + height);
 
-        if (height <= 0) {
-            gameObject.exists = false;
-
-            let maxDistance = VOLCANO_RADIUS;
-            let volume;
-            if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) <= maxDistance) {
-                volume = 1 - distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) / maxDistance;
-            } else {
-                volume = 0;
-            }
-            let strength = volume * 15;
-            makeScreenShake(strength, 15);
-            playSound(sndBoom, volume * 0.5);
-
+        if (height < Layer.UPPER_TILE) {
             let x = Math.round(gameObject.x / TILE.width);
             let y = Math.round(gameObject.y / TILE.height);
             let tileIndex = getIndexFromCoords(x, y);
-            if (gameObject.summoned) {
-                if (globalBoss && distanceBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y) <= globalBoss.height / 2 + gameObject.width / 2) {
-                    globalBoss.hitpoints -= 100;
+            if (map[tileIndex] && map[tileIndex].upperLayer || height <= 0) {
+                gameObject.exists = false;
+
+                let maxDistance = VOLCANO_RADIUS;
+                let volume;
+                if (distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) <= maxDistance) {
+                    volume = 1 - distanceBetweenPoints(globalPlayer.x, globalPlayer.y, gameObject.x, gameObject.y) / maxDistance;
+                } else {
+                    volume = 0;
                 }
-                if (map[tileIndex].upperLayer) {
-                    map[tileIndex].upperLayer.type = TileType.NONE;
-                    map[tileIndex].toughness = 0;
-                    map[tileIndex].oreCount = 0;
-                }
-                if (map[tileIndex].baseLayer.type === TileType.MOUNTAIN) {
-                    map[tileIndex].baseLayer.type = TileType.EARTH;
-                    map[tileIndex].baseLayer.variant = 1;
-                }
-            } else {
-                burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
-                let chance = randomFloat(0, 1);
-                if (chance < 0.25) {
-                    if (
-                        map[tileIndex] && map[tileIndex].baseLayer.type !== TileType.LAVA && map[tileIndex].baseLayer.type !== TileType.MOUNTAIN &&
-                        map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.VOLCANO
-                    ) {
-                        map[tileIndex].upperLayer.type = TileType.IGNEOUS;
-                        map[tileIndex].toughness = 500;
-                        map[tileIndex].firstToughness = 500;
-                        map[tileIndex].oreCount = 1;
+                let strength = volume * 15;
+                makeScreenShake(strength, 15);
+                playSound(sndBoom, volume * 0.5);
+
+                if (gameObject.summoned) {
+                    if (globalBoss && distanceBetweenPoints(globalBoss.x, globalBoss.y, gameObject.x, gameObject.y) <= globalBoss.height / 2 + gameObject.width / 2) {
+                        globalBoss.hitpoints -= 100;
+                    }
+                    if (map[tileIndex].upperLayer) {
+                        map[tileIndex].upperLayer.type = TileType.NONE;
+                        map[tileIndex].toughness = 0;
+                        map[tileIndex].oreCount = 0;
+                    }
+                    if (map[tileIndex].baseLayer.type === TileType.MOUNTAIN) {
+                        map[tileIndex].baseLayer.type = TileType.EARTH;
+                        map[tileIndex].baseLayer.variant = 1;
+                    }
+                } else {
+                    burstParticles({ x: gameObject.x, y: gameObject.y, color: 'red', speed: 5, size: 80, count: 15, decrease: 1, accel: 0 });
+                    let chance = randomFloat(0, 1);
+                    if (chance < 0.25) {
+                        if (
+                            map[tileIndex] && map[tileIndex].baseLayer.type !== TileType.LAVA && map[tileIndex].baseLayer.type !== TileType.MOUNTAIN &&
+                            map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.VOLCANO
+                        ) {
+                            map[tileIndex].upperLayer.type = TileType.IGNEOUS;
+                            map[tileIndex].toughness = 500;
+                            map[tileIndex].firstToughness = 500;
+                            map[tileIndex].oreCount = 1;
+                        }
                     }
                 }
             }
@@ -2725,13 +2739,6 @@ function updateGameObject(gameObject: GameObject) {
     }
 
     if (gameObject.type === GameObjectType.LAVA_BALL) {
-        //прорисовка
-        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, Layer.METEORITE);
-        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
-        gameObject.x += gameObject.speedX;
-        gameObject.y += gameObject.speedY;
-
-        gameObject.lifeTime++;
 
         let speedZ = LAVA_BALL_SPEED * Math.sin(gameObject.angleZ)
 
@@ -2742,7 +2749,16 @@ function updateGameObject(gameObject: GameObject) {
         gameObject.speedX = speedVector[0];
         gameObject.speedY = speedVector[1];
 
-        let height = VOLCANO_HEIGHT + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+        gameObject.x += gameObject.speedX;
+        gameObject.y += gameObject.speedY;
+
+        gameObject.lifeTime++;
+
+        let height = Layer.BOSS + speedZ * gameObject.lifeTime - GRAVITATION / 2 * gameObject.lifeTime * gameObject.lifeTime;
+
+        //прорисовка
+        drawSprite(gameObject.x, gameObject.y, gameObject.sprite, gameObject.angle + Math.PI / 180 * gameObject.lifeTime, gameObject.width, gameObject.height, false, height);
+        drawLight(gameObject.x, gameObject.y, gameObject.width * 1.2);
 
         let range = LAVA_BALL_SPEED * LAVA_BALL_SPEED * Math.sin(2 * gameObject.angleZ) / GRAVITATION;
 
@@ -2756,16 +2772,21 @@ function updateGameObject(gameObject: GameObject) {
         gameObject.width = (20 + height);
         gameObject.height = (20 + height);
 
-        if (height <= 0) {
-            gameObject.exists = false;
+        if (height < Layer.UPPER_TILE) {
             let x = Math.round(gameObject.x / TILE.width);
             let y = Math.round(gameObject.y / TILE.height);
             let tileIndex = getIndexFromCoords(x, y);
-            if (map[tileIndex] && map[tileIndex].baseLayer.type !== TileType.VOLCANO && map[tileIndex].baseLayer.type !== TileType.NONE) {
-                map[tileIndex].upperLayer.type = TileType.NONE;
-                map[tileIndex].baseLayer.type = TileType.LAVA;
-                map[tileIndex].toughness = 0;
-                map[tileIndex].oreCount = 0;
+            if (map[tileIndex] && map[tileIndex].upperLayer || height <= 0) {
+                gameObject.exists = false;
+                let x = Math.round(gameObject.x / TILE.width);
+                let y = Math.round(gameObject.y / TILE.height);
+                let tileIndex = getIndexFromCoords(x, y);
+                if (map[tileIndex] && map[tileIndex].baseLayer.type !== TileType.VOLCANO && map[tileIndex].baseLayer.type !== TileType.NONE) {
+                    map[tileIndex].upperLayer.type = TileType.NONE;
+                    map[tileIndex].baseLayer.type = TileType.LAVA;
+                    map[tileIndex].toughness = 0;
+                    map[tileIndex].oreCount = 0;
+                }
             }
         }
     }
@@ -3028,7 +3049,7 @@ function updateGameObject(gameObject: GameObject) {
     normalizeAngle(gameObject.angle);
 }
 
-function addMenuText(x: number, y: number, width: number, height: number, text: string, color: string, size: number, layer: Layer) {
+function addMenuText(x: number, y: number, width: number, height: number, text: string, color: string, size: number, z: number) {
     let clickableText: Text = {
         text: text,
         x: x,
@@ -3037,7 +3058,7 @@ function addMenuText(x: number, y: number, width: number, height: number, text: 
         height: height,
         color: color,
         size: size,
-        layer: layer,
+        z: z,
         mouseOn: false,
         exists: true,
     }
@@ -3059,7 +3080,7 @@ function updateClickableTexts() {
             mouse.worldY < text.y + text.height / 2) {
             text.mouseOn = true;
         }
-        drawText(text.x, text.y, 0, 0, text.color, text.text, text.size, 'center', text.layer);
+        drawText(text.x, text.y, 0, 0, text.color, text.text, text.size, 'center', text.z);
     }
 }
 
@@ -3292,7 +3313,7 @@ function loop() {
 
     updateTimers();
 
-    drawQueue.sort((a, b) => b.layer - a.layer);
+    drawQueue.sort((a, b) => a.z - b.z);
     for (let itemIndex = 0; itemIndex < drawQueue.length; itemIndex++) {
         const item = drawQueue[itemIndex];
         renderItem(item);

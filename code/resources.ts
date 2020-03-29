@@ -37,20 +37,18 @@ export let resourcesWaitingForLoadCount: number = 0;
 export let canBeginGame: boolean = false;
 
 
-export enum Layer {
-    UI,
-    BOSS_EYE,
-    FORGROUND,
-    METEORITE,
-    PARTICLES,
-    BOSS,
-    BOSS_LEG,
-    MANIPULATOR,
-    UPPER_TILE,
-    PLAYER,
-    ON_TILE,
-    TILE,
-    NONE,
+export let Layer = {
+    UI: 1000000000,
+    FORGROUND: 100000000,
+    BOSS: 130,
+    BOSS_LEG: 120,
+    MANIPULATOR: 110,
+    PARTICLES: 105,
+    UPPER_TILE: 100,
+    PLAYER: 50,
+    ON_TILE: 1,
+    TILE: 0,
+    NONE: -100000,
 }
 
 
@@ -66,8 +64,8 @@ export enum DrawQueueType {
 export class DrawQueueItem {
     x: number;
     y: number;
-    layer: Layer = Layer.TILE;
     type: DrawQueueType = DrawQueueType.NONE;
+    z?: number = 0;
     width?: number = 0;
     height?: number = 0;
     angle?: number = 0;
