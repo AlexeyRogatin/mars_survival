@@ -1586,12 +1586,18 @@ function updateTile(tileType: TileType, tile: Tile) {
                     tile.inventory[1].item = Item.IGNEOUS_INGOT;
                 }
                 tile.inventory[0].count--;
-                if (tile.inventory[0].count <= 0) {
-                    tile.inventory[0].item = Item.NONE;
-                }
                 if (timers[tile.specialTimer] === 0) {
                     tile.specialTimer = null;
                 }
+            }
+
+            console.log(tile.inventory[0].item, tile.inventory[0].count, tile.inventory[1].item, tile.inventory[1].count)
+
+            if (tile.inventory[0].count <= 0) {
+                tile.inventory[0].item = Item.NONE;
+            }
+            if (tile.inventory[1].count <= 0) {
+                tile.inventory[1].item = Item.NONE;
             }
 
             if (!mouse.isDown) {
@@ -3102,7 +3108,7 @@ function resetClicks() {
 }
 
 let playText = addMenuText(-camera.width / 2 + 165, -camera.height / 2 + 400, 130, 60, 'играть', 'White', 40, Layer.UI);
-let controlsText = addMenuText(-camera.width / 2 + 215, -camera.height / 2 + 450, 130, 60, 'управление', 'White', 40, Layer.UI);
+let controlsText = addMenuText(-camera.width / 2 + 215, -camera.height / 2 + 470, 130, 60, 'управление', 'White', 40, Layer.UI);
 
 let instructions = false;
 
@@ -3289,7 +3295,7 @@ function loopGame() {
         musik = null;
 
         playText = addMenuText(-camera.width / 2 + 165, -camera.height / 2 + 400, 130, 60, 'играть', 'White', 40, Layer.UI);
-        controlsText = addMenuText(-camera.width / 2 + 215, -camera.height / 2 + 450, 130, 60, 'управление', 'White', 40, Layer.UI);
+        controlsText = addMenuText(-camera.width / 2 + 215, -camera.height / 2 + 470, 130, 60, 'управление', 'White', 40, Layer.UI);
     }
 }
 
