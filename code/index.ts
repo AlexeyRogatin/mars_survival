@@ -2112,8 +2112,6 @@ function updateGameObject(gameObject: GameObject) {
             }
         }
 
-        addItem(Item.STORAGE, 1);
-
         //время крафта
         if (mouse.worldX > camera.x - camera.width / 2 &&
             mouse.worldX < camera.x - camera.width / 2 + 45 &&
