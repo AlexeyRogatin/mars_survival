@@ -367,7 +367,7 @@ const RECIPES: Recipe[] = [
     },
     {
         result: Item.SHAKING_DETECTOR,
-        parts: [{ item: Item.IRON, count: 30, sprite: imgIronIngot }],
+        parts: [{ item: Item.IRON_INGOT, count: 30, sprite: imgIronIngot }],
         sprite: imgShakingDetector,
         name: 'Детектор тряски',
         description: 'Настроен различать самые мелкие колебания, даже колебания от гейзеров.',
@@ -861,7 +861,7 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
         gameObject.height = 600;
         gameObject.speedLimit = 10;
         gameObject.rotationSpeed = 0.2;
-        gameObject.accelConst = 0.1;
+        gameObject.accelConst = 0.05;
         gameObject.hitpoints = 5000;
         gameObject.maxHitpoints = 5000;
         gameObject.specialTimer = addTimer(100);
