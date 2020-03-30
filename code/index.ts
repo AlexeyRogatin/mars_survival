@@ -220,10 +220,10 @@ const TILE = {
     chunkCountY: 16,
 }
 
-const MORNING_LENGTH = 0;
-const DAY_LENGTH = 0;
-const AFTERNOON_LENGTH = 0;
-const NIGHT_LENGTH = 4000 * 4;
+const MORNING_LENGTH = 4000;
+const DAY_LENGTH = 4000;
+const AFTERNOON_LENGTH = 4000;
+const NIGHT_LENGTH = 4000;
 
 const ONE_DAY = MORNING_LENGTH + DAY_LENGTH + AFTERNOON_LENGTH + NIGHT_LENGTH;
 
@@ -348,7 +348,7 @@ const RECIPES: Recipe[] = [
         parts: [{ item: Item.SILIKON, count: 45, sprite: imgSiliconItem }, { item: Item.CRYSTAL, count: 45, sprite: imgCrystalItem }],
         sprite: imgSunBatteryItem,
         name: 'Сол панель ур.1',
-        description: 'Без батарей, как без рук! Позволяет получать энергию днём; уменьшает запас энергии в 4 раза...Можно убрать',
+        description: 'Без батарей, как без рук! Позволяет получать энергию днём; её поставили на место вашей батареи...',
     },
     {
         result: Item.GOLDEN_CAMERA,
@@ -1569,7 +1569,6 @@ function updateTile(tileType: TileType, tile: Tile) {
 
         } break;
         case TileType.MELTER: {
-            drawLight(tile.x * TILE.width, tile.y * TILE.height, TILE.width * 0.75);
             upSprite = imgMelter;
             if (tile.inventory[1].count > 0) {
                 drawText(tile.x * TILE.width + 30, tile.y * TILE.height, 0, 0, 'blue', `${tile.inventory[1].count}`, 30, 'center', Layer.UI);
@@ -1795,7 +1794,9 @@ function updateGameObject(gameObject: GameObject) {
         controlGameObject(gameObject);
 
         //рисование света вокруг
-        drawLight(gameObject.x, gameObject.y, gameObject.width * 2.5);
+        if (timers[gameObject.energy] > 0) {
+            drawLight(gameObject.x, gameObject.y, timers[gameObject.energy] / gameObject.maxEnergy * gameObject.width * 1.5 + gameObject.width);
+        }
 
         //стрелка на босса
 
@@ -1907,15 +1908,13 @@ function updateGameObject(gameObject: GameObject) {
             gameObject.exists = false;
         }
 
-        addItem(Item.SUN_BATERY, 1);
-
         //солнечная батарея
         if (globalPlayer.sunBateryLvl) {
             if (timers[dayTimer] <= DAY_TIME && timers[dayTimer] > AFTERNOON_TIME) {
-                timers[globalPlayer.energy] += 1.17;
+                timers[globalPlayer.energy] += 1.034;
             }
             if ((timers[dayTimer] <= MORNING_TIME && timers[dayTimer] > DAY_TIME) || (timers[dayTimer] <= AFTERNOON_TIME && timers[dayTimer] > NIGHT_TIME)) {
-                timers[globalPlayer.energy] += 1.34;
+                timers[globalPlayer.energy] += 1.068;
             }
             if (timers[globalPlayer.energy] > globalPlayer.maxEnergy) {
                 timers[globalPlayer.energy] = globalPlayer.maxEnergy;
@@ -2314,8 +2313,8 @@ function updateGameObject(gameObject: GameObject) {
                     if (inventory[mainSlot].item === Item.SUN_BATERY) {
                         if (gameObject.sunBateryLvl === 0) {
                             gameObject.sunBateryLvl = 1;
-                            timers[gameObject.energy] *= 0.25;
-                            gameObject.maxEnergy *= 0.25;
+                            timers[gameObject.energy] *= 0.05;
+                            gameObject.maxEnergy *= 0.05;
                             removeItem(Item.SUN_BATERY, 1);
                         }
                     }
@@ -2350,8 +2349,8 @@ function updateGameObject(gameObject: GameObject) {
                     } else {
                         if (gameObject.sunBateryLvl === 1 && !isInventoryFullForItem(Item.SUN_BATERY)) {
                             gameObject.sunBateryLvl = 0;
-                            timers[gameObject.energy] *= 100 / 25;
-                            gameObject.maxEnergy *= 100 / 25;
+                            timers[gameObject.energy] *= 100 / 5;
+                            gameObject.maxEnergy *= 100 / 5;
                             addItem(Item.SUN_BATERY, 1);
                         }
                     }
@@ -2608,7 +2607,11 @@ function updateGameObject(gameObject: GameObject) {
         }
 
         //двигаем игрока
-        moveGameObject(gameObject);
+        if (timers[gameObject.energy] > 0) {
+            moveGameObject(gameObject);
+        } else {
+            gameObject.hitpoints -= 0.01;
+        }
 
         //границы мира
         if (globalPlayer.x < TILE.firstX - TILE.width / 2) {
@@ -3080,10 +3083,6 @@ function updateGameObject(gameObject: GameObject) {
                 accel: -0.01
             })
         }
-    }
-
-    if (timers[gameObject.energy] <= 0 && gameObject.type === GameObjectType.PLAYER) {
-        gameObject.exists = false;
     }
 
     normalizeAngle(gameObject.angle);
