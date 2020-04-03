@@ -216,8 +216,8 @@ const TILE = {
     firstY: 0,
     chunkSizeX: 8,
     chunkSizeY: 8,
-    chunkCountX: 16,
-    chunkCountY: 16,
+    chunkCountX: 32,
+    chunkCountY: 32,
 }
 
 const MORNING_LENGTH = 4000;
@@ -837,7 +837,7 @@ function addGameObject(type: GameObjectType, x: number, y: number) {
 
     if (gameObject.type === GameObjectType.MAGMA_BALL) {
         gameObject.sprite = imgMagmaBall;
-        gameObject.angle = randomFloat(0, Math.PI * 2);
+        gameObject.angle = randomFloat(0, 2 * Math.PI);
         gameObject.angleZ = randomFloat(0.25 * Math.PI, 0.5 * Math.PI);
     }
 
@@ -2858,12 +2858,13 @@ function updateGameObject(gameObject: GameObject) {
 
         if (timers[gameObject.specialTimer] === 0) {
             if (distanceBetweenPoints(globalBoss.x, globalBoss.y, globalPlayer.x, globalPlayer.y) > camera.width * 1.5) {
-                gameObject.angle = angleBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y);
                 gameObject.attack = 0;
             } else {
                 gameObject.attack = randomInt(0, 3);
                 if (distanceBetweenPoints(globalBoss.x, globalBoss.y, globalPlayer.x, globalPlayer.y) >= 600 && gameObject.attack === 1) {
-                    gameObject.attack = randomInt(2, 3);
+                    while (gameObject.attack === 1) {
+                        gameObject.attack = randomInt(0, 3);
+                    }
                 }
             }
             gameObject.goForward = false;
@@ -2884,16 +2885,11 @@ function updateGameObject(gameObject: GameObject) {
             let angle = angleBetweenPoints(gameObject.x, gameObject.y, globalPlayer.x, globalPlayer.y);
             const diff = normalizeAngle(gameObject.angle - angle);
 
-            if (diff > gameObject.rotationSpeed && !gameObject.goForward) {
-                gameObject.goLeft = true;
-                gameObject.goRight = false;
-            } else if (diff < -gameObject.rotationSpeed && !gameObject.goForward) {
-                gameObject.goRight = true;
-                gameObject.goLeft = false;
-            } else {
-                gameObject.goLeft = false;
-                gameObject.goRight = false;
-                gameObject.goForward = true;
+            if (distanceBetweenPoints(globalBoss.x, globalBoss.y, globalPlayer.x, globalPlayer.y) < camera.width * 1.5 && gameObject.goForward) {
+                gameObject.rotationSpeed = 0;
+            }
+
+            if (gameObject.goForward) {
                 let vector = rotateVector(gameObject.width / 2, 0, gameObject.angle + Math.PI);
                 burstParticles({
                     x: gameObject.x + vector[0],
@@ -2907,8 +2903,16 @@ function updateGameObject(gameObject: GameObject) {
                 })
             }
 
-            if (gameObject.goForward) {
-                gameObject.rotationSpeed = 0.0005;
+            if (diff > gameObject.rotationSpeed) {
+                gameObject.goLeft = true;
+                gameObject.goRight = false;
+            } else if (diff < -gameObject.rotationSpeed) {
+                gameObject.goRight = true;
+                gameObject.goLeft = false;
+            } else {
+                gameObject.goLeft = false;
+                gameObject.goRight = false;
+                gameObject.goForward = true;
             }
         }
 
@@ -2931,7 +2935,7 @@ function updateGameObject(gameObject: GameObject) {
         //дальней дистанции
         if (gameObject.attack === 2) {
             if (timers[gameObject.specialTimer] > 100) {
-                if (timers[gameObject.specialTimer] < 300 && timers[gameObject.specialTimer] % 10 === 0) {
+                if (timers[gameObject.specialTimer] < 300 && timers[gameObject.specialTimer] % 7 === 0) {
                     addGameObject(GameObjectType.MAGMA_BALL, gameObject.x, gameObject.y);
                 }
                 gameObject.rotationSpeed += 0.0015;
@@ -2980,7 +2984,7 @@ function updateGameObject(gameObject: GameObject) {
                 ctx.translate(gameObject.x + vector[0], gameObject.y + vector[1]);
                 if (-286 / 796 * gameObject.height / 2 < rotatedDistanceFromPlayer[1] && 286 / 796 * gameObject.height / 2 > rotatedDistanceFromPlayer[1]
                     && -lazerLength / 2 < rotatedDistanceFromPlayer[0] && lazerLength / 2 > rotatedDistanceFromPlayer[0]) {
-                    globalPlayer.hitpoints -= 0.1;
+                    globalPlayer.hitpoints -= 0.15;
                 }
                 ctx.restore();
             }
@@ -3195,7 +3199,7 @@ function loopGame() {
     if (globalBoss && globalBoss.exists === false) {
         drawText(camera.x, camera.y, 0, 0, 'white', 'Вы - выигрывающий) Спасибо, что поиграли в демо версию, ждите новых обновлений', 45, 'center', Layer.UI);
     } else if (globalPlayer.exists === false) {
-        drawText(camera.x, camera.y, 0, 0, 'white', 'Не время сдаваться, вы справитесь. Нажмите на R для меню', 45, 'center', Layer.UI);
+        drawText(camera.x, camera.y, 0, 0, 'white', 'Не время сдаваться, вы справитесь. Нажмите R для меню', 45, 'center', Layer.UI);
     }
 
 
