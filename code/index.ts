@@ -216,8 +216,8 @@ const TILE = {
     firstY: 0,
     chunkSizeX: 8,
     chunkSizeY: 8,
-    chunkCountX: 32,
-    chunkCountY: 32,
+    chunkCountX: 124,
+    chunkCountY: 124,
 }
 
 const MORNING_LENGTH = 4000;
@@ -934,6 +934,7 @@ function moveGameObject(gameObject: GameObject) {
     if (gameObject.goRight) {
         gameObject.angle += gameObject.rotationSpeed;
     }
+    gameObject.angle = normalizeAngle(gameObject.angle);
     gameObject.speed += gameObject.accel;
     if (gameObject.speed > gameObject.speedLimit) {
         gameObject.speed = gameObject.speedLimit;
@@ -944,71 +945,78 @@ function moveGameObject(gameObject: GameObject) {
     gameObject.speedX = gameObject.speed * Math.cos(gameObject.angle);
     gameObject.speedY = gameObject.speed * Math.sin(gameObject.angle);
 
-    for (let tileIndex = 0; tileIndex < map.length; tileIndex++) {
-        const other = map[tileIndex];
+    let firstTile = { x: Math.round((gameObject.x - (TILE.width * 2.1 + gameObject.width)) / TILE.width), y: Math.round((gameObject.y - (TILE.width * 3 + gameObject.width)) / TILE.width) };
+    let lastTile = { x: Math.round((gameObject.x + (TILE.width * 2.1 + gameObject.width)) / TILE.width), y: Math.round((gameObject.y + (TILE.width * 3 + gameObject.width)) / TILE.width) };
+    for (let y = firstTile.y; y < lastTile.y; y++) {
+        for (let x = firstTile.x; x < lastTile.x; x++) {
+            const other = map[getIndexFromCoords(x, y)];
 
-        const wallLeft = other.x * TILE.width - other.collisionWidth / 2;
-        const wallRight = other.x * TILE.width + other.collisionWidth / 2;
-        const wallTop = other.y * TILE.height - other.collisionHeight / 2;
-        const wallBottom = other.y * TILE.height + other.collisionHeight / 2;
+            if (other) {
+                const wallLeft = other.x * TILE.width - other.collisionWidth / 2;
+                const wallRight = other.x * TILE.width + other.collisionWidth / 2;
+                const wallTop = other.y * TILE.height - other.collisionHeight / 2;
+                const wallBottom = other.y * TILE.height + other.collisionHeight / 2;
 
-        const playerLeft = gameObject.x - gameObject.width / 2;
-        const playerRight = gameObject.x + gameObject.width / 2;
-        const playerTop = gameObject.y - gameObject.height / 2;
-        const playerBottom = gameObject.y + gameObject.height / 2;
+                const playerLeft = gameObject.x - gameObject.width / 2;
+                const playerRight = gameObject.x + gameObject.width / 2;
+                const playerTop = gameObject.y - gameObject.height / 2;
+                const playerBottom = gameObject.y + gameObject.height / 2;
 
-        if (gameObject.stuckable && (other.upperLayer.type === TileType.MOUNTAIN || other.baseLayer.type === TileType.VOLCANO ||
-            other.upperLayer.type === TileType.MELTER || other.upperLayer.type === TileType.SPLITTER ||
-            other.upperLayer.type === TileType.SUN_BATERY || other.upperLayer.type === TileType.STORAGE)) {
+                if (gameObject.stuckable && (other.upperLayer.type === TileType.MOUNTAIN || other.baseLayer.type === TileType.VOLCANO ||
+                    other.upperLayer.type === TileType.MELTER || other.upperLayer.type === TileType.SPLITTER ||
+                    other.upperLayer.type === TileType.SUN_BATERY || other.upperLayer.type === TileType.STORAGE)) {
 
-            if (gameObject.speedX !== 0) {
-                let side: number;
-                let wallSide: number;
-                if (gameObject.speedX > 0) {
-                    side = playerRight;
-                    wallSide = wallLeft;
-                } else {
-                    side = playerLeft;
-                    wallSide = wallRight;
+                    if (gameObject.speedX !== 0) {
+                        let side: number;
+                        let wallSide: number;
+                        if (gameObject.speedX > 0) {
+                            side = playerRight;
+                            wallSide = wallLeft;
+                        } else {
+                            side = playerLeft;
+                            wallSide = wallRight;
+                        }
+
+                        if (
+                            !(playerRight + gameObject.speedX <= wallLeft ||
+                                playerLeft + gameObject.speedX >= wallRight ||
+                                playerTop >= wallBottom ||
+                                playerBottom <= wallTop)
+                        ) {
+                            gameObject.speedX = 0;
+                            gameObject.x -= side - wallSide;
+                        }
+                    }
+
+                    if (gameObject.speedY !== 0) {
+                        let side: number;
+                        let wallSide: number;
+                        if (gameObject.speedY > 0) {
+                            side = playerBottom;
+                            wallSide = wallTop;
+                        } else {
+                            side = playerTop;
+                            wallSide = wallBottom;
+                        }
+
+                        if (
+                            !(playerRight <= wallLeft ||
+                                playerLeft >= wallRight ||
+                                playerTop + gameObject.speedY >= wallBottom ||
+                                playerBottom + gameObject.speedY <= wallTop)
+                        ) {
+                            debugger;
+                            gameObject.speedY = 0;
+                            gameObject.y -= side - wallSide;
+                        }
+                    }
                 }
-
-                if (
-                    !(playerRight + gameObject.speedX <= wallLeft ||
-                        playerLeft + gameObject.speedX >= wallRight ||
-                        playerTop >= wallBottom ||
-                        playerBottom <= wallTop)
-                ) {
-                    gameObject.speedX = 0;
-                    gameObject.x -= side - wallSide;
-                }
-            }
-
-            if (gameObject.speedY !== 0) {
-                let side: number;
-                let wallSide: number;
-                if (gameObject.speedY > 0) {
-                    side = playerBottom;
-                    wallSide = wallTop;
-                } else {
-                    side = playerTop;
-                    wallSide = wallBottom;
-                }
-
-                if (
-                    !(playerRight <= wallLeft ||
-                        playerLeft >= wallRight ||
-                        playerTop + gameObject.speedY >= wallBottom ||
-                        playerBottom + gameObject.speedY <= wallTop)
-                ) {
-                    gameObject.speedY = 0;
-                    gameObject.y -= side - wallSide;
-                }
+                globalPlayer.goForward = false;
+                globalPlayer.goBackward = false;
+                globalPlayer.goLeft = false;
+                globalPlayer.goRight = false;
             }
         }
-        globalPlayer.goForward = false;
-        globalPlayer.goBackward = false;
-        globalPlayer.goLeft = false;
-        globalPlayer.goRight = false;
     }
 
 
@@ -1212,8 +1220,8 @@ function buildMap() {
                         downTileType = TileType.VOLCANO;
                         map[index].width = TILE.width * 3;
                         map[index].height = TILE.height * 3;
-                        map[index].collisionWidth = TILE.width * 2;
-                        map[index].collisionHeight = TILE.height * 2;
+                        map[index].collisionWidth = TILE.width * 2.1;
+                        map[index].collisionHeight = TILE.height * 2.1;
                         map[index].specialTimer = addTimer(randomInt(50, 500));
                     } else if (char === '!') {
                         downTileType = TileType.LAVA;
@@ -2178,6 +2186,9 @@ function updateGameObject(gameObject: GameObject) {
                     firstRecipeIndex++;
                 }
             }
+
+            addItem(Item.STORAGE, 1);
+
             //табличка
             drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 200 + 39, imgCrafts, 0, 450, 533, false, Layer.UI);
             //спрайты предметов
@@ -2665,7 +2676,7 @@ function updateGameObject(gameObject: GameObject) {
         gameObject.height = (100 + height);
 
         //взрыв
-        if (height < Layer.UPPER_TILE) {
+        if (height <= Layer.UPPER_TILE) {
             let x = Math.round(gameObject.x / TILE.width);
             let y = Math.round(gameObject.y / TILE.height);
             let tileIndex = getIndexFromCoords(x, y);
