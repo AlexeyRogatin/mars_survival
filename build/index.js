@@ -2000,7 +2000,6 @@ System.register("index", ["controls", "resources"], function (exports_3, context
                         firstRecipeIndex++;
                     }
                 }
-                addItem(Item.STORAGE, 1);
                 drawSprite(resources_2.camera.x - resources_2.camera.width / 2 + 150, resources_2.camera.y - resources_2.camera.height / 4 + 200 + 39, resources_2.imgCrafts, 0, 450, 533, false, resources_2.Layer.UI);
                 for (var itemIndex = 0; itemIndex < 3; itemIndex++) {
                     drawSprite(resources_2.camera.x - resources_2.camera.width / 2 + 60, resources_2.camera.y - resources_2.camera.height / 4 + 110 + 133 * itemIndex, RECIPES[firstRecipeIndex + itemIndex].sprite, 0, 70, 70, false, resources_2.Layer.UI);
@@ -2191,6 +2190,11 @@ System.register("index", ["controls", "resources"], function (exports_3, context
                         }
                     }
                 }
+                addItem(Item.AURIT, 1);
+                addItem(Item.MELTER, 1);
+                addItem(Item.METEORITE_STUFF, 1);
+                addItem(Item.CRYSTAL, 1);
+                addItem(Item.IGNEOUS_INGOT, 1);
                 if (mouseTile && controls_1.mouse.isDown && mouseTile.toughness) {
                     moveToTile(mouseTile, gameObject);
                     if (gameObject.goForward === false && gameObject.goBackward === false &&
@@ -2491,7 +2495,7 @@ System.register("index", ["controls", "resources"], function (exports_3, context
                             if (map[tileIndex] && map[tileIndex].baseLayer.type !== TileType.LAVA && map[tileIndex].baseLayer.type !== TileType.MOUNTAIN &&
                                 map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.VOLCANO) {
                                 map[tileIndex].upperLayer.type = TileType.IGNEOUS;
-                                map[tileIndex].toughness = 500;
+                                map[tileIndex].toughness = 499;
                                 map[tileIndex].firstToughness = 500;
                                 map[tileIndex].oreCount = 1;
                             }
@@ -2871,7 +2875,7 @@ System.register("index", ["controls", "resources"], function (exports_3, context
             event = Event.NONE;
             timeBetweenEvents = randomInt(timeBetweenEvents - timeBetweenEvents / 6, timeBetweenEvents + timeBetweenEvents / 6);
         }
-        if (event === Event.METEORITE_RAIN && timers[gameTimer] % 3 === 0) {
+        if (timers[gameTimer] % 3 === 0) {
             addGameObject(GameObjectType.METEORITE, randomInt(globalPlayer.x - 5000, globalPlayer.x + 5000), randomInt(globalPlayer.y - 5000, globalPlayer.y + 5000));
         }
         for (var gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {

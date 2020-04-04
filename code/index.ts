@@ -2187,8 +2187,6 @@ function updateGameObject(gameObject: GameObject) {
                 }
             }
 
-            addItem(Item.STORAGE, 1);
-
             //табличка
             drawSprite(camera.x - camera.width / 2 + 150, camera.y - camera.height / 4 + 200 + 39, imgCrafts, 0, 450, 533, false, Layer.UI);
             //спрайты предметов
@@ -2424,6 +2422,12 @@ function updateGameObject(gameObject: GameObject) {
                     }
                 }
             }
+
+            addItem(Item.AURIT, 1);
+            addItem(Item.MELTER, 1);
+            addItem(Item.METEORITE_STUFF, 1);
+            addItem(Item.CRYSTAL, 1);
+            addItem(Item.IGNEOUS_INGOT, 1);
 
             //собираем предметы
 
@@ -2776,7 +2780,7 @@ function updateGameObject(gameObject: GameObject) {
                             map[tileIndex].baseLayer.type !== TileType.NONE && map[tileIndex].baseLayer.type !== TileType.VOLCANO
                         ) {
                             map[tileIndex].upperLayer.type = TileType.IGNEOUS;
-                            map[tileIndex].toughness = 500;
+                            map[tileIndex].toughness = 499;
                             map[tileIndex].firstToughness = 500;
                             map[tileIndex].oreCount = 1;
                         }
@@ -3229,7 +3233,7 @@ function loopGame() {
         timeBetweenEvents = randomInt(timeBetweenEvents - timeBetweenEvents / 6, timeBetweenEvents + timeBetweenEvents / 6);
     }
 
-    if (event === Event.METEORITE_RAIN && timers[gameTimer] % 3 === 0) {
+    if (timers[gameTimer] % 3 === 0) {
         addGameObject(GameObjectType.METEORITE, randomInt(globalPlayer.x - 5000, globalPlayer.x + 5000), randomInt(globalPlayer.y - 5000, globalPlayer.y + 5000));
     }
 
