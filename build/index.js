@@ -937,7 +937,6 @@ System.register("index", ["controls", "resources"], function (exports_3, context
                                 playerLeft >= wallRight ||
                                 playerTop + gameObject.speedY >= wallBottom ||
                                 playerBottom + gameObject.speedY <= wallTop)) {
-                                debugger;
                                 gameObject.speedY = 0;
                                 gameObject.y -= side - wallSide;
                             }
@@ -1745,9 +1744,6 @@ System.register("index", ["controls", "resources"], function (exports_3, context
             if (controls_1.qKey.wentDown) {
                 inventory[mainSlot] = { item: Item.NONE, count: 0, cooldown: addTimer(0) };
             }
-            if (isInventoryFullForItem(Item.NONE)) {
-                drawText(resources_2.camera.x + resources_2.camera.width / 8, resources_2.camera.y + resources_2.camera.height / 2 - 40, 0, 0, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, 'left', resources_2.Layer.UI);
-            }
             var vector1 = rotateVector(20, 0, gameObject.angle + Math.PI / 4);
             var vector2 = rotateVector(20, 0, gameObject.angle + Math.PI * 3 / 4);
             var vector3 = rotateVector(20, 0, gameObject.angle - Math.PI / 4);
@@ -2190,11 +2186,6 @@ System.register("index", ["controls", "resources"], function (exports_3, context
                         }
                     }
                 }
-                addItem(Item.AURIT, 1);
-                addItem(Item.MELTER, 1);
-                addItem(Item.METEORITE_STUFF, 1);
-                addItem(Item.CRYSTAL, 1);
-                addItem(Item.IGNEOUS_INGOT, 1);
                 if (mouseTile && controls_1.mouse.isDown && mouseTile.toughness) {
                     moveToTile(mouseTile, gameObject);
                     if (gameObject.goForward === false && gameObject.goBackward === false &&
@@ -2621,9 +2612,7 @@ System.register("index", ["controls", "resources"], function (exports_3, context
             if (gameObject.attack === 1) {
                 if (timers[gameObject.specialTimer] > 100) {
                     if (timers[gameObject.specialTimer] < 300) {
-                        for (var i = 0; i < 5; i++) {
-                            addGameObject(GameObjectType.LAVA_BALL, gameObject.x, gameObject.y);
-                        }
+                        addGameObject(GameObjectType.LAVA_BALL, gameObject.x, gameObject.y);
                     }
                     gameObject.rotationSpeed += 0.0015;
                 }
@@ -2634,7 +2623,7 @@ System.register("index", ["controls", "resources"], function (exports_3, context
             }
             if (gameObject.attack === 2) {
                 if (timers[gameObject.specialTimer] > 100) {
-                    if (timers[gameObject.specialTimer] < 300 && timers[gameObject.specialTimer] % 7 === 0) {
+                    if (timers[gameObject.specialTimer] < 300 && timers[gameObject.specialTimer] % 10 === 0) {
                         addGameObject(GameObjectType.MAGMA_BALL, gameObject.x, gameObject.y);
                     }
                     gameObject.rotationSpeed += 0.0015;
@@ -2733,26 +2722,35 @@ System.register("index", ["controls", "resources"], function (exports_3, context
                     if (distance < gameObject.width / 2 + globalPlayer.width / 2 && timers[globalPlayer.unhitableTimer] === 0) {
                         globalPlayer.hitpoints -= 20;
                         timers[globalPlayer.unhitableTimer] = 150;
+                        if (globalBoss.attack === 0) {
+                            timers[globalBoss.specialTimer] = 60;
+                        }
                     }
-                    for (var tileIndex = 0; tileIndex < map.length; tileIndex++) {
-                        var tile = map[tileIndex];
-                        if (tile.upperLayer.type !== TileType.NONE && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
-                            tile.upperLayer.type = TileType.NONE;
-                            tile.toughness = 0;
-                            tile.firstToughness = 0;
-                            if (tile.sound) {
-                                tile.sound.volume = 0;
+                    var firstX = Math.round((gameObject.x - gameObject.width / 2 - TILE.width / 2) / TILE.width);
+                    var firstY = Math.round((gameObject.y - gameObject.height / 2 - TILE.height / 2) / TILE.width);
+                    var lastX = Math.round((gameObject.x + gameObject.width / 2 + TILE.width / 2) / TILE.width);
+                    var lastY = Math.round((gameObject.y + gameObject.height / 2 + TILE.height / 2) / TILE.width);
+                    for (var x = firstX; x < lastX; x++) {
+                        for (var y = firstY; y < lastY; y++) {
+                            var tile = map[getIndexFromCoords(x, y)];
+                            if (tile && tile.upperLayer.type !== TileType.NONE && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
+                                tile.upperLayer.type = TileType.NONE;
+                                tile.toughness = 0;
+                                tile.firstToughness = 0;
+                                if (tile.sound) {
+                                    tile.sound.volume = 0;
+                                }
+                                burstParticles({
+                                    x: tile.x * TILE.width,
+                                    y: tile.y * TILE.height,
+                                    color: 'brown',
+                                    speed: 2,
+                                    size: 20,
+                                    count: 20,
+                                    decrease: 0.4,
+                                    accel: 0
+                                });
                             }
-                            burstParticles({
-                                x: tile.x * TILE.width,
-                                y: tile.y * TILE.height,
-                                color: 'brown',
-                                speed: 2,
-                                size: 20,
-                                count: 20,
-                                decrease: 0.4,
-                                accel: 0
-                            });
                         }
                     }
                 }
@@ -2875,7 +2873,7 @@ System.register("index", ["controls", "resources"], function (exports_3, context
             event = Event.NONE;
             timeBetweenEvents = randomInt(timeBetweenEvents - timeBetweenEvents / 6, timeBetweenEvents + timeBetweenEvents / 6);
         }
-        if (timers[gameTimer] % 3 === 0) {
+        if (event === Event.METEORITE_RAIN && timers[gameTimer] % 3 === 0) {
             addGameObject(GameObjectType.METEORITE, randomInt(globalPlayer.x - 5000, globalPlayer.x + 5000), randomInt(globalPlayer.y - 5000, globalPlayer.y + 5000));
         }
         for (var gameObjectIndex = 0; gameObjectIndex < gameObjects.length; gameObjectIndex++) {
@@ -3263,7 +3261,7 @@ System.register("index", ["controls", "resources"], function (exports_3, context
                     description: 'Эта вещь может вызвать метеорит, который упадёт на выбранную область. Хорошо бабахнуло'
                 },
             ];
-            GAME_LENGTH = ONE_DAY * 3;
+            GAME_LENGTH = 2;
             timers = [];
             map = [];
             slotCount = 5;
@@ -3296,7 +3294,6 @@ System.register("index", ["controls", "resources"], function (exports_3, context
             DAY_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH + DAY_LENGTH;
             AFTERNOON_TIME = NIGHT_LENGTH + AFTERNOON_LENGTH;
             NIGHT_TIME = NIGHT_LENGTH;
-            buildMap();
             playText = addMenuText(-resources_2.camera.width / 2 + 165, -resources_2.camera.height / 2 + 400, 130, 60, 'играть', 'White', 40, resources_2.Layer.UI);
             controlsText = addMenuText(-resources_2.camera.width / 2 + 215, -resources_2.camera.height / 2 + 470, 130, 60, 'управление', 'White', 40, resources_2.Layer.UI);
             instructions = false;

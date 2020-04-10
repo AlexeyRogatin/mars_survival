@@ -388,7 +388,7 @@ const RECIPES: Recipe[] = [
     },
 ];
 
-const GAME_LENGTH = ONE_DAY * 3;
+const GAME_LENGTH = 2;
 
 let timers: number[] = [];
 
@@ -1005,7 +1005,6 @@ function moveGameObject(gameObject: GameObject) {
                                 playerTop + gameObject.speedY >= wallBottom ||
                                 playerBottom + gameObject.speedY <= wallTop)
                         ) {
-                            debugger;
                             gameObject.speedY = 0;
                             gameObject.y -= side - wallSide;
                         }
@@ -1254,8 +1253,6 @@ function buildMap() {
         }
     }
 }
-
-buildMap();
 
 export function screenToWorld(x: number, y: number) {
     const result = [
@@ -1894,10 +1891,6 @@ function updateGameObject(gameObject: GameObject) {
             inventory[mainSlot] = { item: Item.NONE, count: 0, cooldown: addTimer(0) };
         }
 
-        if (isInventoryFullForItem(Item.NONE)) {
-            drawText(camera.x + camera.width / 8, camera.y + camera.height / 2 - 40, 0, 0, 'green', 'Нажмите на Q, чтобы выбросить вещь', 25, 'left', Layer.UI);
-        }
-
         //падение в лаву
 
         let vector1 = rotateVector(20, 0, gameObject.angle + Math.PI / 4);
@@ -2423,12 +2416,6 @@ function updateGameObject(gameObject: GameObject) {
                 }
             }
 
-            addItem(Item.AURIT, 1);
-            addItem(Item.MELTER, 1);
-            addItem(Item.METEORITE_STUFF, 1);
-            addItem(Item.CRYSTAL, 1);
-            addItem(Item.IGNEOUS_INGOT, 1);
-
             //собираем предметы
 
             if (mouseTile && mouse.isDown && mouseTile.toughness) {
@@ -2935,9 +2922,7 @@ function updateGameObject(gameObject: GameObject) {
         if (gameObject.attack === 1) {
             if (timers[gameObject.specialTimer] > 100) {
                 if (timers[gameObject.specialTimer] < 300) {
-                    for (let i = 0; i < 5; i++) {
-                        addGameObject(GameObjectType.LAVA_BALL, gameObject.x, gameObject.y);
-                    }
+                    addGameObject(GameObjectType.LAVA_BALL, gameObject.x, gameObject.y);
                 }
                 gameObject.rotationSpeed += 0.0015;
             }
@@ -2950,7 +2935,7 @@ function updateGameObject(gameObject: GameObject) {
         //дальней дистанции
         if (gameObject.attack === 2) {
             if (timers[gameObject.specialTimer] > 100) {
-                if (timers[gameObject.specialTimer] < 300 && timers[gameObject.specialTimer] % 7 === 0) {
+                if (timers[gameObject.specialTimer] < 300 && timers[gameObject.specialTimer] % 10 === 0) {
                     addGameObject(GameObjectType.MAGMA_BALL, gameObject.x, gameObject.y);
                 }
                 gameObject.rotationSpeed += 0.0015;
@@ -3057,26 +3042,36 @@ function updateGameObject(gameObject: GameObject) {
                 if (distance < gameObject.width / 2 + globalPlayer.width / 2 && timers[globalPlayer.unhitableTimer] === 0) {
                     globalPlayer.hitpoints -= 20;
                     timers[globalPlayer.unhitableTimer] = 150;
+                    if (globalBoss.attack === 0) {
+                        timers[globalBoss.specialTimer] = 60;
+                    }
                 }
-                for (let tileIndex = 0; tileIndex < map.length; tileIndex++) {
-                    let tile = map[tileIndex];
-                    if (tile.upperLayer.type !== TileType.NONE && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
-                        tile.upperLayer.type = TileType.NONE;
-                        tile.toughness = 0;
-                        tile.firstToughness = 0;
-                        if (tile.sound) {
-                            tile.sound.volume = 0;
+
+                let firstX = Math.round((gameObject.x - gameObject.width / 2 - TILE.width / 2) / TILE.width);
+                let firstY = Math.round((gameObject.y - gameObject.height / 2 - TILE.height / 2) / TILE.width);
+                let lastX = Math.round((gameObject.x + gameObject.width / 2 + TILE.width / 2) / TILE.width);
+                let lastY = Math.round((gameObject.y + gameObject.height / 2 + TILE.height / 2) / TILE.width);
+                for (let x = firstX; x < lastX; x++) {
+                    for (let y = firstY; y < lastY; y++) {
+                        let tile = map[getIndexFromCoords(x, y)];
+                        if (tile && tile.upperLayer.type !== TileType.NONE && distanceBetweenPoints(tile.x * TILE.width, tile.y * TILE.height, gameObject.x, gameObject.y) <= gameObject.width / 2 + tile.width / 2) {
+                            tile.upperLayer.type = TileType.NONE;
+                            tile.toughness = 0;
+                            tile.firstToughness = 0;
+                            if (tile.sound) {
+                                tile.sound.volume = 0;
+                            }
+                            burstParticles({
+                                x: tile.x * TILE.width,
+                                y: tile.y * TILE.height,
+                                color: 'brown',
+                                speed: 2,
+                                size: 20,
+                                count: 20,
+                                decrease: 0.4,
+                                accel: 0,
+                            });
                         }
-                        burstParticles({
-                            x: tile.x * TILE.width,
-                            y: tile.y * TILE.height,
-                            color: 'brown',
-                            speed: 2,
-                            size: 20,
-                            count: 20,
-                            decrease: 0.4,
-                            accel: 0,
-                        });
                     }
                 }
             }
@@ -3233,7 +3228,7 @@ function loopGame() {
         timeBetweenEvents = randomInt(timeBetweenEvents - timeBetweenEvents / 6, timeBetweenEvents + timeBetweenEvents / 6);
     }
 
-    if (timers[gameTimer] % 3 === 0) {
+    if (event === Event.METEORITE_RAIN && timers[gameTimer] % 3 === 0) {
         addGameObject(GameObjectType.METEORITE, randomInt(globalPlayer.x - 5000, globalPlayer.x + 5000), randomInt(globalPlayer.y - 5000, globalPlayer.y + 5000));
     }
 
